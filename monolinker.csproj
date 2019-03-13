@@ -98,6 +98,8 @@
     <Compile Include="..\..\..\external\linker\linker\Linker\TypePreserve.cs" />
     <Compile Include="..\..\..\external\linker\linker\Linker\TypeReferenceExtensions.cs" />
     <Compile Include="..\..\..\external\linker\linker\Linker\XApiReader.cs" />
+    <Compile Include="MonoLinkerSupportStep.cs" />
+    <Compile Include="MartinTestStep.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

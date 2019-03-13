@@ -1,3 +1,5 @@
+MartinTestStep.cs
+MonoLinkerSupportStep.cs
 ../../../external/linker/linker/Linker/Annotations.cs
 ../../../external/linker/linker/Linker/AssemblyAction.cs
 ../../../external/linker/linker/Linker/AssemblyInfo.cs
