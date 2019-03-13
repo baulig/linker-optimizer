@@ -10,8 +10,21 @@ namespace Martin.LinkerTest
 
 		public static void SimpleTest ()
 		{
+			UnsupportedTryCatch ();
 			if (IsWeakInstanceOf<Foo> (null))
-				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+				throw new InvalidTimeZoneException("I LIVE ON THE MOON!");
+		}
+
+		public static void UnsupportedTryCatch ()
+		{
+			try
+			{
+				throw new InvalidTimeZoneException("I LIVE ON THE MOON");
+			}
+			catch
+			{
+				throw;
+			}
 		}
 	}
 }
