@@ -45,7 +45,6 @@ namespace Mono.Linker.Conditionals
 			get; private set;
 		}
 
-		readonly Instruction [] Instructions;
 		readonly Dictionary<Instruction, BasicBlock> _bb_by_instruction;
 		int _next_block_id;
 
@@ -54,7 +53,6 @@ namespace Mono.Linker.Conditionals
 			Context = context;
 			Body = body;
 
-			Instructions = body.Instructions.ToArray ();
 			_bb_by_instruction = new Dictionary<Instruction, BasicBlock> ();
 		}
 
@@ -84,7 +82,7 @@ namespace Mono.Linker.Conditionals
 
 		bool Scan ()
 		{
-			Context.LogMessage ($"SCAN: {Body.Method} {Instructions.Length}");
+			Context.LogMessage ($"SCAN: {Body.Method}");
 
 			if (Body.ExceptionHandlers.Count > 0) {
 				if (!ThrowOnError)
@@ -94,7 +92,7 @@ namespace Mono.Linker.Conditionals
 
 			BasicBlock bb = null;
 
-			foreach (var instruction in Instructions) {
+			foreach (var instruction in Body.Instructions) {
 				if (bb == null) {
 					if (_bb_by_instruction.TryGetValue (instruction, out bb)) {
 						Context.LogMessage ($"    KNOWN BB: {bb}");
@@ -202,17 +200,29 @@ namespace Mono.Linker.Conditionals
 
 		public void RewriteConditionals ()
 		{
+			var foundConditionals = false;
+
 			foreach (var block in _bb_by_instruction.Values.ToArray ()) {
 				switch (block.Type) {
 				case BlockType.Normal:
 					continue;
 				case BlockType.WeakInstanceOf:
 					RewriteWeakInstanceOf (block);
+					foundConditionals = true;
 					break;
 				default:
 					throw new NotSupportedException ();
 				}
 			}
+
+			if (!foundConditionals)
+				return;
+
+			ComputeOffsets ();
+
+			DumpBlocks ();
+
+			Context.LogMessage ($"DONE REWRITING CONDITIONALS");
 		}
 
 		void RewriteWeakInstanceOf (BasicBlock block)
@@ -220,21 +230,69 @@ namespace Mono.Linker.Conditionals
 			var target = ((GenericInstanceMethod)block.Instructions [1].Operand).GenericArguments [0].Resolve ();
 			var value = Context.Context.Annotations.IsMarked (target);
 
+			var index = Body.Instructions.IndexOf (block.Instructions [0]);
+
 			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {target} {value} {block}");
 
-			var constant = Instruction.Create (value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			constant.Offset = block.Instructions [0].Offset;
-
-			var index = Body.Instructions.IndexOf (block.Instructions [0]);
-			Body.Instructions.Remove (block.Instructions [0]);
-			Body.Instructions.Remove (block.Instructions [1]);
-			Body.Instructions.Insert (index, constant);
+			var eliminateBranch = false;
+			var rewriteBranch = false;
+			var next = block.Instructions [2];
+			if (next.OpCode == OpCodes.Br || next.OpCode == OpCodes.Br_S) {
+				Context.LogMessage ($"  UNCONDITIONAL BRANCH");
+			} else if (next.OpCode == OpCodes.Brfalse || next.OpCode == OpCodes.Brfalse_S) {
+				Context.LogMessage ($"  BR FALSE");
+				eliminateBranch = value;
+				rewriteBranch = !value;
+			} else if (next.OpCode == OpCodes.Brtrue || next.OpCode == OpCodes.Brtrue_S) {
+				Context.LogMessage ($"  BR TRUE");
+				eliminateBranch = !value;
+				rewriteBranch = value;
+			} else {
+				Context.LogMessage ($"  NO BRANCH");
+			}
 
 			RemoveBlock (block);
-			var rewritten = NewBlock (constant);
 
-			for (int i = 2; i < block.Instructions.Count; i++) {
-				rewritten.AddInstruction (block.Instructions [i]);
+			if (eliminateBranch) {
+				Context.LogMessage ($"  ELIMINATING BRANCH");
+
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+
+				NewBlock (block.Instructions [2]);
+			} else if (rewriteBranch) {
+				Context.LogMessage ($"  REWRITE BRANCH");
+
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+
+				var branch = Instruction.Create (OpCodes.Br, (Instruction)next.Operand);
+				Body.Instructions.Insert (index, branch);
+				NewBlock (branch);
+			} else {
+				Context.LogMessage ($"  REWRITING CONDITIONAL");
+
+				var constant = Instruction.Create (value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.Insert (index, constant);
+
+				var rewritten = NewBlock (constant);
+				for (int i = 2; i < block.Instructions.Count; i++) {
+					rewritten.AddInstruction (block.Instructions [i]);
+				}
+			}
+		}
+
+		void ComputeOffsets ()
+		{
+			var offset = 0;
+			foreach (var instruction in Body.Instructions) {
+				instruction.Offset = offset;
+				offset += instruction.GetSize ();
 			}
 		}
 

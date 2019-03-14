@@ -16,13 +16,16 @@ martin-test: martin-test.cs MonoLinkerSupport.cs LinkerTest.cs $(PROFILE_PATH)/m
 	@mkdir $(LINKER_OUTPUT)
 	@echo MARTIN TEST
 #	csc /optimize /out:Tests/Martin/martin-test.exe Tests/Martin/martin-test.cs Tests/Martin/MonoLinkerSupport.cs Tests/Martin/LinkerTest.cs
-	$(LINKER_DEFAULT) --verbose --dump-dependencies --martin -a $(PROFILE_PATH)/martin-test.exe
+	$(LINKER_DEFAULT) --dump-dependencies --martin -a $(PROFILE_PATH)/martin-test.exe
 	gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
 	monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
 	monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
 	ls -lR $(LINKER_OUTPUT)
 	#(cd $(LINKER_OUTPUT); MONO_PATH=. $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot ./martin-test.exe)
 	#@rm -rf $(LINKER_OUTPUT)
+
+build::
+	$(MAKE) PROFILE=build -C ../..
 
 
 include ../../../../build/executable.make
