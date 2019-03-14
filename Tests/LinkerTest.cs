@@ -13,6 +13,9 @@ namespace Martin.LinkerTest
 			Run3 ();
 			Run4 ();
 			Run5 ();
+			Run6 (out var supported);
+			Run7 (ref supported);
+			Run8 ();
 		}
 
 		public static void Run ()
@@ -54,6 +57,23 @@ namespace Martin.LinkerTest
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 		}
 
+		public static void Run6 (out bool supported)
+		{
+			supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
+		}
+
+		public static void Run7 (ref bool supported)
+		{
+			supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
+		}
+
+		public static void Run8 ()
+		{
+			var instance = new InstanceTest ();
+			instance.Run ();
+			Console.WriteLine (instance.Supported);
+		}
+
 		public static bool UnsupportedTryCatch ()
 		{
 			try
@@ -63,6 +83,18 @@ namespace Martin.LinkerTest
 			catch
 			{
 				return false;
+			}
+		}
+
+		class InstanceTest
+		{
+			bool supported;
+
+			public bool Supported => supported;
+
+			public void Run ()
+			{
+				supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 			}
 		}
 	}
