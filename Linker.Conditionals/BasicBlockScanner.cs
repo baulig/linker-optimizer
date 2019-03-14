@@ -47,6 +47,7 @@ namespace Mono.Linker.Conditionals
 		readonly Instruction [] Instructions;
 		readonly Dictionary<int, Instruction> _ins_by_offset;
 		readonly Dictionary<int, BasicBlock> _bb_by_offset;
+		int _next_block_id;
 
 		BasicBlockScanner (MartinContext context, MethodBody body)
 		{
@@ -70,6 +71,18 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => _bb_by_offset.Values;
 
+		BasicBlock NewBlock (Instruction instruction)
+		{
+			var block = new BasicBlock (++_next_block_id, instruction);
+			_bb_by_offset.Add (instruction.Offset, block);
+			return block;
+		}
+
+		void RemoveBlock (BasicBlock block)
+		{
+			_bb_by_offset.Remove (block.StartOffset);
+		}
+
 		bool Scan ()
 		{
 			Context.LogMessage ($"SCAN: {Body.Method} {Instructions.Length}");
@@ -88,8 +101,7 @@ namespace Mono.Linker.Conditionals
 					if (_bb_by_offset.TryGetValue (instruction.Offset, out bb)) {
 						Context.LogMessage ($"    KNOWN BB: {bb}");
 					} else {
-						bb = new BasicBlock (_bb_by_offset.Count, instruction);
-						_bb_by_offset.Add (instruction.Offset, bb);
+						bb = NewBlock (instruction);
 						Context.LogMessage ($"    NEW BB: {bb}");
 					}
 	 			} else {
@@ -103,9 +115,8 @@ namespace Mono.Linker.Conditionals
 				case OperandType.ShortInlineBrTarget:
 					var target = (Instruction)instruction.Operand;
 					if (!_bb_by_offset.ContainsKey (target.Offset)) {
-						var target_bb = new BasicBlock (_bb_by_offset.Count, target);
 						Context.LogMessage ($"    JUMP TARGET BB: {target}");
-						_bb_by_offset.Add (target.Offset, target_bb);
+						NewBlock (target);
 						bb = null;
 					}
 					break;
@@ -114,7 +125,7 @@ namespace Mono.Linker.Conditionals
 						return false;
 					throw new NotSupportedException ($"We don't support `switch` statements yet: {Body.Method.FullName}");
 				case OperandType.InlineMethod:
-					HandleCall (bb, instruction);
+					HandleCall (ref bb, instruction);
 					break;
 				}
 
@@ -138,18 +149,57 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void HandleCall (BasicBlock bb, Instruction instruction)
+		void HandleCall (ref BasicBlock bb, Instruction instruction)
 		{
 			var target = (MethodReference)instruction.Operand;
 			Context.LogMessage ($"    CALL: {target}");
 
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {
 				if (genericInstance.ElementMethod == Context.IsWeakInstanceOf) {
-					Context.LogMessage ($"    WEAK INSTANCE OF!");
-					bb.ContainsConditionals = true;
-					FoundConditionals = true;
+					var conditionalType = genericInstance.GenericArguments[0].Resolve ();
+					if (conditionalType == null)
+						throw new ResolutionException (genericInstance.GenericArguments[0]);
+					HandleWeakInstanceOf (ref bb, instruction, conditionalType);
 				}
 			}
+		}
+
+		void HandleWeakInstanceOf (ref BasicBlock bb, Instruction instruction, TypeDefinition type)
+		{
+			if (bb.Instructions.Count == 1)
+				throw new NotSupportedException ();
+
+			var argument = bb.Instructions [bb.Instructions.Count - 2];
+			Context.LogMessage ($"    WEAK INSTANCE OF: {type} - {instruction} - {argument}");
+
+			if (Context.Context.Annotations.IsMarked (type)) {
+				Context.LogMessage ($"    IS MARKED!");
+				return;
+			}
+
+			VerifyWeakInstanceOfArgument (argument);
+
+			if (bb.Instructions.Count > 2) {
+				RemoveBlock (bb);
+				var previous = NewBlock (bb.Instructions [0]);
+				for (int i = 1; i < bb.Instructions.Count - 2; i++) {
+					previous.AddInstruction (bb.Instructions [i]);
+				}
+
+				var conditional = NewBlock (argument);
+				conditional.AddInstruction (instruction);
+				bb = conditional;
+			}
+
+			bb.ContainsConditionals = true;
+			FoundConditionals = true;
+		}
+
+		bool VerifyWeakInstanceOfArgument (Instruction argument)
+		{
+			if (argument.OpCode == OpCodes.Ldnull)
+				return true;
+			throw new NotSupportedException ($"Invalid opcode `{argument.OpCode}` used as weak instance target in `{Body.Method}`.");
 		}
 
 		public class BasicBlock
