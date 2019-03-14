@@ -277,7 +277,7 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
-			EliminateDeadBlocks ();
+			while (EliminateDeadBlocks ()) {  }
 
 			DumpBlocks ();
 
@@ -345,7 +345,7 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void EliminateDeadBlocks ()
+		bool EliminateDeadBlocks ()
 		{
 			Context.LogMessage ($"ELIMINATING DEAD BLOCKS");
 
@@ -373,12 +373,14 @@ namespace Mono.Linker.Conditionals
 					switch (instruction.OpCode.OperandType) {
 					case OperandType.InlineBrTarget:
 					case OperandType.ShortInlineBrTarget:
+						var target = (Instruction)instruction.Operand;
 						marked.Add (GetBlock ((Instruction)instruction.Operand));
 						break;
 					}
 				}
 			}
 
+			var removedDeadBlocks = false;
 			var allBlocks = _block_list.ToArray ();
 			for (int i = 0; i < allBlocks.Length; i++) {
 				if (marked.Contains (allBlocks [i]))
@@ -389,9 +391,13 @@ namespace Mono.Linker.Conditionals
 				RemoveBlock (allBlocks [i]);
 				foreach (var instruction in allBlocks [i].Instructions)
 					Body.Instructions.Remove (instruction);
+
+				removedDeadBlocks = true;
 			}
 
 			Context.LogMessage ($"DONE ELIMINATING DEAD BLOCKS");
+
+			return removedDeadBlocks;
 		}
 
 		void ComputeOffsets ()
