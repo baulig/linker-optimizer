@@ -13,7 +13,7 @@ class X
 {
 	static int Main()
 	{
-		LinkerSupport.SimpleTest ();
+		SimpleTests.Run ();
 		return 0;
 	}
 }

@@ -98,11 +98,10 @@
     <Compile Include="..\..\..\external\linker\linker\Linker\TypePreserve.cs" />
     <Compile Include="..\..\..\external\linker\linker\Linker\TypeReferenceExtensions.cs" />
     <Compile Include="..\..\..\external\linker\linker\Linker\XApiReader.cs" />
-    <Compile Include="BasicBlockScanner.cs" />
-    <Compile Include="Linker.Conditionals\MonoLinkerSupportStep.cs" />
     <Compile Include="Linker.Conditionals\MartinTestStep.cs" />
     <Compile Include="Linker.Conditionals\MartinContext.cs" />
     <Compile Include="Linker.Conditionals\ConditionalMarkStep.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlockScanner.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

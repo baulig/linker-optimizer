@@ -32,5 +32,29 @@ namespace Mono.Linker.Conditionals
 {
 	public class ConditionalMarkStep : MarkStep
 	{
+		public MartinContext MartinContext => _context.MartinContext;
+
+		void Debug (string message)
+		{
+			_context.Logger.LogMessage (MessageImportance.Low, message);
+		}
+
+		protected override void ProcessMethod (MethodDefinition method)
+		{
+			base.ProcessMethod (method);
+		}
+
+		protected override void MarkMethodBody (MethodBody body)
+		{
+			if (!MartinContext.IsEnabled (body.Method)) {
+				base.MarkMethodBody (body);
+				return;
+			}
+
+			Debug ($"MARK BODY: {body.Method}");
+
+			var scanner = new BasicBlockScanner (body);
+			scanner.Scan ();
+		}
 	}
 }
