@@ -78,6 +78,12 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
+		void RemoveBlock (BasicBlock block)
+		{
+			_block_list.Remove (block);
+			_bb_by_instruction.Remove (block.Instructions [0]);
+		}
+
 		void ReplaceBlock (ref BasicBlock block, BlockType type, params Instruction[] instructions)
 		{
 			if (instructions.Length < 1)
@@ -174,6 +180,10 @@ namespace Mono.Linker.Conditionals
 					bb = null;
 				}
 			}
+
+			DumpBlocks ();
+
+			ComputeOffsets ();
 
 			DumpBlocks ();
 
@@ -341,24 +351,44 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
+			var markNextBlock = true;
 			var marked = new HashSet<BasicBlock> ();
-			if (Body.Instructions.Count > 0)
-				marked.Add (GetBlock (Body.Instructions [0]));
 
-			foreach (var instruction in Body.Instructions) {
-				switch (instruction.OpCode.OperandType) {
-				case OperandType.InlineBrTarget:
-				case OperandType.ShortInlineBrTarget:
-					marked.Add (GetBlock ((Instruction)instruction.Operand));
+			foreach (var block in _block_list) {
+				if (markNextBlock)
+					marked.Add (block);
+
+				switch (block.Type) {
+				case BlockType.Branch:
+					markNextBlock = false;
 					break;
+				case BlockType.Normal:
+					markNextBlock = true;
+					break;
+				default:
+					throw new NotSupportedException ();
+				}
+
+				foreach (var instruction in block.Instructions) {
+					switch (instruction.OpCode.OperandType) {
+					case OperandType.InlineBrTarget:
+					case OperandType.ShortInlineBrTarget:
+						marked.Add (GetBlock ((Instruction)instruction.Operand));
+						break;
+					}
 				}
 			}
 
 			var allBlocks = _block_list.ToArray ();
 			for (int i = 0; i < allBlocks.Length; i++) {
-				if (!marked.Contains (allBlocks[i])) {
-					Context.LogMessage ($"  DEAD BLOCK: {allBlocks [i]}");
-				}
+				if (marked.Contains (allBlocks [i]))
+					continue;
+
+				Context.LogMessage ($"  DEAD BLOCK: {allBlocks [i]}");
+
+				RemoveBlock (allBlocks [i]);
+				foreach (var instruction in allBlocks [i].Instructions)
+					Body.Instructions.Remove (instruction);
 			}
 
 			Context.LogMessage ($"DONE ELIMINATING DEAD BLOCKS");
@@ -371,6 +401,11 @@ namespace Mono.Linker.Conditionals
 				instruction.Offset = offset;
 				offset += instruction.GetSize ();
 			}
+
+			foreach (var block in _block_list)
+				block.ComputeOffsets ();
+
+			_block_list.Sort ((first, second) => first.StartOffset.CompareTo (second.StartOffset));
 		}
 
 		public enum BlockType
@@ -392,6 +427,7 @@ namespace Mono.Linker.Conditionals
 
 			public int StartOffset {
 				get;
+				private set;
 			}
 
 			public int EndOffset {
@@ -457,6 +493,12 @@ namespace Mono.Linker.Conditionals
 			public Instruction[] GetInstructions (int offset)
 			{
 				return GetInstructions (offset, Instructions.Count - offset);
+			}
+
+			public void ComputeOffsets ()
+			{
+				StartOffset = _instructions [0].Offset;
+				EndOffset = _instructions [_instructions.Count - 1].Offset;
 			}
 
 			public override string ToString ()
