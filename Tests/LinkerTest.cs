@@ -11,6 +11,8 @@ namespace Martin.LinkerTest
 			Run ();
 			Run2 ();
 			Run3 ();
+			Run4 ();
+			Run5 ();
 		}
 
 		public static void Run ()
@@ -19,7 +21,6 @@ namespace Martin.LinkerTest
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
 			{
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
-				// throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
 			}
 
 			Console.Error.WriteLine ("DONE");
@@ -40,6 +41,17 @@ namespace Martin.LinkerTest
 				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
 
 			Console.Error.WriteLine ("DONE");
+		}
+
+		public static void Run4 ()
+		{
+			var supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
+			Console.Error.WriteLine ($"SUPPORTED: {supported}");
+		}
+
+		public static bool Run5 ()
+		{
+			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 		}
 
 		public static bool UnsupportedTryCatch ()

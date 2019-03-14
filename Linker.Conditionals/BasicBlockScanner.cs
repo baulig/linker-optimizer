@@ -173,8 +173,6 @@ namespace Mono.Linker.Conditionals
 					bb.AddInstruction (instruction);
 				}
 
-				Context.LogMessage ($"        {instruction}");
-
 				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
@@ -186,24 +184,28 @@ namespace Mono.Linker.Conditionals
 						NewBlock (target);
 						bb = null;
 					}
-					break;
+					continue;
 				case OperandType.InlineSwitch:
 					if (!ThrowOnError)
 						return false;
 					throw new NotSupportedException ($"We don't support `switch` statements yet: {Body.Method.FullName}");
 				case OperandType.InlineMethod:
 					HandleCall (ref bb, ref i, instruction);
-					break;
+					continue;
 				}
 
-				if (instruction.OpCode == OpCodes.Throw || instruction.OpCode == OpCodes.Rethrow) {
+				switch (instruction.OpCode.Code) {
+				case Code.Throw:
+				case Code.Rethrow:
 					Context.LogMessage ($"    THROW");
 					bb.Type = BlockType.Branch;
 					bb = null;
-				} else if (instruction.OpCode == OpCodes.Ret) {
+					break;
+				case Code.Ret:
 					Context.LogMessage ($"    RET");
 					bb.Type = BlockType.Branch;
 					bb = null;
+					break;
 				}
 			}
 
@@ -218,11 +220,15 @@ namespace Mono.Linker.Conditionals
 
 		void DumpBlocks ()
 		{
-			Context.LogMessage ($"BLOCK DUMP");
+			Context.LogMessage ($"BLOCK DUMP ({Body.Method})");
 			foreach (var block in _block_list) {
 				Context.LogMessage ($"{block}:");
-				foreach (var instruction in block.Instructions)
-					Context.LogMessage ($"  {instruction}");
+				foreach (var instruction in block.Instructions) {
+					if (instruction.OpCode.Code == Code.Ldstr)
+						Context.LogMessage ($"  {instruction.OpCode}");
+					else
+						Context.LogMessage ($"  {instruction}");
+				}
 			}
 		}
 
@@ -282,6 +288,55 @@ namespace Mono.Linker.Conditionals
 				}
 
 				bb = null;
+				return;
+			}
+
+			if (IsStoreInstruction (next)) {
+				bb.AddInstruction (next);
+				index++;
+				bb = null;
+			} else if (next.OpCode.Code == Code.Ret) {
+				bb.AddInstruction (next);
+				index++;
+				bb = null;
+			} else {
+				throw new NotSupportedException ($"Invalid opcode `{next.OpCode}` following weak instance.");
+			}
+		}
+
+		bool IsStoreInstruction (Instruction instruction)
+		{
+			switch (instruction.OpCode.Code) {
+			case Code.Starg:
+			case Code.Starg_S:
+			case Code.Stelem_Any:
+			case Code.Stelem_I:
+			case Code.Stelem_I2:
+			case Code.Stelem_I4:
+			case Code.Stelem_I8:
+			case Code.Stelem_R4:
+			case Code.Stelem_R8:
+			case Code.Stelem_Ref:
+			case Code.Stfld:
+			case Code.Stind_I:
+			case Code.Stind_I1:
+			case Code.Stind_I2:
+			case Code.Stind_I4:
+			case Code.Stind_I8:
+			case Code.Stind_R4:
+			case Code.Stind_R8:
+			case Code.Stind_Ref:
+			case Code.Stloc:
+			case Code.Stloc_0:
+			case Code.Stloc_1:
+			case Code.Stloc_2:
+			case Code.Stloc_3:
+			case Code.Stloc_S:
+			case Code.Stobj:
+			case Code.Stsfld:
+				return true;
+			default:
+				return false;
 			}
 		}
 
@@ -342,18 +397,26 @@ namespace Mono.Linker.Conditionals
 			var eliminateBranch = false;
 			var rewriteBranch = false;
 			var next = block.Instructions [2];
-			if (next.OpCode == OpCodes.Br || next.OpCode == OpCodes.Br_S) {
+			switch (next.OpCode.Code) {
+			case Code.Br:
+			case Code.Br_S:
 				Context.LogMessage ($"  UNCONDITIONAL BRANCH");
-			} else if (next.OpCode == OpCodes.Brfalse || next.OpCode == OpCodes.Brfalse_S) {
+				break;
+			case Code.Brfalse:
+			case Code.Brfalse_S:
 				Context.LogMessage ($"  BR FALSE");
 				eliminateBranch = value;
 				rewriteBranch = !value;
-			} else if (next.OpCode == OpCodes.Brtrue || next.OpCode == OpCodes.Brtrue_S) {
+				break;
+			case Code.Brtrue:
+			case Code.Brtrue_S:
 				Context.LogMessage ($"  BR TRUE");
 				eliminateBranch = !value;
 				rewriteBranch = value;
-			} else {
+				break;
+			default:
 				Context.LogMessage ($"  NO BRANCH");
+				break;
 			}
 
 			if (eliminateBranch) {
@@ -454,6 +517,8 @@ namespace Mono.Linker.Conditionals
 					continue;
 
 				var lastInstruction = _block_list [i].LastInstruction;
+				if (lastInstruction.OpCode.Code != Code.Br && lastInstruction.OpCode.Code != Code.Br_S)
+					continue;
 				if ((Instruction)lastInstruction.Operand != _block_list [i + 1].FirstInstruction)
 					continue;
 
