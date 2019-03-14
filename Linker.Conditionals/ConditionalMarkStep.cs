@@ -34,11 +34,6 @@ namespace Mono.Linker.Conditionals
 	{
 		public MartinContext MartinContext => _context.MartinContext;
 
-		void Debug (string message)
-		{
-			_context.Logger.LogMessage (MessageImportance.Low, message);
-		}
-
 		protected override void ProcessMethod (MethodDefinition method)
 		{
 			base.ProcessMethod (method);
@@ -51,10 +46,18 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
-			Debug ($"MARK BODY: {body.Method}");
+			MartinContext.LogMessage ($"MARK BODY: {body.Method}");
 
-			var scanner = new BasicBlockScanner (body);
-			scanner.Scan ();
+			var scanner = BasicBlockScanner.Scan (MartinContext, body);
+			if (scanner == null) {
+				MartinContext.LogMessage (MessageImportance.High, $"BB SCAN FAILED: {body.Method}");
+				return;
+			}
+
+			if (scanner.FoundConditionals)
+				return;
+
+			base.MarkMethodBody (body);
 		}
 	}
 }

@@ -32,30 +32,37 @@ namespace Mono.Linker.Conditionals
 {
 	public class BasicBlockScanner
 	{
+		public MartinContext Context {
+			get;
+		}
+
 		public MethodBody Body {
 			get;
 		}
 
-		public BasicBlockScanner (MethodBody body)
+		public bool FoundConditionals {
+			get; private set;
+		}
+
+		BasicBlockScanner (MartinContext context, MethodBody body)
 		{
+			Context = context;
 			Body = body;
 		}
 
 		public static bool ThrowOnError;
 
-		static void Debug (string message)
+		public static BasicBlockScanner Scan (MartinContext context, MethodBody body)
 		{
-			Console.Error.WriteLine (message);
-		}
-
-		public void Scan ()
-		{
-			Scan (Body.Instructions.ToArray ());
+			var scanner = new BasicBlockScanner (context, body);
+			if (!scanner.Scan (body.Instructions.ToArray ()))
+				return null;
+			return scanner;
 		}
 
 		bool Scan (Instruction [] instructions)
 		{
-			Debug ($"SCAN: {Body} {instructions.Length}");
+			Context.LogMessage ($"SCAN: {Body.Method} {instructions.Length}");
 
 			if (Body.ExceptionHandlers.Count > 0) {
 				if (!ThrowOnError)
@@ -69,15 +76,15 @@ namespace Mono.Linker.Conditionals
 			for (int i = 0; i < instructions.Length; i++) {
 				if (bb == null) {
 					if (bb_by_offset.TryGetValue (instructions [i].Offset, out bb)) {
-						Debug ($"    KNOWN BB: {bb}");
+						Context.LogMessage ($"    KNOWN BB: {bb}");
 					} else {
 						bb = new BasicBlock (bb_by_offset.Count, instructions [i]);
 						bb_by_offset.Add (instructions[i].Offset, bb);
-						Debug ($"    NEW BB: {bb}");
+						Context.LogMessage ($"    NEW BB: {bb}");
 					}
 	 			}
 
-				Debug ($"        {instructions [i]}");
+				Context.LogMessage ($"        {instructions [i]}");
 
 				switch (instructions[i].OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
@@ -85,7 +92,7 @@ namespace Mono.Linker.Conditionals
 					var target = (Instruction)instructions [i].Operand;
 					if (!bb_by_offset.ContainsKey (target.Offset)) {
 						var target_bb = new BasicBlock (bb_by_offset.Count, target);
-						Debug ($"    JUMP TARGET BB: {target}");
+						Context.LogMessage ($"    JUMP TARGET BB: {target}");
 						bb_by_offset.Add (target.Offset, target_bb);
 						bb = null;
 					}
@@ -97,7 +104,7 @@ namespace Mono.Linker.Conditionals
 				}
 
 				if (instructions [i].OpCode == OpCodes.Throw) {
-					Debug ($"    THROW");
+					Context.LogMessage ($"    THROW");
 					bb = null;
 				}
 			}

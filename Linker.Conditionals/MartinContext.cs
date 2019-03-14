@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Linker.Steps;
 
@@ -70,9 +71,23 @@ namespace Mono.Linker.Conditionals
 		{
 			LogMessage ("Initializing Martin's Playground");
 
-			var support = Context.GetType ("Martin.LinkerSupport.MonoLinkerSupport");
-			if (support == null)
+			MonoLinkerSupport = Context.GetType ("Martin.LinkerSupport.MonoLinkerSupport");
+			if (MonoLinkerSupport == null)
 				throw new NotSupportedException ("Cannot find `Martin.LinkerSupport.MonoLinkerSupport`.");
+
+			IsWeakInstanceOf = MonoLinkerSupport.Methods.First (m => m.Name == "IsWeakInstanceOf");
+			if (IsWeakInstanceOf == null)
+				throw new NotSupportedException ("Cannot find `MonoLinkerSupport.IsWeakInstanceOf<T>`.");
+		}
+
+		public TypeDefinition MonoLinkerSupport {
+			get;
+			private set;
+		}
+
+		public MethodDefinition IsWeakInstanceOf {
+			get;
+			private set;
 		}
 
 		public bool IsEnabled (TypeDefinition type)
