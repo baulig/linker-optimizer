@@ -118,6 +118,26 @@ namespace Mono.Linker.Conditionals
 			return true;
 		}
 
+		void CutBlockAt (ref BasicBlock block, int position)
+		{
+			if (block.Instructions.Count < position)
+				throw new ArgumentOutOfRangeException ();
+
+			if (block.Instructions.Count == position) {
+				_block_list.Remove (block);
+				block = null;
+				return;
+			}
+
+			var blockIndex = _block_list.IndexOf (block);
+
+			var previousInstructions = block.GetInstructions (0, position);
+
+			block = new BasicBlock (++_next_block_id, BlockType.Normal, previousInstructions);
+			_block_list [blockIndex] = block;
+			_bb_by_instruction [previousInstructions [0]] = block;
+		}
+
 		BasicBlock GetBlock (Instruction instruction)
 		{
 			return _bb_by_instruction [instruction];
@@ -135,7 +155,9 @@ namespace Mono.Linker.Conditionals
 
 			BasicBlock bb = null;
 
-			foreach (var instruction in Body.Instructions) {
+			for (int i = 0; i < Body.Instructions.Count; i++) {
+				var instruction = Body.Instructions [i];
+
 				if (bb == null) {
 					if (_bb_by_instruction.TryGetValue (instruction, out bb)) {
 						Context.LogMessage ($"    KNOWN BB: {bb}");
@@ -169,7 +191,7 @@ namespace Mono.Linker.Conditionals
 						return false;
 					throw new NotSupportedException ($"We don't support `switch` statements yet: {Body.Method.FullName}");
 				case OperandType.InlineMethod:
-					HandleCall (ref bb, instruction);
+					HandleCall (ref bb, ref i, instruction);
 					break;
 				}
 
@@ -203,7 +225,7 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void HandleCall (ref BasicBlock bb, Instruction instruction)
+		void HandleCall (ref BasicBlock bb, ref int index, Instruction instruction)
 		{
 			var target = (MethodReference)instruction.Operand;
 			Context.LogMessage ($"    CALL: {target}");
@@ -213,12 +235,12 @@ namespace Mono.Linker.Conditionals
 					var conditionalType = genericInstance.GenericArguments[0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments[0]);
-					HandleWeakInstanceOf (ref bb, instruction, conditionalType);
+					HandleWeakInstanceOf (ref bb, ref index, instruction, conditionalType);
 				}
 			}
 		}
 
-		void HandleWeakInstanceOf (ref BasicBlock bb, Instruction instruction, TypeDefinition type)
+		void HandleWeakInstanceOf (ref BasicBlock bb, ref int index, Instruction instruction, TypeDefinition type)
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
@@ -235,13 +257,31 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
-			SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+			if (bb.Instructions.Count > 2)
+				SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 
 			bb.Type = BlockType.WeakInstanceOf;
 
 			DumpBlocks ();
 
 			FoundConditionals = true;
+
+			if (index + 1 >= Body.Instructions.Count)
+				return;
+
+			var next = Body.Instructions [index + 1];
+			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
+				bb.AddInstruction (next);
+				index++;
+
+				var target = (Instruction)next.Operand;
+				if (!_bb_by_instruction.ContainsKey (target)) {
+					Context.LogMessage ($"    JUMP TARGET BB: {target}");
+					NewBlock (target);
+				}
+
+				bb = null;
+			}
 		}
 
 		bool VerifyWeakInstanceOfArgument (Instruction argument)
@@ -296,6 +336,8 @@ namespace Mono.Linker.Conditionals
 
 			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {target} {value} {block}");
 
+			DumpBlocks ();
+
 			var eliminateBranch = false;
 			var rewriteBranch = false;
 			var next = block.Instructions [2];
@@ -320,13 +362,19 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 
-				SplitBlockAt (ref block, 2);
+				if (block.Instructions.Count != 3)
+					throw new InvalidTimeZoneException ("I LIVE ON THE MOON");
+
+				CutBlockAt (ref block, 3);
 			} else if (rewriteBranch) {
 				Context.LogMessage ($"  REWRITE BRANCH");
 
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
+
+				if (block.Instructions.Count != 3)
+					throw new InvalidTimeZoneException ("I LIVE ON THE MOON");
 
 				var branch = Instruction.Create (OpCodes.Br, (Instruction)next.Operand);
 				Body.Instructions.Insert (index, branch);
@@ -346,6 +394,8 @@ namespace Mono.Linker.Conditionals
 				ReplaceBlock (ref block, BlockType.Normal, constant);
 				block.AddInstructions (extraInstructions);
 			}
+
+			DumpBlocks ();
 		}
 
 		bool EliminateDeadBlocks ()

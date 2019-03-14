@@ -13,7 +13,7 @@ class X
 {
 	static int Main()
 	{
-		SimpleTests.Run ();
+		SimpleTests.RunAll ();
 		return 0;
 	}
 }
