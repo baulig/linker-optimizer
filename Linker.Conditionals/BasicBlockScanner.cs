@@ -143,7 +143,10 @@ namespace Mono.Linker.Conditionals
 						bb = NewBlock (instruction);
 						Context.LogMessage ($"    NEW BB: {bb}");
 					}
-	 			} else {
+				} else if (_bb_by_instruction.TryGetValue (instruction, out var newBB)) {
+					bb = newBB;
+					Context.LogMessage ($"    KNOWN BB: {bb}");
+				} else {
 					bb.AddInstruction (instruction);
 				}
 

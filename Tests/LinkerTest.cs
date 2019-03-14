@@ -10,7 +10,12 @@ namespace Martin.LinkerTest
 		{
 			UnsupportedTryCatch ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+			{
+				Console.Error.WriteLine ("I LIVE ON THE MOON!");
+				// throw new InvalidTimeZoneException("I LIVE ON THE MOON!");
+			}
+
+			Console.Error.WriteLine ("DONE");
 		}
 
 		public static bool UnsupportedTryCatch ()
