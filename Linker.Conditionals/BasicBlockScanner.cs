@@ -44,16 +44,18 @@ namespace Mono.Linker.Conditionals
 			get; private set;
 		}
 
-		readonly Instruction [] instructions;
-		readonly Dictionary<int, BasicBlock> bb_by_offset;
+		readonly Instruction [] Instructions;
+		readonly Dictionary<int, Instruction> _ins_by_offset;
+		readonly Dictionary<int, BasicBlock> _bb_by_offset;
 
 		BasicBlockScanner (MartinContext context, MethodBody body)
 		{
 			Context = context;
 			Body = body;
 
-			instructions = body.Instructions.ToArray ();
-			bb_by_offset = new Dictionary<int, BasicBlock> ();
+			Instructions = body.Instructions.ToArray ();
+			_ins_by_offset = new Dictionary<int, Instruction> ();
+			_bb_by_offset = new Dictionary<int, BasicBlock> ();
 		}
 
 		public static bool ThrowOnError;
@@ -66,9 +68,11 @@ namespace Mono.Linker.Conditionals
 			return scanner;
 		}
 
+		public IReadOnlyCollection<BasicBlock> BasicBlocks => _bb_by_offset.Values;
+
 		bool Scan ()
 		{
-			Context.LogMessage ($"SCAN: {Body.Method} {instructions.Length}");
+			Context.LogMessage ($"SCAN: {Body.Method} {Instructions.Length}");
 
 			if (Body.ExceptionHandlers.Count > 0) {
 				if (!ThrowOnError)
@@ -78,27 +82,30 @@ namespace Mono.Linker.Conditionals
 
 			BasicBlock bb = null;
 
-			for (int i = 0; i < instructions.Length; i++) {
+			foreach (var instruction in Instructions) {
+				_ins_by_offset.Add (instruction.Offset, instruction);
 				if (bb == null) {
-					if (bb_by_offset.TryGetValue (instructions [i].Offset, out bb)) {
+					if (_bb_by_offset.TryGetValue (instruction.Offset, out bb)) {
 						Context.LogMessage ($"    KNOWN BB: {bb}");
 					} else {
-						bb = new BasicBlock (bb_by_offset.Count, instructions [i]);
-						bb_by_offset.Add (instructions[i].Offset, bb);
+						bb = new BasicBlock (_bb_by_offset.Count, instruction);
+						_bb_by_offset.Add (instruction.Offset, bb);
 						Context.LogMessage ($"    NEW BB: {bb}");
 					}
-	 			}
+	 			} else {
+					bb.AddInstruction (instruction);
+				}
 
-				Context.LogMessage ($"        {instructions [i]}");
+				Context.LogMessage ($"        {instruction}");
 
-				switch (instructions[i].OpCode.OperandType) {
+				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
-					var target = (Instruction)instructions [i].Operand;
-					if (!bb_by_offset.ContainsKey (target.Offset)) {
-						var target_bb = new BasicBlock (bb_by_offset.Count, target);
+					var target = (Instruction)instruction.Operand;
+					if (!_bb_by_offset.ContainsKey (target.Offset)) {
+						var target_bb = new BasicBlock (_bb_by_offset.Count, target);
 						Context.LogMessage ($"    JUMP TARGET BB: {target}");
-						bb_by_offset.Add (target.Offset, target_bb);
+						_bb_by_offset.Add (target.Offset, target_bb);
 						bb = null;
 					}
 					break;
@@ -107,20 +114,31 @@ namespace Mono.Linker.Conditionals
 						return false;
 					throw new NotSupportedException ($"We don't support `switch` statements yet: {Body.Method.FullName}");
 				case OperandType.InlineMethod:
-					HandleCall (instructions [i]);
+					HandleCall (bb, instruction);
 					break;
 				}
 
-				if (instructions [i].OpCode == OpCodes.Throw) {
+				if (instruction.OpCode == OpCodes.Throw) {
 					Context.LogMessage ($"    THROW");
 					bb = null;
 				}
 			}
 
+			DumpBlocks ();
+
 			return true;
 		}
 
-		void HandleCall (Instruction instruction)
+		void DumpBlocks ()
+		{
+			foreach (var block in _bb_by_offset.Values) {
+				Context.LogMessage ($"{block}:");
+				foreach (var instruction in block.Instructions)
+					Context.LogMessage ($"  {instruction}");
+			}
+		}
+
+		void HandleCall (BasicBlock bb, Instruction instruction)
 		{
 			var target = (MethodReference)instruction.Operand;
 			Context.LogMessage ($"    CALL: {target}");
@@ -128,32 +146,58 @@ namespace Mono.Linker.Conditionals
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {
 				if (genericInstance.ElementMethod == Context.IsWeakInstanceOf) {
 					Context.LogMessage ($"    WEAK INSTANCE OF!");
+					bb.ContainsConditionals = true;
 					FoundConditionals = true;
 				}
 			}
 		}
 
-		class BasicBlock
+		public class BasicBlock
 		{
 			public int Index {
 				get;
 			}
 
-			public int Offset => Instruction.Offset;
-
-			public Instruction Instruction {
+			public int StartOffset {
 				get;
 			}
+
+			public int EndOffset {
+				get;
+				private set;
+			}
+
+			public bool ContainsConditionals {
+				get; set;
+			}
+
+			public IReadOnlyList<Instruction> Instructions => instructions;
+
+			readonly List<Instruction> instructions;
 
 			public BasicBlock (int index, Instruction instruction)
 			{
 				Index = index;
-				Instruction = instruction;
+				StartOffset = instruction.Offset;
+				EndOffset = instruction.Offset;
+
+				instructions = new List<Instruction> ();
+				AddInstruction (instruction);
+
+			}
+
+			public void AddInstruction (Instruction instruction)
+			{
+				if (instruction.Offset < EndOffset)
+					throw new ArgumentException ();
+
+				instructions.Add (instruction);
+				EndOffset = instruction.Offset;
 			}
 
 			public override string ToString ()
 			{
-				return $"[BB {Index} (0x{Offset:x2}): {Instruction}]";
+				return $"[BB {Index}: 0x{StartOffset:x2} - 0x{EndOffset:x2}{((ContainsConditionals ? " CONDITIONAL" : ""))}]";
 			}
 		}
 	}

@@ -38,7 +38,6 @@ namespace Mono.Linker.Conditionals
 
 		Queue<MethodDefinition> _conditional_methods;
 		Dictionary<MethodDefinition, BasicBlockScanner> _block_scanner_by_method;
-		bool _primary_loop_complete;
 
 		public ConditionalMarkStep ()
 		{
@@ -51,17 +50,13 @@ namespace Mono.Linker.Conditionals
 			if (_methods.Count > 0)
 				return;
 
-			if (_primary_loop_complete)
-				return;
-
-			_primary_loop_complete = true;
-
 			MartinContext.LogMessage ($"ADDITIONAL PROCESSING!");
 
 			while (_conditional_methods.Count > 0) {
 				var conditional = _conditional_methods.Dequeue ();
 				MartinContext.LogDebug ($"  CONDITIONAL METHOD: {conditional}");
-				EnqueueMethod (conditional);
+				var scanner = _block_scanner_by_method [conditional];
+				ScanBody (scanner, conditional.Body, true);
 			}
 
 			MartinContext.LogMessage ($"ADDITIONAL PROCESSING DONE!");
@@ -81,11 +76,6 @@ namespace Mono.Linker.Conditionals
 
 			MartinContext.LogMessage ($"MARK BODY: {body.Method}");
 
-			if (_primary_loop_complete) {
-				base.MarkMethodBody (body);
-				return;
-			}
-
 			var scanner = BasicBlockScanner.Scan (MartinContext, body);
 			if (scanner == null) {
 				MartinContext.LogMessage (MessageImportance.High, $"BB SCAN FAILED: {body.Method}");
@@ -103,10 +93,10 @@ namespace Mono.Linker.Conditionals
 			_conditional_methods.Enqueue (body.Method);
 			_block_scanner_by_method.Add (body.Method, scanner);
 
-			ScanBody (body);
+			ScanBody (scanner, body, false);
 		}
 
-		void ScanBody (MethodBody body)
+		void ScanBody (BasicBlockScanner scanner, MethodBody body, bool parseConditionals)
 		{
 			foreach (VariableDefinition var in body.Variables)
 				MarkType (var.VariableType);
@@ -115,12 +105,22 @@ namespace Mono.Linker.Conditionals
 				if (eh.HandlerType == ExceptionHandlerType.Catch)
 					MarkType (eh.CatchType);
 
-			foreach (Instruction instruction in body.Instructions)
-				MarkInstruction (instruction);
+			foreach (var block in scanner.BasicBlocks) {
+				if (block.ContainsConditionals && !parseConditionals)
+					continue;
+
+				MarkBasicBlock (block);
+			}
 
 			MarkInterfacesNeededByBodyStack (body);
 
 			MarkThingsUsedViaReflection (body);
+		}
+
+		void MarkBasicBlock (BasicBlockScanner.BasicBlock block)
+		{
+			foreach (Instruction instruction in block.Instructions)
+				MarkInstruction (instruction);
 		}
 
 		void MarkInterfacesNeededByBodyStack (MethodBody body)
