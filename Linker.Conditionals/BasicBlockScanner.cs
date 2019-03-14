@@ -46,8 +46,7 @@ namespace Mono.Linker.Conditionals
 		}
 
 		readonly Instruction [] Instructions;
-		readonly Dictionary<int, Instruction> _ins_by_offset;
-		readonly Dictionary<int, BasicBlock> _bb_by_offset;
+		readonly Dictionary<Instruction, BasicBlock> _bb_by_instruction;
 		int _next_block_id;
 
 		BasicBlockScanner (MartinContext context, MethodBody body)
@@ -56,8 +55,7 @@ namespace Mono.Linker.Conditionals
 			Body = body;
 
 			Instructions = body.Instructions.ToArray ();
-			_ins_by_offset = new Dictionary<int, Instruction> ();
-			_bb_by_offset = new Dictionary<int, BasicBlock> ();
+			_bb_by_instruction = new Dictionary<Instruction, BasicBlock> ();
 		}
 
 		public static bool ThrowOnError;
@@ -70,18 +68,18 @@ namespace Mono.Linker.Conditionals
 			return scanner;
 		}
 
-		public IReadOnlyCollection<BasicBlock> BasicBlocks => _bb_by_offset.Values;
+		public IReadOnlyCollection<BasicBlock> BasicBlocks => _bb_by_instruction.Values;
 
 		BasicBlock NewBlock (Instruction instruction, BlockType type = BlockType.Normal)
 		{
 			var block = new BasicBlock (++_next_block_id, type, instruction);
-			_bb_by_offset.Add (instruction.Offset, block);
+			_bb_by_instruction.Add (instruction, block);
 			return block;
 		}
 
 		void RemoveBlock (BasicBlock block)
 		{
-			_bb_by_offset.Remove (block.StartOffset);
+			_bb_by_instruction.Remove (block.Instructions[0]);
 		}
 
 		bool Scan ()
@@ -97,9 +95,8 @@ namespace Mono.Linker.Conditionals
 			BasicBlock bb = null;
 
 			foreach (var instruction in Instructions) {
-				_ins_by_offset.Add (instruction.Offset, instruction);
 				if (bb == null) {
-					if (_bb_by_offset.TryGetValue (instruction.Offset, out bb)) {
+					if (_bb_by_instruction.TryGetValue (instruction, out bb)) {
 						Context.LogMessage ($"    KNOWN BB: {bb}");
 					} else {
 						bb = NewBlock (instruction);
@@ -115,7 +112,7 @@ namespace Mono.Linker.Conditionals
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
 					var target = (Instruction)instruction.Operand;
-					if (!_bb_by_offset.ContainsKey (target.Offset)) {
+					if (!_bb_by_instruction.ContainsKey (target)) {
 						Context.LogMessage ($"    JUMP TARGET BB: {target}");
 						NewBlock (target);
 						bb = null;
@@ -143,7 +140,7 @@ namespace Mono.Linker.Conditionals
 
 		void DumpBlocks ()
 		{
-			foreach (var block in _bb_by_offset.Values) {
+			foreach (var block in _bb_by_instruction.Values) {
 				Context.LogMessage ($"{block}:");
 				foreach (var instruction in block.Instructions)
 					Context.LogMessage ($"  {instruction}");
@@ -205,7 +202,7 @@ namespace Mono.Linker.Conditionals
 
 		public void RewriteConditionals ()
 		{
-			foreach (var block in _bb_by_offset.Values.ToArray ()) {
+			foreach (var block in _bb_by_instruction.Values.ToArray ()) {
 				switch (block.Type) {
 				case BlockType.Normal:
 					continue;
@@ -225,8 +222,8 @@ namespace Mono.Linker.Conditionals
 
 			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {target} {value} {block}");
 
-			var constant = Instruction.Create (OpCodes.Ldc_I4_0);
-			constant.Offset = -1;
+			var constant = Instruction.Create (value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+			constant.Offset = block.Instructions [0].Offset;
 
 			var index = Body.Instructions.IndexOf (block.Instructions [0]);
 			Body.Instructions.Remove (block.Instructions [0]);

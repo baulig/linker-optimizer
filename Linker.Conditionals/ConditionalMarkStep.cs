@@ -50,8 +50,6 @@ namespace Mono.Linker.Conditionals
 			if (_methods.Count > 0)
 				return;
 
-			MartinContext.LogMessage ($"ADDITIONAL PROCESSING!");
-
 			while (_conditional_methods.Count > 0) {
 				var conditional = _conditional_methods.Dequeue ();
 				MartinContext.LogDebug ($"  CONDITIONAL METHOD: {conditional}");
@@ -59,8 +57,6 @@ namespace Mono.Linker.Conditionals
 				scanner.RewriteConditionals ();
 				ScanBody (scanner, conditional.Body, true);
 			}
-
-			MartinContext.LogMessage ($"ADDITIONAL PROCESSING DONE!");
 		}
 
 		protected override void ProcessMethod (MethodDefinition method)
