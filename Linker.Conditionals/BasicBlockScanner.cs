@@ -435,18 +435,38 @@ namespace Mono.Linker.Conditionals
 			}
 
 			var removedDeadBlocks = false;
-			var allBlocks = _block_list.ToArray ();
-			for (int i = 0; i < allBlocks.Length; i++) {
-				if (marked.Contains (allBlocks [i]))
+			for (int i = 0; i < _block_list.Count; i++) {
+				if (marked.Contains (_block_list [i]))
 					continue;
 
-				Context.LogMessage ($"  DEAD BLOCK: {allBlocks [i]}");
+				Context.LogMessage ($"  DEAD BLOCK: {_block_list [i]}");
 
-				RemoveBlock (allBlocks [i]);
-				foreach (var instruction in allBlocks [i].Instructions)
+				foreach (var instruction in _block_list [i].Instructions)
 					Body.Instructions.Remove (instruction);
 
+				RemoveBlock (_block_list [i]);
+
 				removedDeadBlocks = true;
+			}
+
+			for (int i = 0; i < _block_list.Count - 1; i++) {
+				if (_block_list [i].Type != BlockType.Branch)
+					continue;
+
+				var lastInstruction = _block_list [i].LastInstruction;
+				if ((Instruction)lastInstruction.Operand != _block_list [i + 1].FirstInstruction)
+					continue;
+
+				Context.LogMessage ($"ELIMINATE DEAD JUMP: {lastInstruction}");
+
+				Body.Instructions.Remove (lastInstruction);
+
+				if (_block_list [i].Instructions.Count == 1)
+					RemoveBlock (_block_list [i--]);
+				else {
+					_block_list [i].RemoveInstruction (lastInstruction);
+					_block_list [i].Type = BlockType.Normal;
+				}
 			}
 
 			Context.LogMessage ($"DONE ELIMINATING DEAD BLOCKS");
@@ -497,6 +517,10 @@ namespace Mono.Linker.Conditionals
 
 			public IReadOnlyList<Instruction> Instructions => _instructions;
 
+			public Instruction FirstInstruction => _instructions [0];
+
+			public Instruction LastInstruction => _instructions [_instructions.Count - 1];
+
 			readonly List<Instruction> _instructions = new List<Instruction> ();
 
 			public BasicBlock (int index, BlockType type, Instruction instruction)
@@ -535,6 +559,17 @@ namespace Mono.Linker.Conditionals
 			{
 				foreach (var instruction in instructions)
 					AddInstruction (instruction);
+			}
+
+			public void RemoveInstruction (Instruction instruction)
+			{
+				if (_instructions.Count < 2)
+					throw new InvalidOperationException ();
+				var index = _instructions.IndexOf (instruction);
+				if (index == 0)
+					throw new InvalidOperationException ();
+				_instructions.Remove (instruction);
+				ComputeOffsets ();
 			}
 
 			public Instruction[] GetInstructions (int offset, int count)
