@@ -44,10 +44,16 @@ namespace Mono.Linker.Conditionals
 			get; private set;
 		}
 
+		readonly Instruction [] instructions;
+		readonly Dictionary<int, BasicBlock> bb_by_offset;
+
 		BasicBlockScanner (MartinContext context, MethodBody body)
 		{
 			Context = context;
 			Body = body;
+
+			instructions = body.Instructions.ToArray ();
+			bb_by_offset = new Dictionary<int, BasicBlock> ();
 		}
 
 		public static bool ThrowOnError;
@@ -55,12 +61,12 @@ namespace Mono.Linker.Conditionals
 		public static BasicBlockScanner Scan (MartinContext context, MethodBody body)
 		{
 			var scanner = new BasicBlockScanner (context, body);
-			if (!scanner.Scan (body.Instructions.ToArray ()))
+			if (!scanner.Scan ())
 				return null;
 			return scanner;
 		}
 
-		bool Scan (Instruction [] instructions)
+		bool Scan ()
 		{
 			Context.LogMessage ($"SCAN: {Body.Method} {instructions.Length}");
 
@@ -71,7 +77,6 @@ namespace Mono.Linker.Conditionals
 			}
 
 			BasicBlock bb = null;
-			var bb_by_offset = new Dictionary<int, BasicBlock> ();
 
 			for (int i = 0; i < instructions.Length; i++) {
 				if (bb == null) {
@@ -101,6 +106,9 @@ namespace Mono.Linker.Conditionals
 					if (!ThrowOnError)
 						return false;
 					throw new NotSupportedException ($"We don't support `switch` statements yet: {Body.Method.FullName}");
+				case OperandType.InlineMethod:
+					HandleCall (instructions [i]);
+					break;
 				}
 
 				if (instructions [i].OpCode == OpCodes.Throw) {
@@ -110,6 +118,19 @@ namespace Mono.Linker.Conditionals
 			}
 
 			return true;
+		}
+
+		void HandleCall (Instruction instruction)
+		{
+			var target = (MethodReference)instruction.Operand;
+			Context.LogMessage ($"    CALL: {target}");
+
+			if (instruction.Operand is GenericInstanceMethod genericInstance) {
+				if (genericInstance.ElementMethod == Context.IsWeakInstanceOf) {
+					Context.LogMessage ($"    WEAK INSTANCE OF!");
+					FoundConditionals = true;
+				}
+			}
 		}
 
 		class BasicBlock

@@ -27,12 +27,45 @@ using System;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Linker.Steps;
+using System.Collections.Generic;
+using Mono.Collections.Generic;
 
 namespace Mono.Linker.Conditionals
 {
 	public class ConditionalMarkStep : MarkStep
 	{
 		public MartinContext MartinContext => _context.MartinContext;
+
+		Queue<MethodDefinition> _conditional_methods;
+		Dictionary<MethodDefinition, BasicBlockScanner> _block_scanner_by_method;
+		bool _primary_loop_complete;
+
+		public ConditionalMarkStep ()
+		{
+			_conditional_methods = new Queue<MethodDefinition> ();
+			_block_scanner_by_method = new Dictionary<MethodDefinition, BasicBlockScanner> ();
+		}
+
+		protected override void DoAdditionalProcessing ()
+		{
+			if (_methods.Count > 0)
+				return;
+
+			if (_primary_loop_complete)
+				return;
+
+			_primary_loop_complete = true;
+
+			MartinContext.LogMessage ($"ADDITIONAL PROCESSING!");
+
+			while (_conditional_methods.Count > 0) {
+				var conditional = _conditional_methods.Dequeue ();
+				MartinContext.LogDebug ($"  CONDITIONAL METHOD: {conditional}");
+				EnqueueMethod (conditional);
+			}
+
+			MartinContext.LogMessage ($"ADDITIONAL PROCESSING DONE!");
+		}
 
 		protected override void ProcessMethod (MethodDefinition method)
 		{
@@ -48,16 +81,59 @@ namespace Mono.Linker.Conditionals
 
 			MartinContext.LogMessage ($"MARK BODY: {body.Method}");
 
-			var scanner = BasicBlockScanner.Scan (MartinContext, body);
-			if (scanner == null) {
-				MartinContext.LogMessage (MessageImportance.High, $"BB SCAN FAILED: {body.Method}");
+			if (_primary_loop_complete) {
+				base.MarkMethodBody (body);
 				return;
 			}
 
-			if (scanner.FoundConditionals)
+			var scanner = BasicBlockScanner.Scan (MartinContext, body);
+			if (scanner == null) {
+				MartinContext.LogMessage (MessageImportance.High, $"BB SCAN FAILED: {body.Method}");
+				base.MarkMethodBody (body);
+				return;
+			}
+
+			if (!scanner.FoundConditionals) {
+				base.MarkMethodBody (body);
+				return;
+			}
+
+			MartinContext.LogMessage ($"MARK BODY - CONDITIONAL: {body.Method}");
+
+			_conditional_methods.Enqueue (body.Method);
+			_block_scanner_by_method.Add (body.Method, scanner);
+
+			ScanBody (body);
+		}
+
+		void ScanBody (MethodBody body)
+		{
+			foreach (VariableDefinition var in body.Variables)
+				MarkType (var.VariableType);
+
+			foreach (ExceptionHandler eh in body.ExceptionHandlers)
+				if (eh.HandlerType == ExceptionHandlerType.Catch)
+					MarkType (eh.CatchType);
+
+			foreach (Instruction instruction in body.Instructions)
+				MarkInstruction (instruction);
+
+			MarkInterfacesNeededByBodyStack (body);
+
+			MarkThingsUsedViaReflection (body);
+		}
+
+		void MarkInterfacesNeededByBodyStack (MethodBody body)
+		{
+			// If a type could be on the stack in the body and an interface it implements could be on the stack on the body
+			// then we need to mark that interface implementation.  When this occurs it is not safe to remove the interface implementation from the type
+			// even if the type is never instantiated
+			var implementations = MethodBodyScanner.GetReferencedInterfaces (_context.Annotations, body);
+			if (implementations == null)
 				return;
 
-			base.MarkMethodBody (body);
+			foreach (var implementation in implementations)
+				MarkInterfaceImplementation (implementation);
 		}
 	}
 }
