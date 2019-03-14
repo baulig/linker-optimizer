@@ -103,8 +103,12 @@ namespace Mono.Linker.Conditionals
 					MarkType (eh.CatchType);
 
 			foreach (var block in scanner.BasicBlocks) {
-				if (block.ContainsConditionals && !parseConditionals)
-					continue;
+				switch (block.Type) {
+				case BasicBlockScanner.BlockType.WeakInstanceOf:
+					if (!parseConditionals)
+						continue;
+					break;
+				}
 
 				MarkBasicBlock (block);
 			}

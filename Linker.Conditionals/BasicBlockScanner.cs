@@ -78,22 +78,6 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
-		void RemoveBlock (BasicBlock block)
-		{
-			_bb_by_instruction.Remove (block.Instructions[0]);
-			_block_list.Remove (block);
-		}
-
-		BasicBlock ReplaceBlock (BasicBlock block, Instruction instruction, BlockType type)
-		{
-			var index = _block_list.IndexOf (block);
-			var newBlock = new BasicBlock (++_next_block_id, type, instruction);
-			_block_list [index] = newBlock;
-			_bb_by_instruction.Remove (block.Instructions [0]);
-			_bb_by_instruction.Add (instruction, newBlock);
-			return newBlock;
-		}
-
 		void ReplaceBlock (ref BasicBlock block, BlockType type, params Instruction[] instructions)
 		{
 			if (instructions.Length < 1)
@@ -116,7 +100,7 @@ namespace Mono.Linker.Conditionals
 			var blockIndex = _block_list.IndexOf (block);
 
 			var previousInstructions = block.GetInstructions (0, position);
-			var nextInstructions = block.GetInstructions (position, block.Instructions.Count - position);
+			var nextInstructions = block.GetInstructions (position);
 
 			var previousBlock = new BasicBlock (++_next_block_id, BlockType.Normal, previousInstructions);
 			_block_list [blockIndex] = previousBlock;
@@ -126,15 +110,6 @@ namespace Mono.Linker.Conditionals
 			_block_list.Insert (blockIndex + 1, block);
 			_bb_by_instruction.Add (nextInstructions [0], block);
 			return true;
-		}
-
-		BasicBlock InsertBlockAfter (BasicBlock position, Instruction instruction, BlockType type)
-		{
-			var block = new BasicBlock (++_next_block_id, type, instruction);
-			_bb_by_instruction.Add (instruction, block);
-			var index = _block_list.IndexOf (position);
-			_block_list.Insert (index, block);
-			return block;
 		}
 
 		BasicBlock GetBlock (Instruction instruction)
@@ -250,7 +225,6 @@ namespace Mono.Linker.Conditionals
 			SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 
 			bb.Type = BlockType.WeakInstanceOf;
-			bb.ContainsConditionals = true;
 
 			DumpBlocks ();
 
@@ -266,6 +240,10 @@ namespace Mono.Linker.Conditionals
 
 		public void RewriteConditionals ()
 		{
+			Context.LogMessage ($"REWRITE CONDITIONALS");
+
+			DumpBlocks ();
+
 			var foundConditionals = false;
 
 			foreach (var block in _block_list.ToArray ()) {
@@ -322,8 +300,6 @@ namespace Mono.Linker.Conditionals
 				Context.LogMessage ($"  NO BRANCH");
 			}
 
-			RemoveBlock (block);
-
 			if (eliminateBranch) {
 				Context.LogMessage ($"  ELIMINATING BRANCH");
 
@@ -331,7 +307,7 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 
-				NewBlock (block.Instructions [2]);
+				SplitBlockAt (ref block, 2);
 			} else if (rewriteBranch) {
 				Context.LogMessage ($"  REWRITE BRANCH");
 
@@ -341,7 +317,8 @@ namespace Mono.Linker.Conditionals
 
 				var branch = Instruction.Create (OpCodes.Br, (Instruction)next.Operand);
 				Body.Instructions.Insert (index, branch);
-				NewBlock (branch, BlockType.Branch);
+
+				ReplaceBlock (ref block, BlockType.Branch, branch);
 			} else {
 				Context.LogMessage ($"  REWRITING CONDITIONAL");
 
@@ -351,10 +328,10 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.Insert (index, constant);
 
-				var rewritten = NewBlock (constant);
-				for (int i = 2; i < block.Instructions.Count; i++) {
-					rewritten.AddInstruction (block.Instructions [i]);
-				}
+				var extraInstructions = block.GetInstructions (2);
+
+				ReplaceBlock (ref block, BlockType.Normal, constant);
+				block.AddInstructions (extraInstructions);
 			}
 		}
 
@@ -422,13 +399,9 @@ namespace Mono.Linker.Conditionals
 				private set;
 			}
 
-			public bool ContainsConditionals {
-				get; set;
-			}
+			public IReadOnlyList<Instruction> Instructions => _instructions;
 
-			public IReadOnlyList<Instruction> Instructions => instructions;
-
-			readonly List<Instruction> instructions;
+			readonly List<Instruction> _instructions = new List<Instruction> ();
 
 			public BasicBlock (int index, BlockType type, Instruction instruction)
 			{
@@ -437,7 +410,6 @@ namespace Mono.Linker.Conditionals
 				StartOffset = instruction.Offset;
 				EndOffset = instruction.Offset;
 
-				instructions = new List<Instruction> ();
 				AddInstruction (instruction);
 
 			}
@@ -451,9 +423,7 @@ namespace Mono.Linker.Conditionals
 					throw new ArgumentOutOfRangeException ();
 
 				StartOffset = EndOffset = instructions [0].Offset;
-				this.instructions = new List<Instruction> ();
-				foreach (var instruction in instructions)
-					AddInstruction (instruction);
+				AddInstructions (instructions);
 			}
 
 			public void AddInstruction (Instruction instruction)
@@ -461,26 +431,37 @@ namespace Mono.Linker.Conditionals
 				if (instruction.Offset < EndOffset)
 					throw new ArgumentException ();
 
-				instructions.Add (instruction);
+				_instructions.Add (instruction);
 				EndOffset = instruction.Offset;
+			}
+
+			public void AddInstructions (params Instruction[] instructions)
+			{
+				foreach (var instruction in instructions)
+					AddInstruction (instruction);
 			}
 
 			public Instruction[] GetInstructions (int offset, int count)
 			{
-				if (offset == instructions.Count)
+				if (offset == _instructions.Count)
 					return new Instruction [0];
-				if (offset + count > instructions.Count)
+				if (offset + count > _instructions.Count)
 					throw new ArgumentOutOfRangeException ();
 
 				var array = new Instruction [count];
 				for (int i = 0; i < count; i++)
-					array [i] = instructions [offset + i];
+					array [i] = _instructions [offset + i];
 				return array;
+			}
+
+			public Instruction[] GetInstructions (int offset)
+			{
+				return GetInstructions (offset, Instructions.Count - offset);
 			}
 
 			public override string ToString ()
 			{
-				return $"[BB {Index}{((Type != BlockType.Normal ? $" ({Type})" : ""))}: 0x{StartOffset:x2} - 0x{EndOffset:x2}{((ContainsConditionals ? " CONDITIONAL" : ""))}]";
+				return $"[BB {Index}{((Type != BlockType.Normal ? $" ({Type})" : ""))}: 0x{StartOffset:x2} - 0x{EndOffset:x2}]";
 			}
 		}
 	}
