@@ -90,10 +90,11 @@ namespace Mono.Linker.Conditionals
 				throw new ArgumentOutOfRangeException ();
 
 			var blockIndex = _block_list.IndexOf (block);
+			_bb_by_instruction.Remove (block.Instructions [0]);
 
 			block = new BasicBlock (++_next_block_id, type, instructions);
 			_block_list [blockIndex] = block;
-			_bb_by_instruction [instructions[0]] = block;
+			_bb_by_instruction.Add (instructions[0], block);
 		}
 
 		bool SplitBlockAt (ref BasicBlock block, int position)
