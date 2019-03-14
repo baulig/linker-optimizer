@@ -13,7 +13,7 @@ namespace Martin.LinkerTest
 				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
 		}
 
-		public static void UnsupportedTryCatch ()
+		public static bool UnsupportedTryCatch ()
 		{
 			try
 			{
@@ -21,7 +21,7 @@ namespace Martin.LinkerTest
 			}
 			catch
 			{
-				throw;
+				return false;
 			}
 		}
 	}

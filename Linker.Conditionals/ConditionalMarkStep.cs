@@ -56,6 +56,7 @@ namespace Mono.Linker.Conditionals
 				var conditional = _conditional_methods.Dequeue ();
 				MartinContext.LogDebug ($"  CONDITIONAL METHOD: {conditional}");
 				var scanner = _block_scanner_by_method [conditional];
+				scanner.RewriteConditionals ();
 				ScanBody (scanner, conditional.Body, true);
 			}
 

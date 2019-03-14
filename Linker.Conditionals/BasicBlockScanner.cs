@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -71,9 +72,9 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => _bb_by_offset.Values;
 
-		BasicBlock NewBlock (Instruction instruction)
+		BasicBlock NewBlock (Instruction instruction, BlockType type = BlockType.Normal)
 		{
-			var block = new BasicBlock (++_next_block_id, instruction);
+			var block = new BasicBlock (++_next_block_id, type, instruction);
 			_bb_by_offset.Add (instruction.Offset, block);
 			return block;
 		}
@@ -179,17 +180,17 @@ namespace Mono.Linker.Conditionals
 
 			VerifyWeakInstanceOfArgument (argument);
 
+			RemoveBlock (bb);
+
 			if (bb.Instructions.Count > 2) {
-				RemoveBlock (bb);
 				var previous = NewBlock (bb.Instructions [0]);
 				for (int i = 1; i < bb.Instructions.Count - 2; i++) {
 					previous.AddInstruction (bb.Instructions [i]);
 				}
-
-				var conditional = NewBlock (argument);
-				conditional.AddInstruction (instruction);
-				bb = conditional;
 			}
+
+			bb = NewBlock (argument, BlockType.WeakInstanceOf);
+		    	bb.AddInstruction (instruction);
 
 			bb.ContainsConditionals = true;
 			FoundConditionals = true;
@@ -202,9 +203,57 @@ namespace Mono.Linker.Conditionals
 			throw new NotSupportedException ($"Invalid opcode `{argument.OpCode}` used as weak instance target in `{Body.Method}`.");
 		}
 
+		public void RewriteConditionals ()
+		{
+			foreach (var block in _bb_by_offset.Values.ToArray ()) {
+				switch (block.Type) {
+				case BlockType.Normal:
+					continue;
+				case BlockType.WeakInstanceOf:
+					RewriteWeakInstanceOf (block);
+					break;
+				default:
+					throw new NotSupportedException ();
+				}
+			}
+		}
+
+		void RewriteWeakInstanceOf (BasicBlock block)
+		{
+			var target = ((GenericInstanceMethod)block.Instructions [1].Operand).GenericArguments [0].Resolve ();
+			var value = Context.Context.Annotations.IsMarked (target);
+
+			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {target} {value} {block}");
+
+			var constant = Instruction.Create (OpCodes.Ldc_I4_0);
+			constant.Offset = -1;
+
+			var index = Body.Instructions.IndexOf (block.Instructions [0]);
+			Body.Instructions.Remove (block.Instructions [0]);
+			Body.Instructions.Remove (block.Instructions [1]);
+			Body.Instructions.Insert (index, constant);
+
+			RemoveBlock (block);
+			var rewritten = NewBlock (constant);
+
+			for (int i = 2; i < block.Instructions.Count; i++) {
+				rewritten.AddInstruction (block.Instructions [i]);
+			}
+		}
+
+		public enum BlockType
+		{
+			Normal,
+			WeakInstanceOf
+		}
+
 		public class BasicBlock
 		{
 			public int Index {
+				get;
+			}
+
+			public BlockType Type {
 				get;
 			}
 
@@ -225,9 +274,10 @@ namespace Mono.Linker.Conditionals
 
 			readonly List<Instruction> instructions;
 
-			public BasicBlock (int index, Instruction instruction)
+			public BasicBlock (int index, BlockType type, Instruction instruction)
 			{
 				Index = index;
+				Type = type;
 				StartOffset = instruction.Offset;
 				EndOffset = instruction.Offset;
 
@@ -247,7 +297,7 @@ namespace Mono.Linker.Conditionals
 
 			public override string ToString ()
 			{
-				return $"[BB {Index}: 0x{StartOffset:x2} - 0x{EndOffset:x2}{((ContainsConditionals ? " CONDITIONAL" : ""))}]";
+				return $"[BB {Index}{((Type != BlockType.Normal ? $" ({Type})" : ""))}: 0x{StartOffset:x2} - 0x{EndOffset:x2}{((ContainsConditionals ? " CONDITIONAL" : ""))}]";
 			}
 		}
 	}
