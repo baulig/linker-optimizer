@@ -104,9 +104,9 @@ namespace Mono.Linker.Conditionals
 
 			foreach (var block in scanner.BasicBlocks) {
 				switch (block.Type) {
-				case BasicBlockScanner.BlockType.WeakInstanceOf:
-				case BasicBlockScanner.BlockType.SimpleWeakInstanceOf:
-				case BasicBlockScanner.BlockType.IsFeatureSupported:
+				case BasicBlock.BlockType.WeakInstanceOf:
+				case BasicBlock.BlockType.SimpleWeakInstanceOf:
+				case BasicBlock.BlockType.IsFeatureSupported:
 					if (!parseConditionals)
 						continue;
 					break;
@@ -120,7 +120,7 @@ namespace Mono.Linker.Conditionals
 			MarkThingsUsedViaReflection (body);
 		}
 
-		void MarkBasicBlock (BasicBlockScanner.BasicBlock block)
+		void MarkBasicBlock (BasicBlock block)
 		{
 			foreach (Instruction instruction in block.Instructions)
 				MarkInstruction (instruction);
