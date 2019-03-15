@@ -165,6 +165,17 @@ namespace Mono.Linker.Conditionals
 			if (index + 1 >= Body.Instructions.Count)
 				throw new NotSupportedException ();
 
+			/*
+			 * `bool MonoLinkerSupport.IsWeakInstance<T> (object instance)`
+			 *
+			 * If the function argument is a simple load (like for instance `Ldarg_0`),
+			 * then we can simply remove that load.  Otherwise, we need to insert a
+			 * `Pop` to discard the value on the stack.
+			 *
+			 * In either case, we always start a new basic block for the conditional.
+			 * Its first instruction will either be the simple load or the call itself.
+			 */
+
 			var argument = Body.Instructions [index - 1];
 
 			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
@@ -180,6 +191,11 @@ namespace Mono.Linker.Conditionals
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
 				bb.Type = BasicBlock.BlockType.WeakInstanceOf;
 			}
+
+			/*
+			 * Once we get here, the current block only contains the (optional) simple load
+			 * and the conditional call itself.
+			 */
 
 			BlockList.Dump ();
 
@@ -197,6 +213,11 @@ namespace Mono.Linker.Conditionals
 				throw new NotSupportedException ();
 			if (index + 1 >= Body.Instructions.Count)
 				throw new NotSupportedException ();
+
+			/*
+			 * `bool MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature feature)`
+			 *
+			 */
 
 			var argument = Body.Instructions [index - 1];
 
@@ -219,6 +240,21 @@ namespace Mono.Linker.Conditionals
 		{
 			if (index + 1 >= Body.Instructions.Count)
 				throw new NotSupportedException ();
+
+			/*
+			 * Look ahead at the instruction immediately following the call to the
+			 * conditional support method (`IsWeakInstanceOf<T>()` or `IsFeatureSupported()`).
+			 *
+			 * If it's a branch or return, then we add it to the current block.
+			 *
+			 * At the end of this method, the current basic block will always look like this:
+			 *
+			 *   - (optional) simple load
+			 *   - conditional call
+			 *   - (optional) branch, return or store.
+			 *
+			 * We will also close out the current block and start a new one after this.
+			 */
 
 			var next = Body.Instructions [index + 1];
 			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
@@ -295,10 +331,18 @@ namespace Mono.Linker.Conditionals
 			int nextIndex;
 			switch (block.Type) {
 			case BasicBlock.BlockType.WeakInstanceOf:
+				/*
+				 * The argument came from a complicated expression, so we started
+				 * a new basic block with the call instruction.
+				 */
 				evaluated = EvaluateWeakInstanceOf (block.Instructions [0]);
 				nextIndex = 1;
 				break;
 			case BasicBlock.BlockType.SimpleWeakInstanceOf:
+				/*
+				 * The argument came from a simple load, so the block starts with
+				 * the load instruction followed by the call.
+				 */
 				evaluated = EvaluateWeakInstanceOf (block.Instructions [1]);
 				nextIndex = 2;
 				break;
@@ -307,6 +351,12 @@ namespace Mono.Linker.Conditionals
 			}
 
 			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {evaluated} {block}");
+
+			/*
+			 * If the instruction immediately following the call is either a branch
+			 * or return, then it will always be the last instruction in the block.
+			 *
+			 */
 
 			if (block.Instructions.Count == nextIndex + 1) {
 				var next = block.Instructions [nextIndex];
@@ -383,6 +433,12 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.Dump (block);
 
+			/*
+			 * If the instruction immediately following the conditional call is a
+			 * conditional branch, then we can resolve the conditional and do not
+			 * need to load the boolean conditional value onto the stack.
+			 */
+
 			var index = Body.Instructions.IndexOf (block.Instructions [0]);
 
 			var newInstructions = new List<Instruction> ();
@@ -393,6 +449,16 @@ namespace Mono.Linker.Conditionals
 			switch (block.Type) {
 			case BasicBlock.BlockType.SimpleWeakInstanceOf:
 			case BasicBlock.BlockType.IsFeatureSupported:
+				/*
+				 * The block contains a simple load, the conditional call and the branch.
+				 *
+				 * If the branch opcode was a conditional branch and it's condition
+				 * evaluated to false, then we can just simply remove the entire block.
+				 *
+				 * Otherwise, we will replace the entire block with an unconditional
+				 * branch to the target.
+				 *
+				 */
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
@@ -402,6 +468,15 @@ namespace Mono.Linker.Conditionals
 				}
 				break;
 			case BasicBlock.BlockType.WeakInstanceOf:
+				/*
+				 * The block contains the conditional call and the branch.  Since the
+				 * call argument has already been pushed onto the stack, we need to
+				 * insert a `pop` to discard it.
+				 *
+				 * Then we can resolve the conditional into either using an unconditional
+				 * branch or no branch at all.
+				 *
+				 */
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				newInstructions.Add (pop);
@@ -427,6 +502,12 @@ namespace Mono.Linker.Conditionals
 		{
 			Context.LogMessage ($"  REWRITING CONDITIONAL");
 
+			/*
+			 * The instruction following the conditional call was not a branch.
+			 * In this case, the conditional call is always the last instruction
+			 * in the block.
+			 */
+
 			var index = Body.Instructions.IndexOf (block.Instructions [0]);
 
 			var newInstructions = new List<Instruction> ();
@@ -436,6 +517,10 @@ namespace Mono.Linker.Conditionals
 			switch (block.Type) {
 			case BasicBlock.BlockType.SimpleWeakInstanceOf:
 			case BasicBlock.BlockType.IsFeatureSupported:
+				/*
+				 * The block contains a simple load and the conditional call.
+				 * Replace both with the constant load.
+				 */
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.Insert (index, constant);
@@ -443,6 +528,11 @@ namespace Mono.Linker.Conditionals
 				newInstructions.AddRange (block.GetInstructions (2));
 				break;
 			case BasicBlock.BlockType.WeakInstanceOf:
+				/*
+				 * The block only contains the conditional call, but it's argument
+				 * has already been pushed onto the stack, so we need to insert a
+				 * `pop` to discard it.
+				 */
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.Insert (index, pop);
 				Body.Instructions.Insert (index + 1, constant);
