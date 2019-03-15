@@ -104,6 +104,7 @@
     <Compile Include="Linker.Conditionals\BasicBlockScanner.cs" />
     <Compile Include="Linker.Conditionals\CecilHelper.cs" />
     <Compile Include="Linker.Conditionals\BasicBlock.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlockList.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
