@@ -245,12 +245,12 @@ namespace Mono.Linker.Conditionals
 					var conditionalType = genericInstance.GenericArguments[0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments[0]);
-					HandleWeakInstanceOf (ref bb, ref index, instruction, conditionalType);
+					HandleWeakInstanceOf (ref bb, ref index, conditionalType);
 				}
 			}
 		}
 
-		void HandleWeakInstanceOf (ref BasicBlock bb, ref int index, Instruction instruction, TypeDefinition type)
+		void HandleWeakInstanceOf (ref BasicBlock bb, ref int index, TypeDefinition type)
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
@@ -262,11 +262,6 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
 
 			DumpBlocks ();
-
-			if (false && Context.Context.Annotations.IsMarked (type)) {
-				Context.LogMessage ($"    IS MARKED!");
-				return;
-			}
 
 			if (IsSimpleLoad (argument)) {
 				if (bb.Instructions.Count > 2)
@@ -295,12 +290,7 @@ namespace Mono.Linker.Conditionals
 					Context.LogMessage ($"    JUMP TARGET BB: {target}");
 					NewBlock (target);
 				}
-
-				bb = null;
-				return;
-			}
-
-			if (IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
+			} else if (IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
 				bb.AddInstruction (next);
 				index++;
 			}
@@ -413,26 +403,24 @@ namespace Mono.Linker.Conditionals
 			DumpBlocks ();
 
 			bool evaluated;
+			int nextIndex;
 			switch (block.Type) {
 			case BlockType.WeakInstanceOf:
 				evaluated = EvaluateWeakInstanceOf (block.Instructions [0]);
+				nextIndex = 1;
 				break;
 			case BlockType.SimpleWeakInstanceOf:
 				evaluated = EvaluateWeakInstanceOf (block.Instructions [1]);
+				nextIndex = 2;
 				break;
 			default:
 				throw new NotSupportedException ();
 			}
 
-			var index = Body.Instructions.IndexOf (block.Instructions [0]);
-
 			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {evaluated} {block}");
 
-			var eliminateBranch = false;
-			var rewriteBranch = false;
-
-			if (block.Instructions.Count == 3) {
-				var next = block.Instructions [2];
+			if (block.Instructions.Count == nextIndex + 1) {
+				var next = block.Instructions [nextIndex];
 				switch (next.OpCode.Code) {
 				case Code.Br:
 				case Code.Br_S:
@@ -441,45 +429,63 @@ namespace Mono.Linker.Conditionals
 				case Code.Brfalse:
 				case Code.Brfalse_S:
 					Context.LogMessage ($"  BR FALSE");
-					eliminateBranch = evaluated;
-					rewriteBranch = !evaluated;
-					break;
+					RewriteBranch (ref block, !evaluated);
+					return;
 				case Code.Brtrue:
 				case Code.Brtrue_S:
 					Context.LogMessage ($"  BR TRUE");
-					eliminateBranch = !evaluated;
-					rewriteBranch = evaluated;
-					break;
+					RewriteBranch (ref block, evaluated);
+					return;
 				default:
 					Context.LogMessage ($"  NO BRANCH");
 					break;
 				}
 			}
 
-			if (eliminateBranch) {
-				Context.LogMessage ($"  ELIMINATING BRANCH");
-
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-
-				RemoveBlock (block);
-			} else if (rewriteBranch) {
-				Context.LogMessage ($"  REWRITE BRANCH");
-
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-
-				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.Instructions[2].Operand);
-				Body.Instructions.Insert (index, branch);
-
-				ReplaceBlock (ref block, BlockType.Branch, branch);
-			} else {
-				RewriteConditional (ref block, evaluated);
-			}
+			RewriteConditional (ref block, evaluated);
 
 			DumpBlocks ();
+		}
+
+		void RewriteBranch (ref BasicBlock block, bool evaluated)
+		{
+			var target = (Instruction)block.LastInstruction.Operand;
+
+			Context.LogMessage ($"  REWRITING BRANCH: {block} {evaluated} {target}");
+
+			DumpBlock (block);
+
+			var index = Body.Instructions.IndexOf (block.Instructions [0]);
+
+			var newInstructions = new List<Instruction> ();
+			var pop = Instruction.Create (OpCodes.Pop);
+			var branch = Instruction.Create (OpCodes.Br, target);
+
+			switch (block.Type) {
+			case BlockType.SimpleWeakInstanceOf:
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+				if (evaluated)
+					newInstructions.Add (branch);
+				break;
+			case BlockType.WeakInstanceOf:
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+				newInstructions.Add (pop);
+				if (evaluated)
+					newInstructions.Add (branch);
+				break;
+			default:
+				throw new NotSupportedException ();
+			}
+
+			for (int i = 0; i < newInstructions.Count; i++)
+				Body.Instructions.Insert (index + i, newInstructions [i]);
+			if (newInstructions.Count == 0)
+				RemoveBlock (block);
+			else
+				ReplaceBlock (ref block, BlockType.Normal, newInstructions.ToArray ());
 		}
 
 		void RewriteConditional (ref BasicBlock block, bool evaluated)
