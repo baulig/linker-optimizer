@@ -262,26 +262,7 @@ namespace Mono.Linker.Conditionals
 			if (index + 1 >= Body.Instructions.Count)
 				throw new NotSupportedException ();
 
-			LookAheadAfterConditional (bb, index);
-			bb = null;
-			return;
-
-			var next = Body.Instructions [index + 1];
-			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
-				bb.AddInstruction (next);
-				index++;
-
-				var target = (Instruction)next.Operand;
-				if (!_bb_by_instruction.ContainsKey (target)) {
-					Context.LogMessage ($"    JUMP TARGET BB: {target}");
-					NewBlock (target);
-				}
-			} else if (CecilHelper.IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
-				bb.AddInstruction (next);
-				index++;
-			}
-
-			bb = null;
+			LookAheadAfterConditional (ref bb, ref index);
 		}
 
 		void HandleIsFeatureSupported (ref BasicBlock bb, ref int index)
@@ -305,11 +286,10 @@ namespace Mono.Linker.Conditionals
 
 			bb.Type = BlockType.IsFeatureSupported;
 
-			LookAheadAfterConditional (bb, index);
-			bb = null;
+			LookAheadAfterConditional (ref bb, ref index);
 		}
 
-		void LookAheadAfterConditional (BasicBlock bb, int index)
+		void LookAheadAfterConditional (ref BasicBlock bb, ref int index)
 		{
 			if (index + 1 >= Body.Instructions.Count)
 				throw new NotSupportedException ();
@@ -328,6 +308,8 @@ namespace Mono.Linker.Conditionals
 				bb.AddInstruction (next);
 				index++;
 			}
+
+			bb = null;
 		}
 
 		public void RewriteConditionals ()
@@ -480,6 +462,7 @@ namespace Mono.Linker.Conditionals
 			var newInstructions = new List<Instruction> ();
 			var pop = Instruction.Create (OpCodes.Pop);
 			var branch = Instruction.Create (OpCodes.Br, target);
+			var type = BlockType.Normal;
 
 			switch (block.Type) {
 			case BlockType.SimpleWeakInstanceOf:
@@ -487,15 +470,19 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
-				if (evaluated)
+				if (evaluated) {
 					newInstructions.Add (branch);
+					type = BlockType.Branch;
+				}
 				break;
 			case BlockType.WeakInstanceOf:
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				newInstructions.Add (pop);
-				if (evaluated)
+				if (evaluated) {
 					newInstructions.Add (branch);
+					type = BlockType.Branch;
+				}
 				break;
 			default:
 				throw new NotSupportedException ();
@@ -505,8 +492,9 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.Insert (index + i, newInstructions [i]);
 			if (newInstructions.Count == 0)
 				RemoveBlock (block);
-			else
-				ReplaceBlock (ref block, BlockType.Normal, newInstructions.ToArray ());
+			else {
+				ReplaceBlock (ref block, type, newInstructions.ToArray ());
+			}
 		}
 
 		void RewriteConditional (ref BasicBlock block, bool evaluated)
@@ -521,6 +509,7 @@ namespace Mono.Linker.Conditionals
 
 			switch (block.Type) {
 			case BlockType.SimpleWeakInstanceOf:
+			case BlockType.IsFeatureSupported:
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.Insert (index, constant);

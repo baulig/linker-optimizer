@@ -106,6 +106,7 @@ namespace Mono.Linker.Conditionals
 				switch (block.Type) {
 				case BasicBlockScanner.BlockType.WeakInstanceOf:
 				case BasicBlockScanner.BlockType.SimpleWeakInstanceOf:
+				case BasicBlockScanner.BlockType.IsFeatureSupported:
 					if (!parseConditionals)
 						continue;
 					break;
