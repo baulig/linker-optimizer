@@ -24,12 +24,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace Mono.Linker.Conditionals
 {
 	static class CecilHelper
 	{
+		public static TypeDefinition GetWeakInstanceArgument (Instruction instruction)
+		{
+			var reference = ((GenericInstanceMethod)instruction.Operand).GenericArguments [0];
+			var type = reference.Resolve ();
+			if (type == null)
+				throw new ResolutionException (reference);
+			return type;
+		}
+
 		public static int GetFeatureArgument (Instruction instruction)
 		{
 			switch (instruction.OpCode.Code) {

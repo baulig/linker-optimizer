@@ -342,7 +342,11 @@ namespace Mono.Linker.Conditionals
 
 			RewriteConditional (block, nextIndex, evaluated);
 
+			BlockList.ComputeOffsets ();
+
 			BlockList.Dump ();
+
+			Context.LogMessage ($"REWRITE WEAK INSTANCE DONE: {block} {evaluated}");
 		}
 
 		void RewriteIsFeatureSupported (BasicBlock block)
