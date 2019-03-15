@@ -209,8 +209,6 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			DumpBlocks ();
-
 			ComputeOffsets ();
 
 			DumpBlocks ();
@@ -222,13 +220,18 @@ namespace Mono.Linker.Conditionals
 		{
 			Context.LogMessage ($"BLOCK DUMP ({Body.Method})");
 			foreach (var block in _block_list) {
-				Context.LogMessage ($"{block}:");
-				foreach (var instruction in block.Instructions) {
-					if (instruction.OpCode.Code == Code.Ldstr)
-						Context.LogMessage ($"  {instruction.OpCode}");
-					else
-						Context.LogMessage ($"  {instruction}");
-				}
+				DumpBlock (block);
+			}
+		}
+
+		void DumpBlock (BasicBlock block)
+		{
+			Context.LogMessage ($"{block}:");
+			foreach (var instruction in block.Instructions) {
+				if (instruction.OpCode.Code == Code.Ldstr)
+					Context.LogMessage ($"  {instruction.OpCode}");
+				else
+					Context.LogMessage ($"  {instruction}");
 			}
 		}
 
@@ -251,30 +254,36 @@ namespace Mono.Linker.Conditionals
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
+			if (index + 1 >= Body.Instructions.Count)
+				throw new NotSupportedException ();
 
-			var argument = bb.Instructions [bb.Instructions.Count - 2];
-			Context.LogMessage ($"    WEAK INSTANCE OF: {type} - {instruction} - {argument}");
+			var argument = Body.Instructions [index - 1];
 
-			if (Context.Context.Annotations.IsMarked (type)) {
+			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
+
+			DumpBlocks ();
+
+			if (false && Context.Context.Annotations.IsMarked (type)) {
 				Context.LogMessage ($"    IS MARKED!");
 				return;
 			}
 
-			VerifyWeakInstanceOfArgument (argument);
-
-			DumpBlocks ();
-
-			if (bb.Instructions.Count > 2)
-				SplitBlockAt (ref bb, bb.Instructions.Count - 2);
-
-			bb.Type = BlockType.WeakInstanceOf;
+			if (IsSimpleLoad (argument)) {
+				if (bb.Instructions.Count > 2)
+					SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+				bb.Type = BlockType.SimpleWeakInstanceOf;
+			} else {
+				Context.LogMessage ($"    COMPLICATED LOAD: {argument}");
+				SplitBlockAt (ref bb, bb.Instructions.Count - 1);
+				bb.Type = BlockType.WeakInstanceOf;
+			}
 
 			DumpBlocks ();
 
 			FoundConditionals = true;
 
 			if (index + 1 >= Body.Instructions.Count)
-				return;
+				throw new NotSupportedException ();
 
 			var next = Body.Instructions [index + 1];
 			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
@@ -291,17 +300,12 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
-			if (IsStoreInstruction (next)) {
+			if (IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
 				bb.AddInstruction (next);
 				index++;
-				bb = null;
-			} else if (next.OpCode.Code == Code.Ret) {
-				bb.AddInstruction (next);
-				index++;
-				bb = null;
-			} else {
-				throw new NotSupportedException ($"Invalid opcode `{next.OpCode}` following weak instance.");
 			}
+
+			bb = null;
 		}
 
 		bool IsStoreInstruction (Instruction instruction)
@@ -340,11 +344,23 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		bool VerifyWeakInstanceOfArgument (Instruction argument)
+		bool IsSimpleLoad (Instruction instruction)
 		{
-			if (argument.OpCode == OpCodes.Ldnull)
+			switch (instruction.OpCode.Code) {
+			case Code.Ldnull:
+			case Code.Ldarg:
+			case Code.Ldarg_0:
+			case Code.Ldarg_1:
+			case Code.Ldarg_2:
+			case Code.Ldarg_3:
+			case Code.Ldloc_0:
+			case Code.Ldloc_1:
+			case Code.Ldloc_2:
+			case Code.Ldloc_3:
 				return true;
-			throw new NotSupportedException ($"Invalid opcode `{argument.OpCode}` used as weak instance target in `{Body.Method}`.");
+			default:
+				return false;
+			}
 		}
 
 		public void RewriteConditionals ()
@@ -361,6 +377,7 @@ namespace Mono.Linker.Conditionals
 				case BlockType.Branch:
 					continue;
 				case BlockType.WeakInstanceOf:
+				case BlockType.SimpleWeakInstanceOf:
 					RewriteWeakInstanceOf (block);
 					foundConditionals = true;
 					break;
@@ -383,40 +400,60 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"DONE REWRITING CONDITIONALS");
 		}
 
+		bool EvaluateWeakInstanceOf (Instruction instruction)
+		{
+			var target = ((GenericInstanceMethod)instruction.Operand).GenericArguments [0].Resolve ();
+			return Context.Context.Annotations.IsMarked (target);
+		}
+
 		void RewriteWeakInstanceOf (BasicBlock block)
 		{
-			var target = ((GenericInstanceMethod)block.Instructions [1].Operand).GenericArguments [0].Resolve ();
-			var value = Context.Context.Annotations.IsMarked (target);
-
-			var index = Body.Instructions.IndexOf (block.Instructions [0]);
-
-			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {target} {value} {block}");
+			Context.LogMessage ($"REWRITE WEAK INSTANCE");
 
 			DumpBlocks ();
 
-			var eliminateBranch = false;
-			var rewriteBranch = false;
-			var next = block.Instructions [2];
-			switch (next.OpCode.Code) {
-			case Code.Br:
-			case Code.Br_S:
-				Context.LogMessage ($"  UNCONDITIONAL BRANCH");
+			bool evaluated;
+			switch (block.Type) {
+			case BlockType.WeakInstanceOf:
+				evaluated = EvaluateWeakInstanceOf (block.Instructions [0]);
 				break;
-			case Code.Brfalse:
-			case Code.Brfalse_S:
-				Context.LogMessage ($"  BR FALSE");
-				eliminateBranch = value;
-				rewriteBranch = !value;
-				break;
-			case Code.Brtrue:
-			case Code.Brtrue_S:
-				Context.LogMessage ($"  BR TRUE");
-				eliminateBranch = !value;
-				rewriteBranch = value;
+			case BlockType.SimpleWeakInstanceOf:
+				evaluated = EvaluateWeakInstanceOf (block.Instructions [1]);
 				break;
 			default:
-				Context.LogMessage ($"  NO BRANCH");
-				break;
+				throw new NotSupportedException ();
+			}
+
+			var index = Body.Instructions.IndexOf (block.Instructions [0]);
+
+			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {evaluated} {block}");
+
+			var eliminateBranch = false;
+			var rewriteBranch = false;
+
+			if (block.Instructions.Count == 3) {
+				var next = block.Instructions [2];
+				switch (next.OpCode.Code) {
+				case Code.Br:
+				case Code.Br_S:
+					Context.LogMessage ($"  UNCONDITIONAL BRANCH");
+					break;
+				case Code.Brfalse:
+				case Code.Brfalse_S:
+					Context.LogMessage ($"  BR FALSE");
+					eliminateBranch = evaluated;
+					rewriteBranch = !evaluated;
+					break;
+				case Code.Brtrue:
+				case Code.Brtrue_S:
+					Context.LogMessage ($"  BR TRUE");
+					eliminateBranch = !evaluated;
+					rewriteBranch = evaluated;
+					break;
+				default:
+					Context.LogMessage ($"  NO BRANCH");
+					break;
+				}
 			}
 
 			if (eliminateBranch) {
@@ -426,10 +463,7 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 
-				if (block.Instructions.Count != 3)
-					throw new InvalidTimeZoneException ("I LIVE ON THE MOON");
-
-				CutBlockAt (ref block, 3);
+				RemoveBlock (block);
 			} else if (rewriteBranch) {
 				Context.LogMessage ($"  REWRITE BRANCH");
 
@@ -437,29 +471,48 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 
-				if (block.Instructions.Count != 3)
-					throw new InvalidTimeZoneException ("I LIVE ON THE MOON");
-
-				var branch = Instruction.Create (OpCodes.Br, (Instruction)next.Operand);
+				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.Instructions[2].Operand);
 				Body.Instructions.Insert (index, branch);
 
 				ReplaceBlock (ref block, BlockType.Branch, branch);
 			} else {
-				Context.LogMessage ($"  REWRITING CONDITIONAL");
-
-				var constant = Instruction.Create (value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.Insert (index, constant);
-
-				var extraInstructions = block.GetInstructions (2);
-
-				ReplaceBlock (ref block, BlockType.Normal, constant);
-				block.AddInstructions (extraInstructions);
+				RewriteConditional (ref block, evaluated);
 			}
 
 			DumpBlocks ();
+		}
+
+		void RewriteConditional (ref BasicBlock block, bool evaluated)
+		{
+			Context.LogMessage ($"  REWRITING CONDITIONAL");
+
+			var index = Body.Instructions.IndexOf (block.Instructions [0]);
+
+			var newInstructions = new List<Instruction> ();
+			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+			var pop = Instruction.Create (OpCodes.Pop);
+
+			switch (block.Type) {
+			case BlockType.SimpleWeakInstanceOf:
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.Insert (index, constant);
+				newInstructions.Add (constant);
+				newInstructions.AddRange (block.GetInstructions (2));
+				break;
+			case BlockType.WeakInstanceOf:
+				Body.Instructions.RemoveAt (index);
+				Body.Instructions.Insert (index, pop);
+				Body.Instructions.Insert (index + 1, constant);
+				newInstructions.Add (pop);
+				newInstructions.Add (constant);
+				newInstructions.AddRange (block.GetInstructions (1));
+				break;
+			default:
+				throw new NotSupportedException ();
+			}
+
+			ReplaceBlock (ref block, BlockType.Normal, newInstructions.ToArray ());
 		}
 
 		bool EliminateDeadBlocks ()
@@ -557,6 +610,7 @@ namespace Mono.Linker.Conditionals
 		{
 			Normal,
 			Branch,
+			SimpleWeakInstanceOf,
 			WeakInstanceOf
 		}
 

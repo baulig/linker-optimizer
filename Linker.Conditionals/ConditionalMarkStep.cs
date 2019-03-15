@@ -105,6 +105,7 @@ namespace Mono.Linker.Conditionals
 			foreach (var block in scanner.BasicBlocks) {
 				switch (block.Type) {
 				case BasicBlockScanner.BlockType.WeakInstanceOf:
+				case BasicBlockScanner.BlockType.SimpleWeakInstanceOf:
 					if (!parseConditionals)
 						continue;
 					break;

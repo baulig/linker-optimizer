@@ -16,6 +16,11 @@ namespace Martin.LinkerTest
 			Run6 (out var supported);
 			Run7 (ref supported);
 			Run8 ();
+			Run9 (null);
+			Run10 ();
+			Run11 ();
+			Run12 ();
+			Run13 ();
 		}
 
 		public static void Run ()
@@ -74,6 +79,42 @@ namespace Martin.LinkerTest
 			Console.WriteLine (instance.Supported);
 		}
 
+		public static bool Run9 (object instance)
+		{
+			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance);
+		}
+
+		public static bool Run10 ()
+		{
+			var instance = new InstanceTest ();
+			Console.WriteLine (instance);
+			if (UnsupportedTryCatch ())
+				return false;
+			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Field);
+		}
+
+		public static void Run11 ()
+		{
+			Console.WriteLine (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null));
+			Console.WriteLine ();
+		}
+
+		public static void Run12 ()
+		{
+			var instance = new InstanceTest ();
+			Console.WriteLine (MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Instance));
+			Console.WriteLine ();
+		}
+
+		public static void Run13 ()
+		{
+			var instance = new InstanceTest ();
+			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Instance))
+				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+
+			Console.Error.WriteLine ("DONE");
+		}
+
 		public static bool UnsupportedTryCatch ()
 		{
 			try
@@ -91,6 +132,10 @@ namespace Martin.LinkerTest
 			bool supported;
 
 			public bool Supported => supported;
+
+			public object Field;
+
+			public object Instance => this;
 
 			public void Run ()
 			{
