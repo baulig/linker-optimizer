@@ -262,6 +262,10 @@ namespace Mono.Linker.Conditionals
 			if (index + 1 >= Body.Instructions.Count)
 				throw new NotSupportedException ();
 
+			LookAheadAfterConditional (bb, index);
+			bb = null;
+			return;
+
 			var next = Body.Instructions [index + 1];
 			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
 				bb.AddInstruction (next);
@@ -300,7 +304,30 @@ namespace Mono.Linker.Conditionals
 			FoundConditionals = true;
 
 			bb.Type = BlockType.IsFeatureSupported;
+
+			LookAheadAfterConditional (bb, index);
 			bb = null;
+		}
+
+		void LookAheadAfterConditional (BasicBlock bb, int index)
+		{
+			if (index + 1 >= Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			var next = Body.Instructions [index + 1];
+			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
+				bb.AddInstruction (next);
+				index++;
+
+				var target = (Instruction)next.Operand;
+				if (!_bb_by_instruction.ContainsKey (target)) {
+					Context.LogMessage ($"    JUMP TARGET BB: {target}");
+					NewBlock (target);
+				}
+			} else if (CecilHelper.IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
+				bb.AddInstruction (next);
+				index++;
+			}
 		}
 
 		public void RewriteConditionals ()
@@ -324,6 +351,7 @@ namespace Mono.Linker.Conditionals
 				case BlockType.IsFeatureSupported:
 					RewriteIsFeatureSupported (block);
 					foundConditionals = true;
+					break;
 				default:
 					throw new NotSupportedException ();
 				}
@@ -402,7 +430,41 @@ namespace Mono.Linker.Conditionals
 
 		void RewriteIsFeatureSupported (BasicBlock block)
 		{
+			Context.LogMessage ($"REWRITE IS FEATURE SUPPORTED");
 
+			DumpBlocks ();
+
+			var feature = CecilHelper.GetFeatureArgument (block.Instructions [0]);
+			var evaluated = Context.IsFeatureEnabled (feature);
+
+			Context.LogMessage ($"REWRITE IS FEATURE SUPPORTED #1: {feature} {evaluated}");
+
+			if (block.Instructions.Count == 3) {
+				var next = block.Instructions [2];
+				switch (next.OpCode.Code) {
+				case Code.Br:
+				case Code.Br_S:
+					Context.LogMessage ($"  UNCONDITIONAL BRANCH");
+					break;
+				case Code.Brfalse:
+				case Code.Brfalse_S:
+					Context.LogMessage ($"  BR FALSE");
+					RewriteBranch (ref block, !evaluated);
+					return;
+				case Code.Brtrue:
+				case Code.Brtrue_S:
+					Context.LogMessage ($"  BR TRUE");
+					RewriteBranch (ref block, evaluated);
+					return;
+				default:
+					Context.LogMessage ($"  NO BRANCH");
+					break;
+				}
+			}
+
+			RewriteConditional (ref block, evaluated);
+
+			DumpBlocks ();
 		}
 
 		void RewriteBranch (ref BasicBlock block, bool evaluated)
@@ -421,6 +483,7 @@ namespace Mono.Linker.Conditionals
 
 			switch (block.Type) {
 			case BlockType.SimpleWeakInstanceOf:
+			case BlockType.IsFeatureSupported:
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
