@@ -245,13 +245,15 @@ namespace Mono.Linker.Conditionals
 			 * Look ahead at the instruction immediately following the call to the
 			 * conditional support method (`IsWeakInstanceOf<T>()` or `IsFeatureSupported()`).
 			 *
-			 * If it's a branch or return, then we add it to the current block.
+			 * If it's a branch, then we add it to the current block.  Since the conditional
+			 * method leaves a `bool` value on the stack, the following instruction can never
+			 * be an unconditional branch.
 			 *
 			 * At the end of this method, the current basic block will always look like this:
 			 *
 			 *   - (optional) simple load
 			 *   - conditional call
-			 *   - (optional) branch, return or store.
+			 *   - (optional) conditional branch.
 			 *
 			 * We will also close out the current block and start a new one after this.
 			 */
@@ -266,11 +268,9 @@ namespace Mono.Linker.Conditionals
 					Context.LogMessage ($"    JUMP TARGET BB: {target}");
 					BlockList.NewBlock (target);
 				}
-			} else if (CecilHelper.IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
-				bb.AddInstruction (next);
-				index++;
 			}
 
+			// Always start a new basic block after this.
 			bb = null;
 		}
 
@@ -333,7 +333,8 @@ namespace Mono.Linker.Conditionals
 			case BasicBlock.BlockType.WeakInstanceOf:
 				/*
 				 * The argument came from a complicated expression, so we started
-				 * a new basic block with the call instruction.
+				 * a new basic block with the call instruction; it's argument has
+				 * already been loaded onto the stack.
 				 */
 				evaluated = EvaluateWeakInstanceOf (block.Instructions [0]);
 				nextIndex = 1;
@@ -350,38 +351,9 @@ namespace Mono.Linker.Conditionals
 				throw new NotSupportedException ();
 			}
 
-			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {evaluated} {block}");
+			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {block} {evaluated}");
 
-			/*
-			 * If the instruction immediately following the call is either a branch
-			 * or return, then it will always be the last instruction in the block.
-			 *
-			 */
-
-			if (block.Instructions.Count == nextIndex + 1) {
-				var next = block.Instructions [nextIndex];
-				switch (next.OpCode.Code) {
-				case Code.Br:
-				case Code.Br_S:
-					Context.LogMessage ($"  UNCONDITIONAL BRANCH");
-					break;
-				case Code.Brfalse:
-				case Code.Brfalse_S:
-					Context.LogMessage ($"  BR FALSE");
-					RewriteBranch (ref block, !evaluated);
-					return;
-				case Code.Brtrue:
-				case Code.Brtrue_S:
-					Context.LogMessage ($"  BR TRUE");
-					RewriteBranch (ref block, evaluated);
-					return;
-				default:
-					Context.LogMessage ($"  NO BRANCH");
-					break;
-				}
-			}
-
-			RewriteConditional (ref block, evaluated);
+			RewriteConditional (block, nextIndex, evaluated);
 
 			BlockList.Dump ();
 		}
@@ -397,13 +369,22 @@ namespace Mono.Linker.Conditionals
 
 			Context.LogMessage ($"REWRITE IS FEATURE SUPPORTED #1: {feature} {evaluated}");
 
-			if (block.Instructions.Count == 3) {
-				var next = block.Instructions [2];
+			RewriteConditional (block, 2, evaluated);
+
+			BlockList.Dump ();
+		}
+
+		void RewriteConditional (BasicBlock block, int nextIndex, bool evaluated)
+		{
+			/*
+			 * The conditional call will either be the last instruction in the block
+			 * or it will be followed by a conditional branch (since the call returns a
+			 * boolean, it cannot be an unconditional branch).
+			 */
+
+			if (block.Instructions.Count == nextIndex + 1) {
+				var next = block.Instructions [nextIndex];
 				switch (next.OpCode.Code) {
-				case Code.Br:
-				case Code.Br_S:
-					Context.LogMessage ($"  UNCONDITIONAL BRANCH");
-					break;
 				case Code.Brfalse:
 				case Code.Brfalse_S:
 					Context.LogMessage ($"  BR FALSE");
@@ -415,14 +396,11 @@ namespace Mono.Linker.Conditionals
 					RewriteBranch (ref block, evaluated);
 					return;
 				default:
-					Context.LogMessage ($"  NO BRANCH");
-					break;
+					throw new NotSupportedException ($"Invalid instruction `{next}` after conditional call.");
 				}
 			}
 
-			RewriteConditional (ref block, evaluated);
-
-			BlockList.Dump ();
+			RewriteAsConstant (ref block, evaluated);
 		}
 
 		void RewriteBranch (ref BasicBlock block, bool evaluated)
@@ -498,9 +476,9 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void RewriteConditional (ref BasicBlock block, bool evaluated)
+		void RewriteAsConstant (ref BasicBlock block, bool evaluated)
 		{
-			Context.LogMessage ($"  REWRITING CONDITIONAL");
+			Context.LogMessage ($"  REWRITING AS CONSTANT");
 
 			/*
 			 * The instruction following the conditional call was not a branch.
@@ -521,11 +499,12 @@ namespace Mono.Linker.Conditionals
 				 * The block contains a simple load and the conditional call.
 				 * Replace both with the constant load.
 				 */
+				if (block.Instructions.Count != 2)
+					throw new NotSupportedException ();
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.Insert (index, constant);
 				newInstructions.Add (constant);
-				newInstructions.AddRange (block.GetInstructions (2));
 				break;
 			case BasicBlock.BlockType.WeakInstanceOf:
 				/*
@@ -533,12 +512,13 @@ namespace Mono.Linker.Conditionals
 				 * has already been pushed onto the stack, so we need to insert a
 				 * `pop` to discard it.
 				 */
+				if (block.Instructions.Count != 1)
+					throw new NotSupportedException ();
 				Body.Instructions.RemoveAt (index);
 				Body.Instructions.Insert (index, pop);
 				Body.Instructions.Insert (index + 1, constant);
 				newInstructions.Add (pop);
 				newInstructions.Add (constant);
-				newInstructions.AddRange (block.GetInstructions (1));
 				break;
 			default:
 				throw new NotSupportedException ();
