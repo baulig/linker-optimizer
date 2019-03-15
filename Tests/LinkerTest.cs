@@ -12,15 +12,34 @@ namespace Martin.LinkerTest
 			Run2 ();
 			Run3 ();
 			Run4 ();
-			Run5 ();
-			Run6 (out var supported);
+
+			var supported = Run5 ();
+			Assert (!supported);
+
+			Run6 (out supported);
+			Assert (!supported);
+
 			Run7 (ref supported);
+			Assert (!supported);
+
 			Run8 ();
-			Run9 (null);
+
+			supported = Run9 (null);
+			Assert (!supported);
+
 			Run10 ();
 			Run11 ();
 			Run12 ();
 			Run13 ();
+		}
+
+		static void Assert (bool condition, [CallerMemberName] string caller = null)
+		{
+			if (condition)
+				return;
+			if (!string.IsNullOrEmpty (caller))
+				throw new ApplicationException ($"Assertion failed: {caller}");
+			throw new ApplicationException ("Assertion failed");
 		}
 
 		public static void Run ()
@@ -29,6 +48,7 @@ namespace Martin.LinkerTest
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
 			{
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
+				Assert (false);
 			}
 
 			Console.Error.WriteLine ("DONE");
@@ -55,6 +75,7 @@ namespace Martin.LinkerTest
 		{
 			var supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
+			Assert (!supported);
 		}
 
 		public static bool Run5 ()
@@ -77,6 +98,7 @@ namespace Martin.LinkerTest
 			var instance = new InstanceTest ();
 			instance.Run ();
 			Console.WriteLine (instance.Supported);
+			Assert (!instance.Supported);
 		}
 
 		public static bool Run9 (object instance)
@@ -89,7 +111,7 @@ namespace Martin.LinkerTest
 			var instance = new InstanceTest ();
 			Console.WriteLine (instance);
 			if (UnsupportedTryCatch ())
-				return false;
+				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Field);
 		}
 
