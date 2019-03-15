@@ -68,7 +68,7 @@ namespace Mono.Linker.Conditionals
 
 			MartinContext.LogMessage ($"MARK BODY: {body.Method}");
 
-			var scanner = BasicBlockScanner.Scan (MartinContext, body);
+			var scanner = BasicBlockScanner.Scan (MartinContext, body.Method);
 			if (scanner == null) {
 				MartinContext.LogMessage (MessageImportance.High, $"BB SCAN FAILED: {body.Method}");
 				base.MarkMethodBody (body);

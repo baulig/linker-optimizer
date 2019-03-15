@@ -37,7 +37,7 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public MethodBody Body {
+		public MethodDefinition Method {
 			get;
 		}
 
@@ -49,19 +49,19 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		BasicBlockScanner (MartinContext context, MethodBody body)
+		BasicBlockScanner (MartinContext context, MethodDefinition method)
 		{
 			Context = context;
-			Body = body;
+			Method = method;
 
-			BlockList = new BasicBlockList (context, body);
+			BlockList = new BasicBlockList (context, method.Body);
 		}
 
 		public static bool ThrowOnError;
 
-		public static BasicBlockScanner Scan (MartinContext context, MethodBody body)
+		public static BasicBlockScanner Scan (MartinContext context, MethodDefinition method)
 		{
-			var scanner = new BasicBlockScanner (context, body);
+			var scanner = new BasicBlockScanner (context, method);
 			if (!scanner.Scan ())
 				return null;
 			return scanner;
@@ -71,18 +71,18 @@ namespace Mono.Linker.Conditionals
 
 		bool Scan ()
 		{
-			Context.LogMessage ($"SCAN: {Body.Method}");
+			Context.LogMessage ($"SCAN: {Method}");
 
-			if (Body.ExceptionHandlers.Count > 0) {
+			if (Method.Body.ExceptionHandlers.Count > 0) {
 				if (!ThrowOnError)
 					return false;
-				throw new NotSupportedException ($"We don't support exception handlers yet: {Body.Method.FullName}");
+				throw new NotSupportedException ($"We don't support exception handlers yet: {Method.FullName}");
 			}
 
 			BasicBlock bb = null;
 
-			for (int i = 0; i < Body.Instructions.Count; i++) {
-				var instruction = Body.Instructions [i];
+			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
+				var instruction = Method.Body.Instructions [i];
 
 				if (bb == null) {
 					if (BlockList.TryGetBlock (instruction, out bb)) {
@@ -113,7 +113,7 @@ namespace Mono.Linker.Conditionals
 				case OperandType.InlineSwitch:
 					if (!ThrowOnError)
 						return false;
-					throw new NotSupportedException ($"We don't support `switch` statements yet: {Body.Method.FullName}");
+					throw new NotSupportedException ($"We don't support `switch` statements yet: {Method.FullName}");
 				case OperandType.InlineMethod:
 					HandleCall (ref bb, ref i, instruction);
 					continue;
@@ -162,7 +162,7 @@ namespace Mono.Linker.Conditionals
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
-			if (index + 1 >= Body.Instructions.Count)
+			if (index + 1 >= Method.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			/*
@@ -176,7 +176,7 @@ namespace Mono.Linker.Conditionals
 			 * Its first instruction will either be the simple load or the call itself.
 			 */
 
-			var argument = Body.Instructions [index - 1];
+			var argument = Method.Body.Instructions [index - 1];
 
 			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
 
@@ -196,7 +196,7 @@ namespace Mono.Linker.Conditionals
 
 			FoundConditionals = true;
 
-			if (index + 1 >= Body.Instructions.Count)
+			if (index + 1 >= Method.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			LookAheadAfterConditional (ref bb, ref index);
@@ -206,7 +206,7 @@ namespace Mono.Linker.Conditionals
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
-			if (index + 1 >= Body.Instructions.Count)
+			if (index + 1 >= Method.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			/*
@@ -225,7 +225,7 @@ namespace Mono.Linker.Conditionals
 
 		void LookAheadAfterConditional (ref BasicBlock bb, ref int index)
 		{
-			if (index + 1 >= Body.Instructions.Count)
+			if (index + 1 >= Method.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			/*
@@ -245,7 +245,7 @@ namespace Mono.Linker.Conditionals
 			 * We will also close out the current block and start a new one after this.
 			 */
 
-			var next = Body.Instructions [index + 1];
+			var next = Method.Body.Instructions [index + 1];
 			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
 				bb.AddInstruction (next);
 				index++;
@@ -555,7 +555,7 @@ namespace Mono.Linker.Conditionals
 			 *
 			 */
 
-			Context.LogMessage ($"  REWRITING AS ISINST #1: {Body.Method.Name} {type} {index} {blockType}");
+			Context.LogMessage ($"  REWRITING AS ISINST #1: {Method.Name} {type} {index} {blockType}");
 
 			BlockList.ReplaceInstructionAt (ref block, index, Instruction.Create (OpCodes.Isinst, type));
 
