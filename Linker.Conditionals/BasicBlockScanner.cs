@@ -302,12 +302,6 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"DONE REWRITING CONDITIONALS");
 		}
 
-		bool EvaluateWeakInstanceOf (Instruction instruction)
-		{
-			var target = ((GenericInstanceMethod)instruction.Operand).GenericArguments [0].Resolve ();
-			return Context.Context.Annotations.IsMarked (target);
-		}
-
 		void RewriteWeakInstanceOf (BasicBlock block)
 		{
 			Context.LogMessage ($"REWRITE WEAK INSTANCE");
@@ -316,6 +310,7 @@ namespace Mono.Linker.Conditionals
 
 			bool evaluated;
 			int nextIndex;
+			TypeDefinition type;
 			switch (block.Type) {
 			case BasicBlock.BlockType.WeakInstanceOf:
 				/*
@@ -323,7 +318,8 @@ namespace Mono.Linker.Conditionals
 				 * a new basic block with the call instruction; it's argument has
 				 * already been loaded onto the stack.
 				 */
-				evaluated = EvaluateWeakInstanceOf (block.Instructions [0]);
+				type = CecilHelper.GetWeakInstanceArgument (block.Instructions [0]);
+				evaluated = Context.Annotations.IsMarked (type);
 				nextIndex = 1;
 				break;
 			case BasicBlock.BlockType.SimpleWeakInstanceOf:
@@ -331,16 +327,20 @@ namespace Mono.Linker.Conditionals
 				 * The argument came from a simple load, so the block starts with
 				 * the load instruction followed by the call.
 				 */
-				evaluated = EvaluateWeakInstanceOf (block.Instructions [1]);
+				type = CecilHelper.GetWeakInstanceArgument (block.Instructions [1]);
+				evaluated = Context.Annotations.IsMarked (type);
 				nextIndex = 2;
 				break;
 			default:
 				throw new NotSupportedException ();
 			}
 
-			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {block} {evaluated}");
+			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {block} {type} {evaluated}");
 
-			RewriteConditional (block, nextIndex, evaluated);
+			if (evaluated)
+				RewriteAsIsinst (ref block, nextIndex, type);
+			else
+				RewriteConditional (block, nextIndex, false);
 
 			BlockList.ComputeOffsets ();
 
@@ -516,6 +516,45 @@ namespace Mono.Linker.Conditionals
 			}
 
 			BlockList.ReplaceBlock (ref block, BasicBlock.BlockType.Normal, newInstructions.ToArray ());
+		}
+
+
+		void RewriteAsIsinst (ref BasicBlock block, int nextIndex, TypeDefinition type)
+		{
+			Context.LogMessage ($"  REWRITING AS ISINST: {type}");
+
+			/*
+			 * The feature is available, so we replace the conditional call with `isinst`.
+			 */
+
+			var index = Body.Instructions.IndexOf (block.Instructions [0]);
+
+			var isinst = Instruction.Create (OpCodes.Isinst, type);
+
+			switch (block.Type) {
+			case BasicBlock.BlockType.SimpleWeakInstanceOf:
+				/*
+				 * The block contains a simple load, the conditional call
+				 * and an optional branch.
+				 */
+				if (block.Count == 2)
+					block.Type = BasicBlock.BlockType.Normal;
+				else if (block.Count == 3) {
+					if (!CecilHelper.IsConditionalBranch (block.Instructions [2]))
+						throw new NotSupportedException ();
+					block.Type = BasicBlock.BlockType.Branch;
+				} else {
+					throw new NotSupportedException ();
+				}
+				Body.Instructions.RemoveAt (index + 1);
+				Body.Instructions.Insert (index + 1, isinst);
+				block.RemoveInstructionAt (1);
+				block.InsertAt (1, isinst);
+				break;
+			case BasicBlock.BlockType.WeakInstanceOf:
+			default:
+				throw new NotSupportedException ();
+			}
 		}
 
 		bool EliminateDeadBlocks ()

@@ -49,6 +49,8 @@ namespace Mono.Linker.Conditionals
 			private set;
 		}
 
+		public int Count => _instructions.Count;
+
 		public IReadOnlyList<Instruction> Instructions => _instructions;
 
 		public Instruction FirstInstruction => _instructions [0];
@@ -97,13 +99,32 @@ namespace Mono.Linker.Conditionals
 
 		public void RemoveInstruction (Instruction instruction)
 		{
+			var index = _instructions.IndexOf (instruction);
+			RemoveInstructionAt (index);
+		}
+
+		public void RemoveInstructionAt (int position)
+		{
 			if (_instructions.Count < 2)
 				throw new InvalidOperationException ();
-			var index = _instructions.IndexOf (instruction);
-			if (index == 0)
-				throw new InvalidOperationException ();
-			_instructions.Remove (instruction);
+			if (position == 0)
+				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
+			_instructions.RemoveAt (position);
 			ComputeOffsets ();
+		}
+
+		public void InsertAfter (Instruction position, Instruction instruction)
+		{
+			var index = _instructions.IndexOf (position);
+			_instructions.Insert (index, instruction);
+			ComputeOffsets ();
+		}
+
+		public void InsertAt (int position, Instruction instruction)
+		{
+			if (position == 0)
+				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
+			_instructions.Insert (position, instruction);
 		}
 
 		public Instruction [] GetInstructions (int offset, int count)

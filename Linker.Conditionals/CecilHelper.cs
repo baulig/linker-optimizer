@@ -122,5 +122,18 @@ namespace Mono.Linker.Conditionals
 				return false;
 			}
 		}
+
+		public static bool IsConditionalBranch (Instruction instruction)
+		{
+			switch (instruction.OpCode.Code) {
+			case Code.Brfalse:
+			case Code.Brfalse_S:
+			case Code.Brtrue:
+			case Code.Brtrue_S:
+				return true;
+			default:
+				return false;
+			}
+		}
 	}
 }

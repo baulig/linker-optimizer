@@ -36,6 +36,8 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		public AnnotationStore Annotations => Context.Annotations;
+
 		MartinContext (LinkContext context)
 		{
 			Context = context;
