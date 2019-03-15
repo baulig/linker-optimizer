@@ -119,26 +119,6 @@ namespace Mono.Linker.Conditionals
 			return true;
 		}
 
-		void CutBlockAt (ref BasicBlock block, int position)
-		{
-			if (block.Instructions.Count < position)
-				throw new ArgumentOutOfRangeException ();
-
-			if (block.Instructions.Count == position) {
-				_block_list.Remove (block);
-				block = null;
-				return;
-			}
-
-			var blockIndex = _block_list.IndexOf (block);
-
-			var previousInstructions = block.GetInstructions (0, position);
-
-			block = new BasicBlock (++_next_block_id, BlockType.Normal, previousInstructions);
-			_block_list [blockIndex] = block;
-			_bb_by_instruction [previousInstructions [0]] = block;
-		}
-
 		BasicBlock GetBlock (Instruction instruction)
 		{
 			return _bb_by_instruction [instruction];
@@ -247,6 +227,8 @@ namespace Mono.Linker.Conditionals
 						throw new ResolutionException (genericInstance.GenericArguments[0]);
 					HandleWeakInstanceOf (ref bb, ref index, conditionalType);
 				}
+			} else if (target == Context.IsFeatureSupported) {
+				HandleIsFeatureSupported (ref bb, ref index);
 			}
 		}
 
@@ -263,7 +245,7 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
-			if (IsSimpleLoad (argument)) {
+			if (CecilHelper.IsSimpleLoad (argument)) {
 				if (bb.Instructions.Count > 2)
 					SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 				bb.Type = BlockType.SimpleWeakInstanceOf;
@@ -290,7 +272,7 @@ namespace Mono.Linker.Conditionals
 					Context.LogMessage ($"    JUMP TARGET BB: {target}");
 					NewBlock (target);
 				}
-			} else if (IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
+			} else if (CecilHelper.IsStoreInstruction (next) || next.OpCode.Code == Code.Ret) {
 				bb.AddInstruction (next);
 				index++;
 			}
@@ -298,59 +280,27 @@ namespace Mono.Linker.Conditionals
 			bb = null;
 		}
 
-		bool IsStoreInstruction (Instruction instruction)
+		void HandleIsFeatureSupported (ref BasicBlock bb, ref int index)
 		{
-			switch (instruction.OpCode.Code) {
-			case Code.Starg:
-			case Code.Starg_S:
-			case Code.Stelem_Any:
-			case Code.Stelem_I:
-			case Code.Stelem_I2:
-			case Code.Stelem_I4:
-			case Code.Stelem_I8:
-			case Code.Stelem_R4:
-			case Code.Stelem_R8:
-			case Code.Stelem_Ref:
-			case Code.Stfld:
-			case Code.Stind_I:
-			case Code.Stind_I1:
-			case Code.Stind_I2:
-			case Code.Stind_I4:
-			case Code.Stind_I8:
-			case Code.Stind_R4:
-			case Code.Stind_R8:
-			case Code.Stind_Ref:
-			case Code.Stloc:
-			case Code.Stloc_0:
-			case Code.Stloc_1:
-			case Code.Stloc_2:
-			case Code.Stloc_3:
-			case Code.Stloc_S:
-			case Code.Stobj:
-			case Code.Stsfld:
-				return true;
-			default:
-				return false;
-			}
-		}
+			if (bb.Instructions.Count == 1)
+				throw new NotSupportedException ();
+			if (index + 1 >= Body.Instructions.Count)
+				throw new NotSupportedException ();
 
-		bool IsSimpleLoad (Instruction instruction)
-		{
-			switch (instruction.OpCode.Code) {
-			case Code.Ldnull:
-			case Code.Ldarg:
-			case Code.Ldarg_0:
-			case Code.Ldarg_1:
-			case Code.Ldarg_2:
-			case Code.Ldarg_3:
-			case Code.Ldloc_0:
-			case Code.Ldloc_1:
-			case Code.Ldloc_2:
-			case Code.Ldloc_3:
-				return true;
-			default:
-				return false;
-			}
+			var argument = Body.Instructions [index - 1];
+
+			Context.LogMessage ($"IS FEATURE SUPPORTED: {bb} {index} - {argument}");
+
+			DumpBlocks ();
+
+			var feature = CecilHelper.GetFeatureArgument (argument);
+			var evaluated = Context.IsFeatureEnabled (feature);
+			Context.LogMessage ($"IS FEATURE SUPPORTED #1: {bb} {index} - {feature} {evaluated}");
+
+			FoundConditionals = true;
+
+			bb.Type = BlockType.IsFeatureSupported;
+			bb = null;
 		}
 
 		public void RewriteConditionals ()
@@ -371,6 +321,9 @@ namespace Mono.Linker.Conditionals
 					RewriteWeakInstanceOf (block);
 					foundConditionals = true;
 					break;
+				case BlockType.IsFeatureSupported:
+					RewriteIsFeatureSupported (block);
+					foundConditionals = true;
 				default:
 					throw new NotSupportedException ();
 				}
@@ -445,6 +398,11 @@ namespace Mono.Linker.Conditionals
 			RewriteConditional (ref block, evaluated);
 
 			DumpBlocks ();
+		}
+
+		void RewriteIsFeatureSupported (BasicBlock block)
+		{
+
 		}
 
 		void RewriteBranch (ref BasicBlock block, bool evaluated)
@@ -617,7 +575,8 @@ namespace Mono.Linker.Conditionals
 			Normal,
 			Branch,
 			SimpleWeakInstanceOf,
-			WeakInstanceOf
+			WeakInstanceOf,
+			IsFeatureSupported
 		}
 
 		public class BasicBlock

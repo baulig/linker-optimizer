@@ -8,29 +8,39 @@ namespace Martin.LinkerTest
 	{
 		public static void RunAll ()
 		{
-			Run ();
-			Run2 ();
-			Run3 ();
-			Run4 ();
+			RunFeatures ();
+		}
 
-			var supported = Run5 ();
+		public static void RunWeakInstances ()
+		{
+			RunWeakInstance1 ();
+			RunWeakInstance2 ();
+			RunWeakInstance3 ();
+			RunWeakInstance4 ();
+
+			var supported = RunWeakInstance5 ();
 			Assert (!supported);
 
-			Run6 (out supported);
+			RunWeakInstance6 (out supported);
 			Assert (!supported);
 
-			Run7 (ref supported);
+			RunWeakInstance7 (ref supported);
 			Assert (!supported);
 
-			Run8 ();
+			RunWeakInstance8 ();
 
-			supported = Run9 (null);
+			supported = RunWeakInstance9 (null);
 			Assert (!supported);
 
-			Run10 ();
-			Run11 ();
-			Run12 ();
-			Run13 ();
+			RunWeakInstance10 ();
+			RunWeakInstance11 ();
+			RunWeakInstance12 ();
+			RunWeakInstance13 ();
+		}
+
+		public static void RunFeatures ()
+		{
+			RunFeature1 ();
 		}
 
 		static void Assert (bool condition, [CallerMemberName] string caller = null)
@@ -42,7 +52,7 @@ namespace Martin.LinkerTest
 			throw new ApplicationException ("Assertion failed");
 		}
 
-		public static void Run ()
+		public static void RunWeakInstance1 ()
 		{
 			UnsupportedTryCatch ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
@@ -54,7 +64,7 @@ namespace Martin.LinkerTest
 			Console.Error.WriteLine ("DONE");
 		}
 
-		public static void Run2 ()
+		public static void RunWeakInstance2 ()
 		{
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
 				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
@@ -62,7 +72,7 @@ namespace Martin.LinkerTest
 			Console.Error.WriteLine ("DONE");
 		}
 
-		public static void Run3 ()
+		public static void RunWeakInstance3 ()
 		{
 			Console.Error.WriteLine ("HELLO");
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
@@ -71,29 +81,29 @@ namespace Martin.LinkerTest
 			Console.Error.WriteLine ("DONE");
 		}
 
-		public static void Run4 ()
+		public static void RunWeakInstance4 ()
 		{
 			var supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
 			Assert (!supported);
 		}
 
-		public static bool Run5 ()
+		public static bool RunWeakInstance5 ()
 		{
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 		}
 
-		public static void Run6 (out bool supported)
+		public static void RunWeakInstance6 (out bool supported)
 		{
 			supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 		}
 
-		public static void Run7 (ref bool supported)
+		public static void RunWeakInstance7 (ref bool supported)
 		{
 			supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 		}
 
-		public static void Run8 ()
+		public static void RunWeakInstance8 ()
 		{
 			var instance = new InstanceTest ();
 			instance.Run ();
@@ -101,12 +111,12 @@ namespace Martin.LinkerTest
 			Assert (!instance.Supported);
 		}
 
-		public static bool Run9 (object instance)
+		public static bool RunWeakInstance9 (object instance)
 		{
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance);
 		}
 
-		public static bool Run10 ()
+		public static bool RunWeakInstance10 ()
 		{
 			var instance = new InstanceTest ();
 			Console.WriteLine (instance);
@@ -115,26 +125,32 @@ namespace Martin.LinkerTest
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Field);
 		}
 
-		public static void Run11 ()
+		public static void RunWeakInstance11 ()
 		{
 			Console.WriteLine (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null));
 			Console.WriteLine ();
 		}
 
-		public static void Run12 ()
+		public static void RunWeakInstance12 ()
 		{
 			var instance = new InstanceTest ();
 			Console.WriteLine (MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Instance));
 			Console.WriteLine ();
 		}
 
-		public static void Run13 ()
+		public static void RunWeakInstance13 ()
 		{
 			var instance = new InstanceTest ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Instance))
 				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
 
 			Console.Error.WriteLine ("DONE");
+		}
+
+		public static void RunFeature1 ()
+		{
+			if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Remoting))
+				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
 		}
 
 		public static bool UnsupportedTryCatch ()

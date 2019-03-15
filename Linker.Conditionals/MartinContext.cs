@@ -77,7 +77,11 @@ namespace Mono.Linker.Conditionals
 
 			IsWeakInstanceOf = MonoLinkerSupport.Methods.First (m => m.Name == "IsWeakInstanceOf");
 			if (IsWeakInstanceOf == null)
-				throw new NotSupportedException ("Cannot find `MonoLinkerSupport.IsWeakInstanceOf<T>`.");
+				throw new NotSupportedException ("Cannot find `MonoLinkerSupport.IsWeakInstanceOf<T>()`.");
+
+			IsFeatureSupported = MonoLinkerSupport.Methods.First (m => m.Name == "IsFeatureSupported");
+			if (IsFeatureSupported == null)
+				throw new NotSupportedException ("Cannot find `MonoLinkerSupport.IsFeatureSupported()`.");
 		}
 
 		public TypeDefinition MonoLinkerSupport {
@@ -86,6 +90,11 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public MethodDefinition IsWeakInstanceOf {
+			get;
+			private set;
+		}
+
+		public MethodDefinition IsFeatureSupported {
 			get;
 			private set;
 		}
@@ -105,6 +114,11 @@ namespace Mono.Linker.Conditionals
 		public bool IsEnabled (MethodDefinition method)
 		{
 			return IsEnabled (method.DeclaringType);
+		}
+
+		public bool IsFeatureEnabled (int feature)
+		{
+			return feature == 2;
 		}
 
 		class InitializeStep : BaseStep

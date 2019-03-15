@@ -102,6 +102,7 @@
     <Compile Include="Linker.Conditionals\MartinContext.cs" />
     <Compile Include="Linker.Conditionals\ConditionalMarkStep.cs" />
     <Compile Include="Linker.Conditionals\BasicBlockScanner.cs" />
+    <Compile Include="Linker.Conditionals\CecilHelper.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
