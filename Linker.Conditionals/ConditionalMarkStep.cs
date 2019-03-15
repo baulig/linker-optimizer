@@ -142,7 +142,7 @@ namespace Mono.Linker.Conditionals
 		protected override TypeDefinition MarkType (TypeReference reference)
 		{
 			var type = reference?.Resolve ();
-			if (type != null && type.FullName.Contains ("Foo"))
+			if (type != null && type.FullName.Contains ("Foo") && !CheckProcessed (type))
 				MartinContext.LogMessage ($"FOO MARKED!");
 			return base.MarkType (reference);
 		}

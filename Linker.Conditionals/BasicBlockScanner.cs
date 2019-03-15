@@ -527,14 +527,14 @@ namespace Mono.Linker.Conditionals
 			 * The feature is available, so we replace the conditional call with `isinst`.
 			 */
 
-			int startIndex;
+			int index;
 			switch (block.Type) {
 			case BasicBlock.BlockType.SimpleWeakInstanceOf:
 				/*
 				 * The block contains a simple load, the conditional call
 				 * and an optional branch.
 				 */
-				startIndex = 1;
+				index = 1;
 				break;
 			case BasicBlock.BlockType.WeakInstanceOf:
 				/*
@@ -544,7 +544,7 @@ namespace Mono.Linker.Conditionals
 				 * Since we cannot replace the a basic block's first instruction,
 				 * we need to replace the entire block.
 				 */
-				startIndex = 0;
+				index = 0;
 				break;
 			default:
 				throw new NotSupportedException ();
@@ -554,10 +554,10 @@ namespace Mono.Linker.Conditionals
 			/*
 			 * The call instruction is optionally followed by a branch.
 			 */
-			if (block.Count == startIndex + 1) {
+			if (block.Count == index + 1) {
 				blockType = BasicBlock.BlockType.Normal;
-			} else if (block.Count == startIndex + 2) {
-				if (!CecilHelper.IsConditionalBranch (block.Instructions [startIndex + 1]))
+			} else if (block.Count == index + 2) {
+				if (!CecilHelper.IsConditionalBranch (block.Instructions [index + 1]))
 					throw new NotSupportedException ();
 				blockType = BasicBlock.BlockType.Branch;
 			} else {
@@ -570,49 +570,17 @@ namespace Mono.Linker.Conditionals
 			 *
 			 */
 
-			Context.LogMessage ($"  REWRITING AS ISINST #1: {type} {startIndex} {blockType}");
+			Context.LogMessage ($"  REWRITING AS ISINST #1: {type} {index} {blockType}");
 
-			var isinst = Instruction.Create (OpCodes.Isinst, type);
-			BlockList.ReplaceInstructionAt (ref block, startIndex, isinst);
-
-			if (blockType == BasicBlock.BlockType.Normal) {
-				// Convert it into a bool.
-				BlockList.ReplaceInstructionAt (ref block, startIndex + 1, Instruction.Create (OpCodes.Ldnull));
-				BlockList.ReplaceInstructionAt (ref block, startIndex + 2, Instruction.Create (OpCodes.Cgt_Un));
-			}
-
-			return;
-
-
-			var instructions = new List<Instruction> {
-				Instruction.Create (OpCodes.Isinst, type)
-			};
+			BlockList.ReplaceInstructionAt (ref block, index, Instruction.Create (OpCodes.Isinst, type));
 
 			if (blockType == BasicBlock.BlockType.Normal) {
 				// Convert it into a bool.
-				instructions.Add (Instruction.Create (OpCodes.Ldnull));
-				instructions.Add (Instruction.Create (OpCodes.Cgt_Un));
+				BlockList.InsertInstructionAt (ref block, index + 1, Instruction.Create (OpCodes.Ldnull));
+				BlockList.InsertInstructionAt (ref block, index + 2, Instruction.Create (OpCodes.Cgt_Un));
 			}
 
-
-			var index = Body.Instructions.IndexOf (block.Instructions [startIndex]);
-			Body.Instructions.RemoveAt (index);
-			foreach (var instruction in instructions)
-				Body.Instructions.Insert (index++, instruction);
-
-			if (blockType == BasicBlock.BlockType.Branch)
-				instructions.Add (block.Instructions [startIndex + 1]);
-			if (startIndex == 1)
-				instructions.Insert (0, block.Instructions [0]);
-
-			if (false && startIndex == 0) {
-				/*
-				 * Since we cannot replace the first instruction of a basic block,
-				 * we need to replace the entire block.
-				 */
-			}
-
-			BlockList.ReplaceBlock (ref block, blockType, instructions);
+			block.Type = blockType;
 		}
 
 		bool EliminateDeadBlocks ()

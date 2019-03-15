@@ -169,7 +169,7 @@ namespace Mono.Linker.Conditionals
 			block.RemoveInstructionAt (position);
 		}
 
-		public void InsertInstructionAt (BasicBlock block, int position, Instruction instruction)
+		public void InsertInstructionAt (ref BasicBlock block, int position, Instruction instruction)
 		{
 			var index = Body.Instructions.IndexOf (block.Instructions [position]);
 			Body.Instructions.Insert (index, instruction);
