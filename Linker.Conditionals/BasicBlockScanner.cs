@@ -408,12 +408,8 @@ namespace Mono.Linker.Conditionals
 			 * need to load the boolean conditional value onto the stack.
 			 */
 
-			var index = Body.Instructions.IndexOf (block.Instructions [0]);
-
-			var newInstructions = new List<Instruction> ();
 			var pop = Instruction.Create (OpCodes.Pop);
 			var branch = Instruction.Create (OpCodes.Br, target);
-			var type = BasicBlock.BlockType.Normal;
 
 			switch (block.Type) {
 			case BasicBlock.BlockType.SimpleWeakInstanceOf:
@@ -428,14 +424,16 @@ namespace Mono.Linker.Conditionals
 				 * branch to the target.
 				 *
 				 */
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
 				if (evaluated) {
-					newInstructions.Add (branch);
-					type = BasicBlock.BlockType.Branch;
+					BlockList.ReplaceInstructionAt (ref block, 0, branch);
+					BlockList.RemoveInstructionAt (block, 1);
+					BlockList.RemoveInstructionAt (block, 1);
+					block.Type = BasicBlock.BlockType.Branch;
+				} else {
+					BlockList.DeleteBlock (block);
 				}
 				break;
+
 			case BasicBlock.BlockType.WeakInstanceOf:
 				/*
 				 * The block contains the conditional call and the branch.  Since the
@@ -446,24 +444,18 @@ namespace Mono.Linker.Conditionals
 				 * branch or no branch at all.
 				 *
 				 */
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-				newInstructions.Add (pop);
+				BlockList.ReplaceInstructionAt (ref block, 0, pop);
+				BlockList.RemoveInstructionAt (block, 1);
 				if (evaluated) {
-					newInstructions.Add (branch);
-					type = BasicBlock.BlockType.Branch;
+					BlockList.InsertInstructionAt (ref block, 1, branch);
+					block.Type = BasicBlock.BlockType.Branch;
+				} else {
+					block.Type = BasicBlock.BlockType.Normal;
 				}
 				break;
+
 			default:
 				throw new NotSupportedException ();
-			}
-
-			for (int i = 0; i < newInstructions.Count; i++)
-				Body.Instructions.Insert (index + i, newInstructions [i]);
-			if (newInstructions.Count == 0)
-				BlockList.RemoveBlock (block);
-			else {
-				BlockList.ReplaceBlock (ref block, type, newInstructions);
 			}
 		}
 
@@ -477,9 +469,6 @@ namespace Mono.Linker.Conditionals
 			 * in the block.
 			 */
 
-			var index = Body.Instructions.IndexOf (block.Instructions [0]);
-
-			var newInstructions = new List<Instruction> ();
 			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 			var pop = Instruction.Create (OpCodes.Pop);
 
@@ -492,11 +481,11 @@ namespace Mono.Linker.Conditionals
 				 */
 				if (block.Instructions.Count != 2)
 					throw new NotSupportedException ();
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.Insert (index, constant);
-				newInstructions.Add (constant);
+				BlockList.ReplaceInstructionAt (ref block, 0, constant);
+				BlockList.RemoveInstructionAt (block, 1);
+				block.Type = BasicBlock.BlockType.Normal;
 				break;
+
 			case BasicBlock.BlockType.WeakInstanceOf:
 				/*
 				 * The block only contains the conditional call, but it's argument
@@ -505,19 +494,15 @@ namespace Mono.Linker.Conditionals
 				 */
 				if (block.Instructions.Count != 1)
 					throw new NotSupportedException ();
-				Body.Instructions.RemoveAt (index);
-				Body.Instructions.Insert (index, pop);
-				Body.Instructions.Insert (index + 1, constant);
-				newInstructions.Add (pop);
-				newInstructions.Add (constant);
+				BlockList.ReplaceInstructionAt (ref block, 0, pop);
+				BlockList.InsertInstructionAt (ref block, 1, constant);
+				block.Type = BasicBlock.BlockType.Normal;
 				break;
+
 			default:
 				throw new NotSupportedException ();
 			}
-
-			BlockList.ReplaceBlock (ref block, BasicBlock.BlockType.Normal, newInstructions);
 		}
-
 
 		void RewriteAsIsinst (ref BasicBlock block, TypeDefinition type)
 		{
@@ -625,12 +610,10 @@ namespace Mono.Linker.Conditionals
 
 				Context.LogMessage ($"  DEAD BLOCK: {BlockList [i]}");
 
-				foreach (var instruction in BlockList [i].Instructions)
-					Body.Instructions.Remove (instruction);
-
-				BlockList.RemoveBlock (BlockList [i]);
+				BlockList.DeleteBlock (BlockList [i]);
 
 				removedDeadBlocks = true;
+				--i;
 			}
 
 			for (int i = 0; i < BlockList.Count - 1; i++) {
@@ -645,12 +628,10 @@ namespace Mono.Linker.Conditionals
 
 				Context.LogMessage ($"ELIMINATE DEAD JUMP: {lastInstruction}");
 
-				Body.Instructions.Remove (lastInstruction);
-
-				if (BlockList [i].Instructions.Count == 1)
-					BlockList.RemoveBlock (BlockList [i--]);
+				if (BlockList [i].Count == 1)
+					BlockList.DeleteBlock (BlockList [i--]);
 				else {
-					BlockList [i].RemoveInstruction (lastInstruction);
+					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
 					BlockList [i].Type = BasicBlock.BlockType.Normal;
 				}
 			}

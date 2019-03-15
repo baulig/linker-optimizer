@@ -215,5 +215,13 @@ namespace Mono.Linker.Conditionals
 
 			ReplaceBlock (ref block, block.Type, instructions);
 		}
+
+		public void DeleteBlock (BasicBlock block)
+		{
+			var startIndex = Body.Instructions.IndexOf (block.FirstInstruction);
+			for (int i = 0; i < block.Count; i++)
+				Body.Instructions.RemoveAt (startIndex);
+			RemoveBlock (block);
+		}
 	}
 }
