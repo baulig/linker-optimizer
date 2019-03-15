@@ -463,7 +463,7 @@ namespace Mono.Linker.Conditionals
 			if (newInstructions.Count == 0)
 				BlockList.RemoveBlock (block);
 			else {
-				BlockList.ReplaceBlock (ref block, type, newInstructions.ToArray ());
+				BlockList.ReplaceBlock (ref block, type, newInstructions);
 			}
 		}
 
@@ -515,7 +515,7 @@ namespace Mono.Linker.Conditionals
 				throw new NotSupportedException ();
 			}
 
-			BlockList.ReplaceBlock (ref block, BasicBlock.BlockType.Normal, newInstructions.ToArray ());
+			BlockList.ReplaceBlock (ref block, BasicBlock.BlockType.Normal, newInstructions);
 		}
 
 
@@ -572,6 +572,18 @@ namespace Mono.Linker.Conditionals
 
 			Context.LogMessage ($"  REWRITING AS ISINST #1: {type} {startIndex} {blockType}");
 
+			var isinst = Instruction.Create (OpCodes.Isinst, type);
+			BlockList.ReplaceInstructionAt (ref block, startIndex, isinst);
+
+			if (blockType == BasicBlock.BlockType.Normal) {
+				// Convert it into a bool.
+				BlockList.ReplaceInstructionAt (ref block, startIndex + 1, Instruction.Create (OpCodes.Ldnull));
+				BlockList.ReplaceInstructionAt (ref block, startIndex + 2, Instruction.Create (OpCodes.Cgt_Un));
+			}
+
+			return;
+
+
 			var instructions = new List<Instruction> {
 				Instruction.Create (OpCodes.Isinst, type)
 			};
@@ -600,7 +612,7 @@ namespace Mono.Linker.Conditionals
 				 */
 			}
 
-			BlockList.ReplaceBlock (ref block, blockType, instructions.ToArray ());
+			BlockList.ReplaceBlock (ref block, blockType, instructions);
 		}
 
 		bool EliminateDeadBlocks ()

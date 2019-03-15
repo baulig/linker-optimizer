@@ -70,12 +70,12 @@ namespace Mono.Linker.Conditionals
 
 		}
 
-		public BasicBlock (int index, BlockType type, params Instruction [] instructions)
+		public BasicBlock (int index, BlockType type, IList<Instruction> instructions)
 		{
 			Index = index;
 			Type = type;
 
-			if (instructions.Length < 1)
+			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
 
 			StartOffset = EndOffset = instructions [0].Offset;
@@ -91,7 +91,7 @@ namespace Mono.Linker.Conditionals
 			EndOffset = instruction.Offset;
 		}
 
-		public void AddInstructions (params Instruction [] instructions)
+		public void AddInstructions (IList<Instruction> instructions)
 		{
 			foreach (var instruction in instructions)
 				AddInstruction (instruction);
@@ -125,6 +125,11 @@ namespace Mono.Linker.Conditionals
 			if (position == 0)
 				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
 			_instructions.Insert (position, instruction);
+		}
+
+		public int IndexOf (Instruction instruction)
+		{
+			return _instructions.IndexOf (instruction);
 		}
 
 		public Instruction [] GetInstructions (int offset, int count)

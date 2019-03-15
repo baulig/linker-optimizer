@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Mono.Cecil.Cil;
 
@@ -68,9 +69,9 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Remove (block.Instructions [0]);
 		}
 
-		public void ReplaceBlock (ref BasicBlock block, BasicBlock.BlockType type, params Instruction [] instructions)
+		public void ReplaceBlock (ref BasicBlock block, BasicBlock.BlockType type, IList<Instruction> instructions)
 		{
-			if (instructions.Length < 1)
+			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
 
 			var blockIndex = _block_list.IndexOf (block);
@@ -148,6 +149,66 @@ namespace Mono.Linker.Conditionals
 				else
 					Context.LogMessage ($"  {instruction}");
 			}
+		}
+
+		public void RemoveInstruction (BasicBlock block, Instruction instruction)
+		{
+			var position = block.IndexOf (instruction);
+			RemoveInstructionAt (block, position);
+		}
+
+		public void RemoveInstructionAt (BasicBlock block, int position)
+		{
+			if (block.Count < 2)
+				throw new InvalidOperationException ("Basic block must have at least one instruction in it.");
+			if (position == 0)
+				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
+
+			var instruction = block.Instructions [position];
+			Body.Instructions.Remove (instruction);
+			block.RemoveInstructionAt (position);
+		}
+
+		public void InsertInstructionAt (BasicBlock block, int position, Instruction instruction)
+		{
+			var index = Body.Instructions.IndexOf (block.Instructions [position]);
+			Body.Instructions.Insert (index, instruction);
+
+			if (position > 0) {
+				block.InsertAt (position, instruction);
+				return;
+			}
+
+			/*
+			 * Our logic assumes that the first instruction in a basic block will never change
+			 * (because basic blocks are referenced by their first instruction).
+			 */
+
+			var instructions = block.Instructions.ToList ();
+			instructions.Insert (0, instruction);
+			ReplaceBlock (ref block, block.Type, instructions);
+		}
+
+		public void ReplaceInstructionAt (ref BasicBlock block, int position, Instruction instruction)
+		{
+			var index = Body.Instructions.IndexOf (block.Instructions [position]);
+			Body.Instructions [index] = instruction;
+
+			if (position > 0) {
+				block.RemoveInstructionAt (position);
+				block.InsertAt (position, instruction);
+				return;
+			}
+
+			/*
+			 * Our logic assumes that the first instruction in a basic block will never change
+			 * (because basic blocks are referenced by their first instruction).
+			 */
+
+			var instructions = block.Instructions.ToArray ();
+			instructions [position] = instruction;
+
+			ReplaceBlock (ref block, block.Type, instructions);
 		}
 	}
 }
