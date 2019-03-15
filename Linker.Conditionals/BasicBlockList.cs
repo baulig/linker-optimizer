@@ -125,10 +125,7 @@ namespace Mono.Linker.Conditionals
 				offset += instruction.GetSize ();
 			}
 
-			foreach (var block in _block_list)
-				block.ComputeOffsets ();
-
-			_block_list.Sort ((first, second) => first.StartOffset.CompareTo (second.StartOffset));
+			_block_list.Sort ((first, second) => first.FirstInstruction.Offset.CompareTo (second.FirstInstruction.Offset));
 		}
 
 
@@ -178,7 +175,7 @@ namespace Mono.Linker.Conditionals
 				// Appending to the end.
 				var index = Body.Instructions.IndexOf (block.LastInstruction);
 				Body.Instructions.Insert (index + 1, instruction);
-				block.InsertAt (position, instruction);
+				block.AddInstruction (instruction);
 				return;
 			} else if (position > 0) {
 				var index = Body.Instructions.IndexOf (block.Instructions [position]);

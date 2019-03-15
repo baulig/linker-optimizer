@@ -39,16 +39,6 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
-		public int StartOffset {
-			get;
-			private set;
-		}
-
-		public int EndOffset {
-			get;
-			private set;
-		}
-
 		public int Count => _instructions.Count;
 
 		public IReadOnlyList<Instruction> Instructions => _instructions;
@@ -63,8 +53,6 @@ namespace Mono.Linker.Conditionals
 		{
 			Index = index;
 			Type = type;
-			StartOffset = instruction.Offset;
-			EndOffset = instruction.Offset;
 
 			AddInstruction (instruction);
 
@@ -78,17 +66,12 @@ namespace Mono.Linker.Conditionals
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
 
-			StartOffset = EndOffset = instructions [0].Offset;
 			AddInstructions (instructions);
 		}
 
 		public void AddInstruction (Instruction instruction)
 		{
-			if (instruction.Offset < EndOffset)
-				throw new ArgumentException ();
-
 			_instructions.Add (instruction);
-			EndOffset = instruction.Offset;
 		}
 
 		public void AddInstructions (IList<Instruction> instructions)
@@ -110,14 +93,12 @@ namespace Mono.Linker.Conditionals
 			if (position == 0)
 				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
 			_instructions.RemoveAt (position);
-			ComputeOffsets ();
 		}
 
 		public void InsertAfter (Instruction position, Instruction instruction)
 		{
 			var index = _instructions.IndexOf (position);
 			_instructions.Insert (index, instruction);
-			ComputeOffsets ();
 		}
 
 		public void InsertAt (int position, Instruction instruction)
@@ -150,15 +131,9 @@ namespace Mono.Linker.Conditionals
 			return GetInstructions (offset, Instructions.Count - offset);
 		}
 
-		public void ComputeOffsets ()
-		{
-			StartOffset = _instructions [0].Offset;
-			EndOffset = _instructions [_instructions.Count - 1].Offset;
-		}
-
 		public override string ToString ()
 		{
-			return $"[BB {Index}{((Type != BlockType.Normal ? $" ({Type})" : ""))}: 0x{StartOffset:x2} - 0x{EndOffset:x2}]";
+			return $"[BB {Index}{((Type != BlockType.Normal ? $" ({Type})" : ""))}: {FirstInstruction.OpCode.Code}]";
 		}
 
 		public enum BlockType
