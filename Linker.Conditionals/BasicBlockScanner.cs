@@ -147,14 +147,16 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"    CALL: {target}");
 
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {
-				if (genericInstance.ElementMethod == Context.IsWeakInstanceOf) {
+				if (genericInstance.ElementMethod == Context.IsWeakInstanceOfMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
 					HandleWeakInstanceOf (ref bb, ref index, conditionalType);
 				}
-			} else if (target == Context.IsFeatureSupported) {
+			} else if (target == Context.IsFeatureSupportedMethod) {
 				HandleIsFeatureSupported (ref bb, ref index);
+			} else if (target == Context.MarkFeatureMethod) {
+				HandleMarkFeature (ref bb, ref index);
 			}
 		}
 
@@ -221,6 +223,44 @@ namespace Mono.Linker.Conditionals
 			FoundConditionals = true;
 
 			LookAheadAfterConditional (ref bb, ref index);
+		}
+
+		void HandleMarkFeature (ref BasicBlock bb, ref int index)
+		{
+			if (bb.Instructions.Count == 1)
+				throw new NotSupportedException ();
+			if (index + 1 >= Method.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			var feature = CecilHelper.GetFeatureArgument (bb.Instructions [bb.Count - 2]);
+			Context.SetFeatureEnabled (feature, true);
+
+			Context.LogMessage ($"MARK FEATURE: {feature}");
+
+			/*
+			 * `void MonoLinkerSupport.MarkFeature (MonoLinkerFeature feature)`
+			 *
+			 */
+
+			if (bb.Instructions.Count > 2) {
+				/*
+				 * If we are in the middle of a basic block, then we can simply remove
+				 * the two instructions.
+				 */
+				BlockList.RemoveInstructionAt (bb, bb.Count - 1);
+				BlockList.RemoveInstructionAt (bb, bb.Count - 1);
+				index -= 2;
+				return;
+			} else {
+				/*
+				 * We are at the beginning of a basic block.  Since somebody might jump
+				 * to us, we replace the call with a `nop`.
+				 */
+				BlockList.RemoveInstructionAt (bb, bb.Count - 1);
+				BlockList.ReplaceInstructionAt (ref bb, bb.Count - 1, Instruction.Create (OpCodes.Nop));
+				index--;
+				return;
+			}
 		}
 
 		void LookAheadAfterConditional (ref BasicBlock bb, ref int index)

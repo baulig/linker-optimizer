@@ -14,5 +14,9 @@ namespace System.Runtime.CompilerServices
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static bool IsFeatureSupported (MonoLinkerFeature feature) => true;
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		public static void MarkFeature (MonoLinkerFeature feature)
+		{ }	
 	}
 }

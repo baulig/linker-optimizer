@@ -19,7 +19,8 @@ CLEAN_FILES += *.exe *.dll *.pdb
 TEST_CASES := \
 	test-weak-instances-1.cs \
 	test-weak-instances-2.cs \
-	test-features-1.cs
+	test-features-1.cs \
+	test-features-2.cs
 
 compile-tests: $(TEST_CASES:.cs=.exe)
 

@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Linker.Steps;
 
@@ -75,30 +76,39 @@ namespace Mono.Linker.Conditionals
 		{
 			LogMessage ("Initializing Martin's Playground");
 
-			MonoLinkerSupport = Context.GetType (LinkerSupportType);
-			if (MonoLinkerSupport == null)
+			MonoLinkerSupportType = Context.GetType (LinkerSupportType);
+			if (MonoLinkerSupportType == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}`.");
 
-			IsWeakInstanceOf = MonoLinkerSupport.Methods.First (m => m.Name == "IsWeakInstanceOf");
-			if (IsWeakInstanceOf == null)
+			IsWeakInstanceOfMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsWeakInstanceOf");
+			if (IsWeakInstanceOfMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsWeakInstanceOf<T>()`.");
 
-			IsFeatureSupported = MonoLinkerSupport.Methods.First (m => m.Name == "IsFeatureSupported");
-			if (IsFeatureSupported == null)
+			IsFeatureSupportedMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsFeatureSupported");
+			if (IsFeatureSupportedMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsFeatureSupported()`.");
+
+			MarkFeatureMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "MarkFeature");
+			if (MarkFeatureMethod == null)
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.MarkFeature()`.");
 		}
 
-		public TypeDefinition MonoLinkerSupport {
+		public TypeDefinition MonoLinkerSupportType {
 			get;
 			private set;
 		}
 
-		public MethodDefinition IsWeakInstanceOf {
+		public MethodDefinition IsWeakInstanceOfMethod {
 			get;
 			private set;
 		}
 
-		public MethodDefinition IsFeatureSupported {
+		public MethodDefinition IsFeatureSupportedMethod {
+			get;
+			private set;
+		}
+
+		public MethodDefinition MarkFeatureMethod {
 			get;
 			private set;
 		}
@@ -119,14 +129,21 @@ namespace Mono.Linker.Conditionals
 
 		public bool IsEnabled (MethodDefinition method)
 		{
-			if (method.Name.Equals ("Main"))
-				return false;
 			return IsEnabled (method.DeclaringType);
 		}
 
+		readonly Dictionary<int, bool> enabledFeatures = new Dictionary<int, bool> ();
+
 		public bool IsFeatureEnabled (int feature)
 		{
-			return feature == 2;
+			if (enabledFeatures.TryGetValue (feature, out var value))
+				return value;
+			return false;
+		}
+
+		public void SetFeatureEnabled (int feature, bool enabled)
+		{
+			enabledFeatures [feature] = enabled;
 		}
 
 		class InitializeStep : BaseStep
