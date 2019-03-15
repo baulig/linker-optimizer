@@ -138,5 +138,13 @@ namespace Mono.Linker.Conditionals
 			foreach (var implementation in implementations)
 				MarkInterfaceImplementation (implementation);
 		}
+
+		protected override TypeDefinition MarkType (TypeReference reference)
+		{
+			var type = reference?.Resolve ();
+			if (type != null && type.FullName.Contains ("Foo"))
+				MartinContext.LogMessage ($"FOO MARKED!");
+			return base.MarkType (reference);
+		}
 	}
 }

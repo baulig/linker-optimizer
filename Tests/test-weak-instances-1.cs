@@ -136,22 +136,6 @@ namespace Martin.LinkerTest
 			Console.Error.WriteLine ("DONE");
 		}
 
-		public static void RunFeature1 ()
-		{
-			if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Remoting))
-				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
-		}
-
-		public static bool RunFeature2 ()
-		{
-			return MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Remoting);
-		}
-
-		public static bool RunFeature3 ()
-		{
-			return MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Martin);
-		}
-
 		public static bool UnsupportedTryCatch ()
 		{
 			try

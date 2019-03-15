@@ -18,15 +18,15 @@ CORLIB_SOURCES = $(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLink
 
 CLEAN_FILES += *.exe *.dll *.pdb
 
-TEST_CASES := \
-	LinkerTest.cs
+ALL_TEST_EXES := \
+	test-weak-instances-1.exe
 
-compile-tests: $(TEST_CASES)
+compile-tests: $(ALL_TEST_EXES)
 
 test-%.exe: test-%.cs $(CORLIB_SOURCES)
 	$(TESTS_COMPILER) /optimize /out:$@ $^
 
-test-%: test-%.exe
+test-%: test-%.exe build
 	@echo RUN TEST $@
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
