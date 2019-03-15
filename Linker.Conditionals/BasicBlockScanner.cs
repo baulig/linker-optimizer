@@ -338,7 +338,7 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {block} {type} {evaluated}");
 
 			if (evaluated)
-				RewriteAsIsinst (ref block, nextIndex, type);
+				RewriteAsIsinst (ref block, type);
 			else
 				RewriteConditional (block, nextIndex, false);
 
@@ -519,7 +519,7 @@ namespace Mono.Linker.Conditionals
 		}
 
 
-		void RewriteAsIsinst (ref BasicBlock block, int nextIndex, TypeDefinition type)
+		void RewriteAsIsinst (ref BasicBlock block, TypeDefinition type)
 		{
 			Context.LogMessage ($"  REWRITING AS ISINST: {type}");
 
@@ -527,34 +527,80 @@ namespace Mono.Linker.Conditionals
 			 * The feature is available, so we replace the conditional call with `isinst`.
 			 */
 
-			var index = Body.Instructions.IndexOf (block.Instructions [0]);
-
-			var isinst = Instruction.Create (OpCodes.Isinst, type);
-
+			int startIndex;
 			switch (block.Type) {
 			case BasicBlock.BlockType.SimpleWeakInstanceOf:
 				/*
 				 * The block contains a simple load, the conditional call
 				 * and an optional branch.
 				 */
-				if (block.Count == 2)
-					block.Type = BasicBlock.BlockType.Normal;
-				else if (block.Count == 3) {
-					if (!CecilHelper.IsConditionalBranch (block.Instructions [2]))
-						throw new NotSupportedException ();
-					block.Type = BasicBlock.BlockType.Branch;
-				} else {
-					throw new NotSupportedException ();
-				}
-				Body.Instructions.RemoveAt (index + 1);
-				Body.Instructions.Insert (index + 1, isinst);
-				block.RemoveInstructionAt (1);
-				block.InsertAt (1, isinst);
+				startIndex = 1;
 				break;
 			case BasicBlock.BlockType.WeakInstanceOf:
+				/*
+				 * The block contains the conditional call (with the argument already
+				 * on the stack) and an optional branch.
+				 *
+				 * Since we cannot replace the a basic block's first instruction,
+				 * we need to replace the entire block.
+				 */
+				startIndex = 0;
+				break;
 			default:
 				throw new NotSupportedException ();
 			}
+
+			BasicBlock.BlockType blockType;
+			/*
+			 * The call instruction is optionally followed by a branch.
+			 */
+			if (block.Count == startIndex + 1) {
+				blockType = BasicBlock.BlockType.Normal;
+			} else if (block.Count == startIndex + 2) {
+				if (!CecilHelper.IsConditionalBranch (block.Instructions [startIndex + 1]))
+					throw new NotSupportedException ();
+				blockType = BasicBlock.BlockType.Branch;
+			} else {
+				throw new NotSupportedException ();
+			}
+
+			/*
+			 * If we're followed by a branch (which will always be a conditional
+			 * branch due to the value on the stack), then we can simply use `isinst`.
+			 *
+			 */
+
+			Context.LogMessage ($"  REWRITING AS ISINST #1: {type} {startIndex} {blockType}");
+
+			var instructions = new List<Instruction> {
+				Instruction.Create (OpCodes.Isinst, type)
+			};
+
+			if (blockType == BasicBlock.BlockType.Normal) {
+				// Convert it into a bool.
+				instructions.Add (Instruction.Create (OpCodes.Ldnull));
+				instructions.Add (Instruction.Create (OpCodes.Cgt_Un));
+			}
+
+
+			var index = Body.Instructions.IndexOf (block.Instructions [startIndex]);
+			Body.Instructions.RemoveAt (index);
+			foreach (var instruction in instructions)
+				Body.Instructions.Insert (index++, instruction);
+
+			if (blockType == BasicBlock.BlockType.Branch)
+				instructions.Add (block.Instructions [startIndex + 1]);
+			if (startIndex == 1)
+				instructions.Insert (0, block.Instructions [0]);
+
+			if (false && startIndex == 0) {
+				/*
+				 * Since we cannot replace the first instruction of a basic block,
+				 * we need to replace the entire block.
+				 */
+			}
+
+			BlockList.ReplaceBlock (ref block, blockType, instructions.ToArray ());
 		}
 
 		bool EliminateDeadBlocks ()
