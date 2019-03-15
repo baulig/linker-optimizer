@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using Martin.LinkerSupport;
 
 namespace Martin.LinkerTest
 {

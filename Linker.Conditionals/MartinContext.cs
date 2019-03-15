@@ -67,21 +67,23 @@ namespace Mono.Linker.Conditionals
 			context.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep ());
 		}
 
+		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";
+
 		void Initialize ()
 		{
 			LogMessage ("Initializing Martin's Playground");
 
-			MonoLinkerSupport = Context.GetType ("Martin.LinkerSupport.MonoLinkerSupport");
+			MonoLinkerSupport = Context.GetType (LinkerSupportType);
 			if (MonoLinkerSupport == null)
-				throw new NotSupportedException ("Cannot find `Martin.LinkerSupport.MonoLinkerSupport`.");
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}`.");
 
 			IsWeakInstanceOf = MonoLinkerSupport.Methods.First (m => m.Name == "IsWeakInstanceOf");
 			if (IsWeakInstanceOf == null)
-				throw new NotSupportedException ("Cannot find `MonoLinkerSupport.IsWeakInstanceOf<T>()`.");
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsWeakInstanceOf<T>()`.");
 
 			IsFeatureSupported = MonoLinkerSupport.Methods.First (m => m.Name == "IsFeatureSupported");
 			if (IsFeatureSupported == null)
-				throw new NotSupportedException ("Cannot find `MonoLinkerSupport.IsFeatureSupported()`.");
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsFeatureSupported()`.");
 		}
 
 		public TypeDefinition MonoLinkerSupport {

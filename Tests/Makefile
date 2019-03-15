@@ -11,7 +11,9 @@ PROFILE_PATH = $(topdir)/class/lib/$(PROFILE_DIRECTORY)
 LINKER = MONO_PATH=$(topdir)/class/lib/$(BUILD_TOOLS_PROFILE) $(RUNTIME) $(RUNTIME_FLAGS) $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/monolinker.exe -c link -out $(LINKER_OUTPUT) -b true -d $(PROFILE_PATH)
 LINKER_DEFAULT = $(LINKER) -l none $(LINKER_PROFILE_OPTIONS)
 
-martin-test: martin-test.cs MonoLinkerSupport.cs LinkerTest.cs $(PROFILE_PATH)/martin-test.exe
+CORLIB_SOURCES = $(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs
+
+martin-test: martin-test.cs $(CORLIB_SOURCES) LinkerTest.cs $(PROFILE_PATH)/martin-test.exe
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
 	@echo MARTIN TEST
