@@ -7,8 +7,7 @@ namespace Martin.LinkerTest
 	{
 		public static void Main ()
 		{
-			var foo = new Foo ();
-			var bar = new Bar ();
+			Foo.Hello ();
 
 			RunWeakInstance1 ();
 			RunWeakInstance2 ();

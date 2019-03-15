@@ -119,6 +119,8 @@ namespace Mono.Linker.Conditionals
 
 		public bool IsEnabled (MethodDefinition method)
 		{
+			if (method.Name.Equals ("Main"))
+				return false;
 			return IsEnabled (method.DeclaringType);
 		}
 

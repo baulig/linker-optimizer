@@ -570,7 +570,7 @@ namespace Mono.Linker.Conditionals
 			 *
 			 */
 
-			Context.LogMessage ($"  REWRITING AS ISINST #1: {type} {index} {blockType}");
+			Context.LogMessage ($"  REWRITING AS ISINST #1: {Body.Method.Name} {type} {index} {blockType}");
 
 			BlockList.ReplaceInstructionAt (ref block, index, Instruction.Create (OpCodes.Isinst, type));
 

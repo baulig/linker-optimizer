@@ -59,11 +59,6 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		protected override void ProcessMethod (MethodDefinition method)
-		{
-			base.ProcessMethod (method);
-		}
-
 		protected override void MarkMethodBody (MethodBody body)
 		{
 			if (!MartinContext.IsEnabled (body.Method)) {
@@ -142,7 +137,7 @@ namespace Mono.Linker.Conditionals
 		protected override TypeDefinition MarkType (TypeReference reference)
 		{
 			var type = reference?.Resolve ();
-			if (type != null && type.FullName.Contains ("Foo") && !CheckProcessed (type))
+			if (type != null && type.FullName.Contains ("Foo") && !Annotations.IsProcessed (type))
 				MartinContext.LogMessage ($"FOO MARKED!");
 			return base.MarkType (reference);
 		}

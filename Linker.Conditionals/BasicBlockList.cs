@@ -171,10 +171,18 @@ namespace Mono.Linker.Conditionals
 
 		public void InsertInstructionAt (ref BasicBlock block, int position, Instruction instruction)
 		{
-			var index = Body.Instructions.IndexOf (block.Instructions [position]);
-			Body.Instructions.Insert (index, instruction);
+			if (position < 0 || position > block.Count)
+				throw new ArgumentOutOfRangeException (nameof (position));
 
-			if (position > 0) {
+			if (position == block.Count) {
+				// Appending to the end.
+				var index = Body.Instructions.IndexOf (block.LastInstruction);
+				Body.Instructions.Insert (index + 1, instruction);
+				block.InsertAt (position, instruction);
+				return;
+			} else if (position > 0) {
+				var index = Body.Instructions.IndexOf (block.Instructions [position]);
+				Body.Instructions.Insert (index, instruction);
 				block.InsertAt (position, instruction);
 				return;
 			}
