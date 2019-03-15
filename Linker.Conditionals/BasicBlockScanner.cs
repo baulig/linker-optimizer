@@ -180,14 +180,11 @@ namespace Mono.Linker.Conditionals
 
 			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
 
-			BlockList.Dump ();
-
 			if (CecilHelper.IsSimpleLoad (argument)) {
 				if (bb.Instructions.Count > 2)
 					BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 				bb.Type = BasicBlock.BlockType.SimpleWeakInstanceOf;
 			} else {
-				Context.LogMessage ($"    COMPLICATED LOAD: {argument}");
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
 				bb.Type = BasicBlock.BlockType.WeakInstanceOf;
 			}
@@ -196,8 +193,6 @@ namespace Mono.Linker.Conditionals
 			 * Once we get here, the current block only contains the (optional) simple load
 			 * and the conditional call itself.
 			 */
-
-			BlockList.Dump ();
 
 			FoundConditionals = true;
 
@@ -219,19 +214,11 @@ namespace Mono.Linker.Conditionals
 			 *
 			 */
 
-			var argument = Body.Instructions [index - 1];
-
-			Context.LogMessage ($"IS FEATURE SUPPORTED: {bb} {index} - {argument}");
-
-			BlockList.Dump ();
-
-			var feature = CecilHelper.GetFeatureArgument (argument);
-			var evaluated = Context.IsFeatureEnabled (feature);
-			Context.LogMessage ($"IS FEATURE SUPPORTED #1: {bb} {index} - {feature} {evaluated}");
+			if (bb.Instructions.Count > 2)
+				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+			bb.Type = BasicBlock.BlockType.IsFeatureSupported;
 
 			FoundConditionals = true;
-
-			bb.Type = BasicBlock.BlockType.IsFeatureSupported;
 
 			LookAheadAfterConditional (ref bb, ref index);
 		}
