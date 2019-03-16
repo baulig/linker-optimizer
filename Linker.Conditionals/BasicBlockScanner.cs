@@ -225,6 +225,10 @@ namespace Mono.Linker.Conditionals
 
 			if (bb.Instructions.Count > 2)
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+
+			var feature = CecilHelper.GetFeatureArgument (bb.FirstInstruction);
+			bb.LinkerConditional = new IsFeatureSupportedConditional (BlockList, bb, feature);
+
 			bb.Type = BasicBlockType.IsFeatureSupported;
 
 			FoundConditionals = true;
@@ -297,11 +301,7 @@ namespace Mono.Linker.Conditionals
 				bb.AddInstruction (next);
 				index++;
 
-				var target = (Instruction)next.Operand;
-				if (!BlockList.HasBlock (target)) {
-					Context.LogMessage ($"    JUMP TARGET BB: {target}");
-					BlockList.NewBlock (target);
-				}
+				CloseBlock (ref bb, CecilHelper.GetBranchType (next), (Instruction)next.Operand);
 			}
 
 			// Always start a new basic block after this.

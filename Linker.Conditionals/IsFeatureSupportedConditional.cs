@@ -28,7 +28,15 @@ namespace Mono.Linker.Conditionals
 {
 	public class IsFeatureSupportedConditional : LinkerConditional
 	{
-		public IsFeatureSupportedConditional (BasicBlockList blocks)
+		public BasicBlock Block {
+			get;
+		}
+
+		public int Feature {
+			get;
+		}
+
+		public IsFeatureSupportedConditional (BasicBlockList blocks, BasicBlock block, int feature)
 			: base (blocks)
 		{
 		}

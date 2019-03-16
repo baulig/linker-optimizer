@@ -135,7 +135,7 @@ namespace Mono.Linker.Conditionals
 			var previousInstructions = block.GetInstructions (0, position);
 			var nextInstructions = block.GetInstructions (position);
 
-			var previousBlock = new BasicBlock (++_next_block_id, BasicBlockType.Normal, previousInstructions);
+			var previousBlock = new BasicBlock (++_next_block_id, BasicBlockType.Normal, BranchType.None, previousInstructions);
 			_block_list [blockIndex] = previousBlock;
 			_bb_by_instruction [previousInstructions [0]] = previousBlock;
 

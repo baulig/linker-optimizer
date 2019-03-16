@@ -68,10 +68,14 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public BasicBlock (int index, BasicBlockType type, IList<Instruction> instructions)
+			: this (index, type, BranchType.Unassigned, instructions)
+		{ }
+
+		public BasicBlock (int index, BasicBlockType type, BranchType branch, IList<Instruction> instructions)
 		{
 			Index = index;
 			Type = type;
-			BranchType = BranchType.Unassigned;
+			BranchType = branch;
 
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
