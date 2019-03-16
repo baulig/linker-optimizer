@@ -60,11 +60,31 @@ namespace Mono.Linker.Conditionals
 				RewriteBranch (ref block, stackDepth, evaluated);
 				return true;
 			case BranchType.Feature:
+				RewriteAsConstant (ref block, stackDepth, evaluated);
+				return true;
 			case BranchType.FeatureReturn:
-				return false;
+				RewriteReturn (ref block, stackDepth, evaluated);
+				return true;
 			default:
 				throw new MartinTestException ();
 			}
+		}
+
+		void RewriteReturn (ref BasicBlock block, int stackDepth, bool evaluated)
+		{
+			if (block.Count != stackDepth + 3)
+				throw new MartinTestException ();
+			if (block.LastInstruction.OpCode.Code != Code.Ret)
+				throw new MartinTestException ();
+
+			if (stackDepth > 0)
+				throw new MartinTestException ();
+
+			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+			BlockList.ReplaceInstructionAt (ref block, 0, constant);
+			BlockList.RemoveInstructionAt (block, 1);
+			block.Type = BasicBlockType.Branch;
+			block.BranchType = BranchType.Return;
 		}
 
 		void RewriteBranch (ref BasicBlock block, int stackDepth, bool condition)
@@ -103,9 +123,25 @@ namespace Mono.Linker.Conditionals
 				BlockList.RemoveInstructionAt (block, 1);
 				BlockList.RemoveInstructionAt (block, 1);
 				block.Type = BasicBlockType.Branch;
+				block.BranchType = BranchType.Jump;
 			} else {
 				BlockList.DeleteBlock (block);
 			}
+		}
+
+		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool evaluated)
+		{
+			if (block.Count != stackDepth + 2)
+				throw new MartinTestException ();
+
+			if (stackDepth > 0)
+				throw new MartinTestException ();
+
+			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+			BlockList.ReplaceInstructionAt (ref block, 0, constant);
+			BlockList.RemoveInstructionAt (block, 1);
+			block.Type = BasicBlockType.Normal;
+			block.BranchType = BranchType.None;
 		}
 	}
 }
