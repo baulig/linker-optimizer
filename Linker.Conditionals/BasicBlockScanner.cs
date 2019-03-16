@@ -76,14 +76,34 @@ namespace Mono.Linker.Conditionals
 
 		void CloseBlock (ref BasicBlock block, BranchType branch, Instruction target)
 		{
-			if (block != null) {
-				block.BranchType = branch;
-				if (block.Type == BasicBlockType.Normal)
-					block.Type = branch == BranchType.Switch ? BasicBlockType.Switch : BasicBlockType.Branch;
-				block = null;
-			}
+			if (block != null)
+				CloseBlock (ref block, branch);
 			if (!BlockList.HasBlock (target))
 				BlockList.NewBlock (target);
+		}
+
+		void CloseBlock (ref BasicBlock block, BranchType branch)
+		{
+			block.BranchType = branch;
+			if (block.Type == BasicBlockType.Normal) {
+				switch (branch) {
+				case BranchType.None:
+					break;
+				case BranchType.Switch:
+					block.Type = BasicBlockType.Switch;
+					break;
+				case BranchType.Conditional:
+				case BranchType.Exit:
+				case BranchType.False:
+				case BranchType.True:
+				case BranchType.Jump:
+					block.Type = BasicBlockType.Branch;
+					break;
+				default:
+					throw new MartinTestException ();
+				}
+			}
+			block = null;
 		}
 
 		bool Scan ()
@@ -130,13 +150,11 @@ namespace Mono.Linker.Conditionals
 				case Code.Throw:
 				case Code.Rethrow:
 					Context.LogMessage ($"    THROW");
-					bb.Type = BasicBlockType.Branch;
-					bb = null;
+					CloseBlock (ref bb, BranchType.Exit);
 					break;
 				case Code.Ret:
 					Context.LogMessage ($"    RET");
-					bb.Type = BasicBlockType.Branch;
-					bb = null;
+					CloseBlock (ref bb, BranchType.Exit);
 					break;
 				}
 			}
@@ -144,6 +162,11 @@ namespace Mono.Linker.Conditionals
 			BlockList.ComputeOffsets ();
 
 			BlockList.Dump ();
+
+			foreach (var block in BlockList.Blocks) {
+				if (block.BranchType == BranchType.Unassigned)
+					throw new MartinTestException ();
+			}
 
 			return true;
 		}
@@ -297,37 +320,31 @@ namespace Mono.Linker.Conditionals
 
 			var next = Method.Body.Instructions [index + 1];
 			var type = CecilHelper.GetBranchType (next);
-			bool hasBranch;
 
 			switch (type) {
 			case BranchType.False:
 				type = BranchType.FeatureFalse;
-				hasBranch = true;
 				break;
 			case BranchType.True:
 				type = BranchType.FeatureTrue;
-				hasBranch = true;
 				break;
 			case BranchType.None:
-				type = BranchType.Feature;
-				hasBranch = false;
-				break;
-			case BranchType.Exit:
-				hasBranch = false;
+				CloseBlock (ref bb, BranchType.Feature);
+				return;
+			case BranchType.Return:
+				type = BranchType.FeatureReturn;
 				break;
 			default:
 				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
 			}
 
-			if (hasBranch) {
-				bb.AddInstruction (next);
-				index++;
+			bb.AddInstruction (next);
+			index++;
 
+			if (type == BranchType.FeatureReturn)
+				CloseBlock (ref bb, type);
+			else
 				CloseBlock (ref bb, type, (Instruction)next.Operand);
-			}
-
-			// Always start a new basic block after this.
-			bb = null;
 		}
 
 		public void RewriteConditionals ()

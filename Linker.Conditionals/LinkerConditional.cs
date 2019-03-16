@@ -60,6 +60,7 @@ namespace Mono.Linker.Conditionals
 				RewriteBranch (ref block, stackDepth, evaluated);
 				return true;
 			case BranchType.Feature:
+			case BranchType.FeatureReturn:
 				return false;
 			default:
 				throw new MartinTestException ();
@@ -68,7 +69,7 @@ namespace Mono.Linker.Conditionals
 
 		void RewriteBranch (ref BasicBlock block, int stackDepth, bool condition)
 		{
-			if (block.Count != stackDepth + 2)
+			if (block.Count != stackDepth + 3)
 				throw new MartinTestException ();
 
 			var target = (Instruction)block.LastInstruction.Operand;

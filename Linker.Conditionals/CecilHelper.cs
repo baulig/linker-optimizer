@@ -178,8 +178,9 @@ namespace Mono.Linker.Conditionals
 			switch (instruction.OpCode.Code) {
 			case Code.Throw:
 			case Code.Rethrow:
-			case Code.Ret:
 				return BranchType.Exit;
+			case Code.Ret:
+				return BranchType.Return;
 			case Code.Br:
 			case Code.Br_S:
 				return BranchType.Jump;

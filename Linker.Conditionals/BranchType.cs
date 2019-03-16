@@ -30,6 +30,7 @@ namespace Mono.Linker.Conditionals
 		Unassigned,
 		None,
 		Jump,
+		Return,
 		Exit,
 		False,
 		True,
@@ -37,6 +38,7 @@ namespace Mono.Linker.Conditionals
 		Conditional,
 		Feature,
 		FeatureFalse,
-		FeatureTrue
+		FeatureTrue,
+		FeatureReturn
 	}
 }
