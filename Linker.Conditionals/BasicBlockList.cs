@@ -202,10 +202,12 @@ namespace Mono.Linker.Conditionals
 				var index = Body.Instructions.IndexOf (block.LastInstruction);
 				Body.Instructions.Insert (index + 1, instruction);
 				block.AddInstruction (instruction);
+				return;
 			} else if (position > 0) {
 				var index = Body.Instructions.IndexOf (block.Instructions [position]);
 				Body.Instructions.Insert (index, instruction);
 				block.InsertAt (position, instruction);
+				return;
 			}
 
 			/*
