@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.Linker.Conditionals
 {
@@ -52,7 +53,54 @@ namespace Mono.Linker.Conditionals
 			var evaluated = Context.Annotations.IsMarked (InstanceType);
 			var stackDepth = HasLoadInstruction ? 0 : 1;
 
-			RewriteConditional (ref block, stackDepth, evaluated);
+			if (!evaluated)
+				RewriteConditional (ref block, stackDepth, false);
+			else
+				RewriteAsIsInst (ref block);
+		}
+
+		void RewriteAsIsInst (ref BasicBlock block)
+		{
+			Context.LogMessage ($"REWRITE AS ISINST: {block.Count} {block}");
+
+			var index = HasLoadInstruction ? 1 : 0;
+			var branchType = block.BranchType;
+			var end = branchType == BranchType.Feature ? block.Count : block.Count - 1;
+
+			for (int i = index + 1; i < end; i++)
+				BlockList.RemoveInstructionAt (block, i);
+
+			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, InstanceType));
+
+			switch (branchType) {
+			case BranchType.FeatureFalse:
+				block.Type = BasicBlockType.Branch;
+				block.BranchType = BranchType.False;
+				break;
+			case BranchType.FeatureTrue:
+				block.Type = BasicBlockType.Branch;
+				block.BranchType = BranchType.True;
+				break;
+			case BranchType.FeatureReturn:
+				// Convert it into a bool.
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
+				block.Type = BasicBlockType.Branch;
+				block.BranchType = BranchType.Return;
+				break;
+			case BranchType.Feature:
+				// Convert it into a bool.
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
+				block.Type = BasicBlockType.Normal;
+				block.BranchType = BranchType.None;
+				break;
+			default:
+				throw new MartinTestException ();
+
+			}
+
+			// throw new MartinTestException ();
 		}
 
 		public override string ToString ()
