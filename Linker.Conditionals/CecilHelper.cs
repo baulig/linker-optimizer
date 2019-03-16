@@ -157,5 +157,20 @@ namespace Mono.Linker.Conditionals
 				return false;
 			}
 		}
+
+		static string EscapeString (string text)
+		{
+			return text.Replace ("{", "{{").Replace ("}", "}}");
+		}
+
+		public static string Format (Instruction instruction)
+		{
+			if (instruction.OpCode.Code != Code.Ldstr)
+				return instruction.ToString ();
+
+			var text = (string)instruction.Operand;
+			text = '"' + EscapeString (text) + '"';
+			return $"IL_{instruction.Offset:x4}: {instruction.OpCode} {text}";
+		}
 	}
 }

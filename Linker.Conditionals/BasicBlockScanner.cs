@@ -105,7 +105,7 @@ namespace Mono.Linker.Conditionals
 						bb.Type = BasicBlock.BlockType.Branch;
 					var target = (Instruction)instruction.Operand;
 					if (!BlockList.HasBlock (target)) {
-						Context.LogMessage ($"    JUMP TARGET BB: {target}");
+						Context.LogMessage ($"    JUMP TARGET BB: {CecilHelper.Format (target)}");
 						BlockList.NewBlock (target);
 						bb = null;
 					}

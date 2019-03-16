@@ -158,19 +158,8 @@ namespace Mono.Linker.Conditionals
 		{
 			Context.LogMessage ($"{block}:");
 			foreach (var instruction in block.Instructions) {
-				if (instruction.OpCode.Code == Code.Ldstr) {
-					var text = (string)instruction.Operand;
-					text = '"' + EscapeString (text) + '"';
-					Context.LogMessage ($"  IL_{instruction.Offset:x4}: {instruction.OpCode} {text}");
-				} else {
-					Context.LogMessage ($"  {instruction}");
-				}
+				Context.LogMessage ($"  {CecilHelper.Format (instruction)}");
 			}
-		}
-
-		string EscapeString (string text)
-		{
-			return text.Replace ("{", "{{").Replace ("}", "}}");
 		}
 
 		public void RemoveInstruction (BasicBlock block, Instruction instruction)
