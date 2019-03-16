@@ -24,6 +24,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+
 namespace Mono.Linker.Conditionals
 {
 	public abstract class LinkerConditional
@@ -32,9 +35,76 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		protected MartinContext Context => BlockList.Context;
+
 		protected LinkerConditional (BasicBlockList blocks)
 		{
 			BlockList = blocks;
+		}
+
+		public abstract bool RewriteConditional (ref BasicBlock block);
+
+		protected bool RewriteConditional (ref BasicBlock block, int stackDepth, bool evaluated)
+		{
+			/*
+			 * The conditional call will either be the last instruction in the block
+			 * or it will be followed by a conditional branch (since the call returns a
+			 * boolean, it cannot be an unconditional branch).
+			 */
+
+			switch (block.BranchType) {
+			case BranchType.FeatureFalse:
+				RewriteBranch (ref block, stackDepth, !evaluated);
+				return true;
+			case BranchType.FeatureTrue:
+				RewriteBranch (ref block, stackDepth, evaluated);
+				return true;
+			case BranchType.Feature:
+				return false;
+			default:
+				throw new MartinTestException ();
+			}
+		}
+
+		void RewriteBranch (ref BasicBlock block, int stackDepth, bool condition)
+		{
+			if (block.Count != stackDepth + 2)
+				throw new MartinTestException ();
+
+			var target = (Instruction)block.LastInstruction.Operand;
+
+			Context.LogMessage ($"  REWRITING BRANCH: {block} {stackDepth} {condition} {target}");
+
+			/*
+			 * If the instruction immediately following the conditional call is a
+			 * conditional branch, then we can resolve the conditional and do not
+			 * need to load the boolean conditional value onto the stack.
+			 */
+
+			var pop = Instruction.Create (OpCodes.Pop);
+			var branch = Instruction.Create (OpCodes.Br, target);
+
+			/*
+			 * The block contains a simple load, the conditional call and the branch.
+			 *
+			 * If the branch opcode was a conditional branch and it's condition
+			 * evaluated to false, then we can just simply remove the entire block.
+			 *
+			 * Otherwise, we will replace the entire block with an unconditional
+			 * branch to the target.
+			 *
+			 */
+
+			if (stackDepth > 0) {
+				throw new MartinTestException ();
+			} else if (condition) {
+				BlockList.ReplaceInstructionAt (ref block, 0, branch);
+				BlockList.RemoveInstructionAt (block, 1);
+				BlockList.RemoveInstructionAt (block, 1);
+				block.Type = BasicBlockType.Branch;
+			} else {
+				BlockList.DeleteBlock (block);
+			}
 		}
 	}
 }

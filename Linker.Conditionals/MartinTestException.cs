@@ -28,5 +28,11 @@ namespace Mono.Linker.Conditionals
 {
 	class MartinTestException : Exception
 	{
+		public MartinTestException ()
+		{ }
+
+		public MartinTestException (string message)
+			: base (message)
+		{ }
 	}
 }

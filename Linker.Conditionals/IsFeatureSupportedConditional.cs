@@ -24,21 +24,71 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+
 namespace Mono.Linker.Conditionals
 {
 	public class IsFeatureSupportedConditional : LinkerConditional
 	{
-		public BasicBlock Block {
-			get;
-		}
-
 		public int Feature {
 			get;
 		}
 
-		public IsFeatureSupportedConditional (BasicBlockList blocks, BasicBlock block, int feature)
+		public IsFeatureSupportedConditional (BasicBlockList blocks, int feature)
 			: base (blocks)
 		{
+			Feature = feature;
+		}
+
+		public override bool RewriteConditional (ref BasicBlock block)
+		{
+			var evaluated = Context.IsFeatureEnabled (Feature);
+			Context.LogMessage ($"REWRITE FEATURE CONDITIONAL: {Feature} {evaluated}");
+
+			return RewriteConditional (ref block, 0, evaluated);
+		}
+
+		void RewriteBranch (BasicBlock block, bool condition, bool evaluated)
+		{
+			var target = (Instruction)block.LastInstruction.Operand;
+
+			Context.LogMessage ($"  REWRITING BRANCH: {block} {condition} {evaluated} {target}");
+
+			BlockList.Dump (block);
+
+			/*
+			 * If the instruction immediately following the conditional call is a
+			 * conditional branch, then we can resolve the conditional and do not
+			 * need to load the boolean conditional value onto the stack.
+			 */
+
+			var pop = Instruction.Create (OpCodes.Pop);
+			var branch = Instruction.Create (OpCodes.Br, target);
+
+			/*
+			 * The block contains a simple load, the conditional call and the branch.
+			 *
+			 * If the branch opcode was a conditional branch and it's condition
+			 * evaluated to false, then we can just simply remove the entire block.
+			 *
+			 * Otherwise, we will replace the entire block with an unconditional
+			 * branch to the target.
+			 *
+			 */
+			if (evaluated) {
+				BlockList.ReplaceInstructionAt (ref block, 0, branch);
+				BlockList.RemoveInstructionAt (block, 1);
+				BlockList.RemoveInstructionAt (block, 1);
+				block.Type = BasicBlockType.Branch;
+			} else {
+				BlockList.DeleteBlock (block);
+			}
+		}
+
+		public override string ToString ()
+		{
+			return $"[{GetType ().Name}: {Feature}]";
 		}
 	}
 }

@@ -227,9 +227,8 @@ namespace Mono.Linker.Conditionals
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 
 			var feature = CecilHelper.GetFeatureArgument (bb.FirstInstruction);
-			bb.LinkerConditional = new IsFeatureSupportedConditional (BlockList, bb, feature);
-
-			bb.Type = BasicBlockType.IsFeatureSupported;
+			bb.LinkerConditional = new IsFeatureSupportedConditional (BlockList, feature);
+			bb.Type = BasicBlockType.LinkerConditional;
 
 			FoundConditionals = true;
 
@@ -297,11 +296,34 @@ namespace Mono.Linker.Conditionals
 			 */
 
 			var next = Method.Body.Instructions [index + 1];
-			if (next.OpCode.OperandType == OperandType.InlineBrTarget || next.OpCode.OperandType == OperandType.ShortInlineBrTarget) {
+			var type = CecilHelper.GetBranchType (next);
+			bool hasBranch;
+
+			switch (type) {
+			case BranchType.False:
+				type = BranchType.FeatureFalse;
+				hasBranch = true;
+				break;
+			case BranchType.True:
+				type = BranchType.FeatureTrue;
+				hasBranch = true;
+				break;
+			case BranchType.None:
+				type = BranchType.Feature;
+				hasBranch = false;
+				break;
+			case BranchType.Exit:
+				hasBranch = false;
+				break;
+			default:
+				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
+			}
+
+			if (hasBranch) {
 				bb.AddInstruction (next);
 				index++;
 
-				CloseBlock (ref bb, CecilHelper.GetBranchType (next), (Instruction)next.Operand);
+				CloseBlock (ref bb, type, (Instruction)next.Operand);
 			}
 
 			// Always start a new basic block after this.
@@ -329,6 +351,10 @@ namespace Mono.Linker.Conditionals
 					break;
 				case BasicBlockType.IsFeatureSupported:
 					RewriteIsFeatureSupported (block);
+					foundConditionals = true;
+					break;
+				case BasicBlockType.LinkerConditional:
+					RewriteLinkerConditional (block);
 					foundConditionals = true;
 					break;
 				default:
@@ -411,6 +437,26 @@ namespace Mono.Linker.Conditionals
 			RewriteConditional (block, 2, evaluated);
 
 			BlockList.Dump ();
+		}
+
+		void RewriteLinkerConditional (BasicBlock block)
+		{
+			Context.LogMessage ($"REWRITE LINKER CONDITIONAL: {block.LinkerConditional}");
+
+			BlockList.Dump ();
+
+			if (!block.LinkerConditional.RewriteConditional (ref block)) {
+				var feature = CecilHelper.GetFeatureArgument (block.Instructions [0]);
+				var evaluated = Context.IsFeatureEnabled (feature);
+
+				RewriteConditional (block, 2, evaluated);
+			}
+
+			BlockList.ComputeOffsets ();
+
+			BlockList.Dump ();
+
+			Context.LogMessage ($"DONE REWRITING LINKER CONDITIONAL: {block.LinkerConditional}");
 		}
 
 		void RewriteConditional (BasicBlock block, int nextIndex, bool evaluated)
