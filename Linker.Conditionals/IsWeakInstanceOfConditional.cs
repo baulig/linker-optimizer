@@ -65,10 +65,15 @@ namespace Mono.Linker.Conditionals
 
 			var index = HasLoadInstruction ? 1 : 0;
 			var branchType = block.BranchType;
-			var end = branchType == BranchType.Feature ? block.Count : block.Count - 1;
 
-			for (int i = index + 1; i < end; i++)
-				BlockList.RemoveInstructionAt (block, i);
+			/*
+			 * The block consists of the following:
+			 *
+			 * - optional simple load instruction
+			 * - conditional call
+			 * - optional branch instruction
+			 *
+			 */
 
 			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, InstanceType));
 
@@ -99,8 +104,6 @@ namespace Mono.Linker.Conditionals
 				throw new MartinTestException ();
 
 			}
-
-			// throw new MartinTestException ();
 		}
 
 		public override string ToString ()
