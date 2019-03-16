@@ -45,7 +45,7 @@ namespace Martin.LinkerTest
 
 		public static void RunWeakInstance1 ()
 		{
-			UnsupportedTryCatch ();
+			TryCatchMethod ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
 			{
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
@@ -111,7 +111,7 @@ namespace Martin.LinkerTest
 		{
 			var instance = new InstanceTest ();
 			Console.WriteLine (instance);
-			if (UnsupportedTryCatch ())
+			if (TryCatchMethod ())
 				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Field);
 		}
@@ -138,7 +138,7 @@ namespace Martin.LinkerTest
 			Console.Error.WriteLine ("DONE");
 		}
 
-		public static bool UnsupportedTryCatch ()
+		public static bool TryCatchMethod ()
 		{
 			try
 			{
