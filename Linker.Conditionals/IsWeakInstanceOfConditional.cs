@@ -51,10 +51,9 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"REWRITE CONDITIONAL: {this} {block}");
 
 			var evaluated = Context.Annotations.IsMarked (InstanceType);
-			var stackDepth = HasLoadInstruction ? 0 : 1;
 
 			if (!evaluated)
-				RewriteConditional (ref block, stackDepth, false);
+				RewriteConditional (ref block, HasLoadInstruction ? 0 : 1, false);
 			else
 				RewriteAsIsInst (ref block);
 		}
@@ -78,20 +77,17 @@ namespace Mono.Linker.Conditionals
 			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, InstanceType));
 
 			switch (branchType) {
-			case BranchType.FeatureFalse:
+			case BranchType.False:
 				block.Type = BasicBlockType.Branch;
-				block.BranchType = BranchType.False;
 				break;
-			case BranchType.FeatureTrue:
+			case BranchType.True:
 				block.Type = BasicBlockType.Branch;
-				block.BranchType = BranchType.True;
 				break;
-			case BranchType.FeatureReturn:
+			case BranchType.Return:
 				// Convert it into a bool.
 				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
 				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
 				block.Type = BasicBlockType.Branch;
-				block.BranchType = BranchType.Return;
 				break;
 			case BranchType.Feature:
 				// Convert it into a bool.

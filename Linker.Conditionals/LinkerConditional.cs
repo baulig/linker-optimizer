@@ -44,26 +44,24 @@ namespace Mono.Linker.Conditionals
 
 		public abstract void RewriteConditional (ref BasicBlock block);
 
-		protected void RewriteConditional (ref BasicBlock block, int stackDepth, bool evaluated)
+		protected void RewriteConditional (ref BasicBlock block, int stackDepth, bool condition)
 		{
 			/*
-			 * The conditional call will either be the last instruction in the block
-			 * or it will be followed by a conditional branch (since the call returns a
-			 * boolean, it cannot be an unconditional branch).
+			 * The conditional call can be replaced with a constant.
 			 */
 
 			switch (block.BranchType) {
-			case BranchType.FeatureFalse:
-				RewriteBranch (ref block, stackDepth, !evaluated);
+			case BranchType.False:
+				RewriteBranch (ref block, stackDepth, !condition);
 				break;
-			case BranchType.FeatureTrue:
-				RewriteBranch (ref block, stackDepth, evaluated);
+			case BranchType.True:
+				RewriteBranch (ref block, stackDepth, condition);
 				break;
 			case BranchType.Feature:
-				RewriteAsConstant (ref block, stackDepth, evaluated);
+				RewriteAsConstant (ref block, stackDepth, condition);
 				break;
-			case BranchType.FeatureReturn:
-				RewriteReturn (ref block, stackDepth, evaluated);
+			case BranchType.Return:
+				RewriteReturn (ref block, stackDepth, condition);
 				break;
 			default:
 				throw new MartinTestException ();
@@ -120,15 +118,27 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool evaluated)
+		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool condition)
 		{
-			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+			/*
+			 * Replace the entire block with a constant.
+			 */
+			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 			ReplaceWithInstruction (ref block, stackDepth, constant);
 
 			block.Type = BasicBlockType.Normal;
 			block.BranchType = BranchType.None;
 		}
 
+		/*
+		 * Replace the entire block with the following:
+		 *
+		 * - pop @stackDepth values from the stack
+		 * - (optional) instruction @instruction
+		 *
+		 * The block will be deleted if this would result in an empty block.
+		 *
+		 */
 		void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
 		{
 			if (stackDepth == 0 && instruction == null) {

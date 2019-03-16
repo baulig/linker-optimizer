@@ -37,8 +37,5 @@ namespace Mono.Linker.Conditionals
 		Switch,
 		Conditional,
 		Feature,
-		FeatureFalse,
-		FeatureTrue,
-		FeatureReturn
 	}
 }

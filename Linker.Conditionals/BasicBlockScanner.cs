@@ -330,30 +330,25 @@ namespace Mono.Linker.Conditionals
 			var next = Method.Body.Instructions [index + 1];
 			var type = CecilHelper.GetBranchType (next);
 
-			switch (type) {
-			case BranchType.False:
-				type = BranchType.FeatureFalse;
-				break;
-			case BranchType.True:
-				type = BranchType.FeatureTrue;
-				break;
-			case BranchType.None:
+			if (type == BranchType.None) {
 				CloseBlock (ref bb, BranchType.Feature);
 				return;
-			case BranchType.Return:
-				type = BranchType.FeatureReturn;
-				break;
-			default:
-				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
 			}
 
 			bb.AddInstruction (next);
 			index++;
 
-			if (type == BranchType.FeatureReturn)
-				CloseBlock (ref bb, type);
-			else
+			switch (type) {
+			case BranchType.False:
+			case BranchType.True:
 				CloseBlock (ref bb, type, (Instruction)next.Operand);
+				break;
+			case BranchType.Return:
+				CloseBlock (ref bb, type);
+				break;
+			default:
+				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
+			}
 		}
 
 		public void RewriteConditionals ()
