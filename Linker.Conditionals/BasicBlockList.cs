@@ -256,7 +256,7 @@ namespace Mono.Linker.Conditionals
 			ReplaceBlock (ref block, block.Type, instructions);
 		}
 
-		public void DeleteBlock (BasicBlock block)
+		public void DeleteBlock (ref BasicBlock block)
 		{
 			var firstInstruction = block.FirstInstruction;
 			var startIndex = Body.Instructions.IndexOf (firstInstruction);
@@ -266,6 +266,7 @@ namespace Mono.Linker.Conditionals
 			}
 			RemoveBlock (block);
 			AdjustJumpTargets (firstInstruction, null);
+			block = null;
 		}
 	}
 }

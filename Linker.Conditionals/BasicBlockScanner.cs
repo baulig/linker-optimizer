@@ -545,7 +545,7 @@ namespace Mono.Linker.Conditionals
 					BlockList.RemoveInstructionAt (block, 1);
 					block.Type = BasicBlockType.Branch;
 				} else {
-					BlockList.DeleteBlock (block);
+					BlockList.DeleteBlock (ref block);
 				}
 				break;
 
@@ -738,7 +738,8 @@ namespace Mono.Linker.Conditionals
 
 				Context.LogMessage ($"  DEAD BLOCK: {BlockList [i]}");
 
-				BlockList.DeleteBlock (BlockList [i]);
+				var block = BlockList [i];
+				BlockList.DeleteBlock (ref block);
 
 				removedDeadBlocks = true;
 				--i;
@@ -767,9 +768,10 @@ namespace Mono.Linker.Conditionals
 
 				removedDeadBlocks = true;
 
-				if (BlockList [i].Count == 1)
-					BlockList.DeleteBlock (BlockList [i--]);
-				else {
+				if (BlockList [i].Count == 1) {
+					var block = BlockList [i--];
+					BlockList.DeleteBlock (ref block);
+				} else {
 					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
 					BlockList [i].Type = BasicBlockType.Normal;
 				}

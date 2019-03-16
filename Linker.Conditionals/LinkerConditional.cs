@@ -70,15 +70,13 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void RewriteReturn (ref BasicBlock block, int stackDepth, bool evaluated)
+		void RewriteReturn (ref BasicBlock block, int stackDepth, bool condition)
 		{
-			if (false && block.Count != stackDepth + 3)
-				throw new MartinTestException ();
 			if (block.LastInstruction.OpCode.Code != Code.Ret)
-				throw new MartinTestException ();
+				throw new NotSupportedException ();
 
 			// Rewrite as constant, then put back the return
-			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 			ReplaceWithInstruction (ref block, stackDepth, constant);
 			BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
 
@@ -88,50 +86,37 @@ namespace Mono.Linker.Conditionals
 
 		void RewriteBranch (ref BasicBlock block, int stackDepth, bool condition)
 		{
-			if (false && block.Count != stackDepth + 3)
-				throw new MartinTestException ();
-
-			var target = (Instruction)block.LastInstruction.Operand;
-
-			Context.LogMessage ($"  REWRITING BRANCH: {block} {stackDepth} {condition} {target}");
-
 			/*
 			 * If the instruction immediately following the conditional call is a
 			 * conditional branch, then we can resolve the conditional and do not
 			 * need to load the boolean conditional value onto the stack.
 			 */
 
-			var branch = Instruction.Create (OpCodes.Br, target);
-
-			/*
-			 * The block contains a simple load, the conditional call and the branch.
-			 *
-			 * If the branch opcode was a conditional branch and it's condition
-			 * evaluated to false, then we can just simply remove the entire block.
-			 *
-			 * Otherwise, we will replace the entire block with an unconditional
-			 * branch to the target.
-			 *
-			 */
-
 			if (condition) {
+				/*
+				 * Replace with direct jump.  Not that ReplaceWithInstruction() will take
+				 * care of popping extra values off the stack if needed.
+				 */
+				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
 				ReplaceWithInstruction (ref block, stackDepth, branch);
 
 				block.Type = BasicBlockType.Branch;
 				block.BranchType = BranchType.Jump;
 			} else if (stackDepth > 0) {
-				// Remove everything except the first instruction.
-				for (int i = 1; i < block.Count; i++)
-					BlockList.RemoveInstructionAt (block, 1);
-
-				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
-				for (int i = 1; i < stackDepth; i++)
-					BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
+				/*
+				 * The condition is false, but there are still values on the stack that
+				 * we need to pop.
+				 */
+				ReplaceWithInstruction (ref block, stackDepth, null);
 
 				block.Type = BasicBlockType.Normal;
 				block.BranchType = BranchType.None;
 			} else {
-				BlockList.DeleteBlock (block);
+				/*
+				 * The condition is false and there are no additional values on the stack.
+				 * We can just simply delete the entire block.
+				 */
+				BlockList.DeleteBlock (ref block);
 			}
 		}
 
@@ -146,6 +131,12 @@ namespace Mono.Linker.Conditionals
 
 		void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
 		{
+			if (stackDepth == 0 && instruction == null) {
+				// Delete the entire block.
+				BlockList.DeleteBlock (ref block);
+				return;
+			}
+
 			// Remove everything except the first instruction.
 			for (int i = 1; i < block.Count; i++)
 				BlockList.RemoveInstructionAt (block, 1);
@@ -159,7 +150,8 @@ namespace Mono.Linker.Conditionals
 			for (int i = 1; i < stackDepth; i++)
 				BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
 
-			BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
+			if (instruction != null)
+				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
 		}
 	}
 }
