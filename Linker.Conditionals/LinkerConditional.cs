@@ -77,22 +77,10 @@ namespace Mono.Linker.Conditionals
 			if (block.LastInstruction.OpCode.Code != Code.Ret)
 				throw new MartinTestException ();
 
+			// Rewrite as constant, then put back the return
 			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-
-			// Remove everything except the first and last instruction.
-			for (int i = 1; i < block.Count - 1; i++)
-				BlockList.RemoveInstructionAt (block, 1);
-
-			if (stackDepth > 0) {
-				// Pop values from the stack then load the constant.
-				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
-				for (int i = 1; i < stackDepth; i++)
-					BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
-				BlockList.InsertInstructionAt (ref block, stackDepth, constant);
-			} else {
-				// Since we don't have any additional values on the stack, we can just load the constant.
-				BlockList.ReplaceInstructionAt (ref block, 0, constant);
-			}
+			ReplaceWithInstruction (ref block, stackDepth, constant);
+			BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
 
 			block.Type = BasicBlockType.Branch;
 			block.BranchType = BranchType.Return;
@@ -100,7 +88,7 @@ namespace Mono.Linker.Conditionals
 
 		void RewriteBranch (ref BasicBlock block, int stackDepth, bool condition)
 		{
-			if (block.Count != stackDepth + 3)
+			if (false && block.Count != stackDepth + 3)
 				throw new MartinTestException ();
 
 			var target = (Instruction)block.LastInstruction.Operand;
@@ -113,7 +101,6 @@ namespace Mono.Linker.Conditionals
 			 * need to load the boolean conditional value onto the stack.
 			 */
 
-			var pop = Instruction.Create (OpCodes.Pop);
 			var branch = Instruction.Create (OpCodes.Br, target);
 
 			/*
@@ -127,14 +114,22 @@ namespace Mono.Linker.Conditionals
 			 *
 			 */
 
-			if (stackDepth > 0) {
-				throw new MartinTestException ();
-			} else if (condition) {
-				BlockList.ReplaceInstructionAt (ref block, 0, branch);
-				BlockList.RemoveInstructionAt (block, 1);
-				BlockList.RemoveInstructionAt (block, 1);
+			if (condition) {
+				ReplaceWithInstruction (ref block, stackDepth, branch);
+
 				block.Type = BasicBlockType.Branch;
 				block.BranchType = BranchType.Jump;
+			} else if (stackDepth > 0) {
+				// Remove everything except the first instruction.
+				for (int i = 1; i < block.Count; i++)
+					BlockList.RemoveInstructionAt (block, 1);
+
+				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
+				for (int i = 1; i < stackDepth; i++)
+					BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
+
+				block.Type = BasicBlockType.Normal;
+				block.BranchType = BranchType.None;
 			} else {
 				BlockList.DeleteBlock (block);
 			}
@@ -143,24 +138,28 @@ namespace Mono.Linker.Conditionals
 		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool evaluated)
 		{
 			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-
-			// Remove everything except the first.
-			for (int i = 1; i < block.Count; i++)
-				BlockList.RemoveInstructionAt (block, 1);
-
-			if (stackDepth > 0) {
-				// Pop values from the stack then load the constant.
-				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
-				for (int i = 1; i < stackDepth; i++)
-					BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
-				BlockList.InsertInstructionAt (ref block, stackDepth, constant);
-			} else {
-				// Since we don't have any additional values on the stack, we can just load the constant.
-				BlockList.ReplaceInstructionAt (ref block, 0, constant);
-			}
+			ReplaceWithInstruction (ref block, stackDepth, constant);
 
 			block.Type = BasicBlockType.Normal;
 			block.BranchType = BranchType.None;
+		}
+
+		void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
+		{
+			// Remove everything except the first instruction.
+			for (int i = 1; i < block.Count; i++)
+				BlockList.RemoveInstructionAt (block, 1);
+
+			if (stackDepth == 0) {
+				BlockList.ReplaceInstructionAt (ref block, 0, instruction);
+				return;
+			}
+
+			BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
+			for (int i = 1; i < stackDepth; i++)
+				BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
+
+			BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
 		}
 	}
 }
