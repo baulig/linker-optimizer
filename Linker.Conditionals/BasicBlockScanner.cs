@@ -78,8 +78,8 @@ namespace Mono.Linker.Conditionals
 		{
 			if (block != null) {
 				block.BranchType = branch;
-				if (block.Type == BasicBlock.BlockType.Normal)
-					block.Type = branch == BranchType.Switch ? BasicBlock.BlockType.Switch : BasicBlock.BlockType.Branch;
+				if (block.Type == BasicBlockType.Normal)
+					block.Type = branch == BranchType.Switch ? BasicBlockType.Switch : BasicBlockType.Branch;
 				block = null;
 			}
 			if (!BlockList.HasBlock (target))
@@ -130,12 +130,12 @@ namespace Mono.Linker.Conditionals
 				case Code.Throw:
 				case Code.Rethrow:
 					Context.LogMessage ($"    THROW");
-					bb.Type = BasicBlock.BlockType.Branch;
+					bb.Type = BasicBlockType.Branch;
 					bb = null;
 					break;
 				case Code.Ret:
 					Context.LogMessage ($"    RET");
-					bb.Type = BasicBlock.BlockType.Branch;
+					bb.Type = BasicBlockType.Branch;
 					bb = null;
 					break;
 				}
@@ -192,10 +192,10 @@ namespace Mono.Linker.Conditionals
 			if (CecilHelper.IsSimpleLoad (argument)) {
 				if (bb.Instructions.Count > 2)
 					BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
-				bb.Type = BasicBlock.BlockType.SimpleWeakInstanceOf;
+				bb.Type = BasicBlockType.SimpleWeakInstanceOf;
 			} else {
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
-				bb.Type = BasicBlock.BlockType.WeakInstanceOf;
+				bb.Type = BasicBlockType.WeakInstanceOf;
 			}
 
 			/*
@@ -225,7 +225,7 @@ namespace Mono.Linker.Conditionals
 
 			if (bb.Instructions.Count > 2)
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
-			bb.Type = BasicBlock.BlockType.IsFeatureSupported;
+			bb.Type = BasicBlockType.IsFeatureSupported;
 
 			FoundConditionals = true;
 
@@ -318,16 +318,16 @@ namespace Mono.Linker.Conditionals
 
 			foreach (var block in BlockList.Blocks.ToArray ()) {
 				switch (block.Type) {
-				case BasicBlock.BlockType.Normal:
-				case BasicBlock.BlockType.Branch:
-				case BasicBlock.BlockType.Switch:
+				case BasicBlockType.Normal:
+				case BasicBlockType.Branch:
+				case BasicBlockType.Switch:
 					continue;
-				case BasicBlock.BlockType.WeakInstanceOf:
-				case BasicBlock.BlockType.SimpleWeakInstanceOf:
+				case BasicBlockType.WeakInstanceOf:
+				case BasicBlockType.SimpleWeakInstanceOf:
 					RewriteWeakInstanceOf (block);
 					foundConditionals = true;
 					break;
-				case BasicBlock.BlockType.IsFeatureSupported:
+				case BasicBlockType.IsFeatureSupported:
 					RewriteIsFeatureSupported (block);
 					foundConditionals = true;
 					break;
@@ -360,7 +360,7 @@ namespace Mono.Linker.Conditionals
 			int nextIndex;
 			TypeDefinition type;
 			switch (block.Type) {
-			case BasicBlock.BlockType.WeakInstanceOf:
+			case BasicBlockType.WeakInstanceOf:
 				/*
 				 * The argument came from a complicated expression, so we started
 				 * a new basic block with the call instruction; it's argument has
@@ -370,7 +370,7 @@ namespace Mono.Linker.Conditionals
 				evaluated = Context.Annotations.IsMarked (type);
 				nextIndex = 1;
 				break;
-			case BasicBlock.BlockType.SimpleWeakInstanceOf:
+			case BasicBlockType.SimpleWeakInstanceOf:
 				/*
 				 * The argument came from a simple load, so the block starts with
 				 * the load instruction followed by the call.
@@ -460,8 +460,8 @@ namespace Mono.Linker.Conditionals
 			var branch = Instruction.Create (OpCodes.Br, target);
 
 			switch (block.Type) {
-			case BasicBlock.BlockType.SimpleWeakInstanceOf:
-			case BasicBlock.BlockType.IsFeatureSupported:
+			case BasicBlockType.SimpleWeakInstanceOf:
+			case BasicBlockType.IsFeatureSupported:
 				/*
 				 * The block contains a simple load, the conditional call and the branch.
 				 *
@@ -476,13 +476,13 @@ namespace Mono.Linker.Conditionals
 					BlockList.ReplaceInstructionAt (ref block, 0, branch);
 					BlockList.RemoveInstructionAt (block, 1);
 					BlockList.RemoveInstructionAt (block, 1);
-					block.Type = BasicBlock.BlockType.Branch;
+					block.Type = BasicBlockType.Branch;
 				} else {
 					BlockList.DeleteBlock (block);
 				}
 				break;
 
-			case BasicBlock.BlockType.WeakInstanceOf:
+			case BasicBlockType.WeakInstanceOf:
 				/*
 				 * The block contains the conditional call and the branch.  Since the
 				 * call argument has already been pushed onto the stack, we need to
@@ -496,9 +496,9 @@ namespace Mono.Linker.Conditionals
 				BlockList.RemoveInstructionAt (block, 1);
 				if (evaluated) {
 					BlockList.InsertInstructionAt (ref block, 1, branch);
-					block.Type = BasicBlock.BlockType.Branch;
+					block.Type = BasicBlockType.Branch;
 				} else {
-					block.Type = BasicBlock.BlockType.Normal;
+					block.Type = BasicBlockType.Normal;
 				}
 				break;
 
@@ -521,8 +521,8 @@ namespace Mono.Linker.Conditionals
 			var pop = Instruction.Create (OpCodes.Pop);
 
 			switch (block.Type) {
-			case BasicBlock.BlockType.SimpleWeakInstanceOf:
-			case BasicBlock.BlockType.IsFeatureSupported:
+			case BasicBlockType.SimpleWeakInstanceOf:
+			case BasicBlockType.IsFeatureSupported:
 				/*
 				 * The block contains a simple load and the conditional call.
 				 * Replace both with the constant load.
@@ -531,10 +531,10 @@ namespace Mono.Linker.Conditionals
 					throw new NotSupportedException ();
 				BlockList.ReplaceInstructionAt (ref block, 0, constant);
 				BlockList.RemoveInstructionAt (block, 1);
-				block.Type = BasicBlock.BlockType.Normal;
+				block.Type = BasicBlockType.Normal;
 				break;
 
-			case BasicBlock.BlockType.WeakInstanceOf:
+			case BasicBlockType.WeakInstanceOf:
 				/*
 				 * The block only contains the conditional call, but it's argument
 				 * has already been pushed onto the stack, so we need to insert a
@@ -544,7 +544,7 @@ namespace Mono.Linker.Conditionals
 					throw new NotSupportedException ();
 				BlockList.ReplaceInstructionAt (ref block, 0, pop);
 				BlockList.InsertInstructionAt (ref block, 1, constant);
-				block.Type = BasicBlock.BlockType.Normal;
+				block.Type = BasicBlockType.Normal;
 				break;
 
 			default:
@@ -562,14 +562,14 @@ namespace Mono.Linker.Conditionals
 
 			int index;
 			switch (block.Type) {
-			case BasicBlock.BlockType.SimpleWeakInstanceOf:
+			case BasicBlockType.SimpleWeakInstanceOf:
 				/*
 				 * The block contains a simple load, the conditional call
 				 * and an optional branch.
 				 */
 				index = 1;
 				break;
-			case BasicBlock.BlockType.WeakInstanceOf:
+			case BasicBlockType.WeakInstanceOf:
 				/*
 				 * The block contains the conditional call (with the argument already
 				 * on the stack) and an optional branch.
@@ -583,16 +583,16 @@ namespace Mono.Linker.Conditionals
 				throw new NotSupportedException ();
 			}
 
-			BasicBlock.BlockType blockType;
+			BasicBlockType blockType;
 			/*
 			 * The call instruction is optionally followed by a branch.
 			 */
 			if (block.Count == index + 1) {
-				blockType = BasicBlock.BlockType.Normal;
+				blockType = BasicBlockType.Normal;
 			} else if (block.Count == index + 2) {
 				if (!CecilHelper.IsConditionalBranch (block.Instructions [index + 1]))
 					throw new NotSupportedException ();
-				blockType = BasicBlock.BlockType.Branch;
+				blockType = BasicBlockType.Branch;
 			} else {
 				throw new NotSupportedException ();
 			}
@@ -607,7 +607,7 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.ReplaceInstructionAt (ref block, index, Instruction.Create (OpCodes.Isinst, type));
 
-			if (blockType == BasicBlock.BlockType.Normal) {
+			if (blockType == BasicBlockType.Normal) {
 				// Convert it into a bool.
 				BlockList.InsertInstructionAt (ref block, index + 1, Instruction.Create (OpCodes.Ldnull));
 				BlockList.InsertInstructionAt (ref block, index + 2, Instruction.Create (OpCodes.Cgt_Un));
@@ -629,12 +629,12 @@ namespace Mono.Linker.Conditionals
 				if (markNextBlock)
 					marked.Add (block);
 
-				if (block.Type == BasicBlock.BlockType.Normal) {
+				if (block.Type == BasicBlockType.Normal) {
 					markNextBlock = true;
 					continue;
 				}
 
-				if (block.Type == BasicBlock.BlockType.Switch) {
+				if (block.Type == BasicBlockType.Switch) {
 					foreach (var label in (Instruction[])block.LastInstruction.Operand) {
 						marked.Add (BlockList.GetBlock (label));
 					}
@@ -642,7 +642,7 @@ namespace Mono.Linker.Conditionals
 					continue;
 				}
 
-				if (block.Type != BasicBlock.BlockType.Branch)
+				if (block.Type != BasicBlockType.Branch)
 					throw new NotSupportedException ();
 
 				var branch = block.LastInstruction;
@@ -684,7 +684,7 @@ namespace Mono.Linker.Conditionals
 			}
 
 			for (int i = 0; i < BlockList.Count - 1; i++) {
-				if (BlockList [i].Type != BasicBlock.BlockType.Branch)
+				if (BlockList [i].Type != BasicBlockType.Branch)
 					continue;
 
 				var lastInstruction = BlockList [i].LastInstruction;
@@ -704,7 +704,7 @@ namespace Mono.Linker.Conditionals
 					BlockList.DeleteBlock (BlockList [i--]);
 				else {
 					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
-					BlockList [i].Type = BasicBlock.BlockType.Normal;
+					BlockList [i].Type = BasicBlockType.Normal;
 				}
 			}
 

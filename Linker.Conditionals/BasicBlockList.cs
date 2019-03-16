@@ -55,7 +55,7 @@ namespace Mono.Linker.Conditionals
 			_block_list = new List<BasicBlock> ();
 		}
 
-		public BasicBlock NewBlock (Instruction instruction, BasicBlock.BlockType type = BasicBlock.BlockType.Normal)
+		public BasicBlock NewBlock (Instruction instruction, BasicBlockType type = BasicBlockType.Normal)
 		{
 			var block = new BasicBlock (++_next_block_id, type, instruction);
 			_bb_by_instruction.Add (instruction, block);
@@ -69,7 +69,7 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Remove (block.Instructions [0]);
 		}
 
-		public void ReplaceBlock (ref BasicBlock block, BasicBlock.BlockType type, IList<Instruction> instructions)
+		public void ReplaceBlock (ref BasicBlock block, BasicBlockType type, IList<Instruction> instructions)
 		{
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
@@ -135,7 +135,7 @@ namespace Mono.Linker.Conditionals
 			var previousInstructions = block.GetInstructions (0, position);
 			var nextInstructions = block.GetInstructions (position);
 
-			var previousBlock = new BasicBlock (++_next_block_id, BasicBlock.BlockType.Normal, previousInstructions);
+			var previousBlock = new BasicBlock (++_next_block_id, BasicBlockType.Normal, previousInstructions);
 			_block_list [blockIndex] = previousBlock;
 			_bb_by_instruction [previousInstructions [0]] = previousBlock;
 

@@ -1,5 +1,5 @@
 ﻿//
-// BasicBlock.cs
+// BasicBlockType.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -26,16 +26,13 @@
 
 namespace Mono.Linker.Conditionals
 {
-	public partial class BasicBlock
+	public enum BasicBlockType
 	{
-		public enum BlockType
-		{
-			Normal,
-			Branch,
-			Switch,
-			SimpleWeakInstanceOf,
-			WeakInstanceOf,
-			IsFeatureSupported
-		}
+		Normal,
+		Branch,
+		Switch,
+		SimpleWeakInstanceOf,
+		WeakInstanceOf,
+		IsFeatureSupported
 	}
 }

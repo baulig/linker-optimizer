@@ -35,7 +35,7 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public BlockType Type {
+		public BasicBlockType Type {
 			get; set;
 		}
 
@@ -57,7 +57,7 @@ namespace Mono.Linker.Conditionals
 
 		readonly List<Instruction> _instructions = new List<Instruction> ();
 
-		public BasicBlock (int index, BlockType type, Instruction instruction)
+		public BasicBlock (int index, BasicBlockType type, Instruction instruction)
 		{
 			Index = index;
 			Type = type;
@@ -67,7 +67,7 @@ namespace Mono.Linker.Conditionals
 
 		}
 
-		public BasicBlock (int index, BlockType type, IList<Instruction> instructions)
+		public BasicBlock (int index, BasicBlockType type, IList<Instruction> instructions)
 		{
 			Index = index;
 			Type = type;
@@ -143,7 +143,7 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[BB {Index}{((Type != BlockType.Normal ? $" ({Type})" : ""))}: {FirstInstruction.OpCode.Code}]";
+			return $"[BB {Index}{((Type != BasicBlockType.Normal ? $" ({Type})" : ""))}: {FirstInstruction.OpCode.Code}]";
 		}
 	}
 }

@@ -104,6 +104,7 @@
     <Compile Include="Linker.Conditionals\BasicBlockScanner.cs" />
     <Compile Include="Linker.Conditionals\CecilHelper.cs" />
     <Compile Include="Linker.Conditionals\BasicBlock.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlockType.cs" />
     <Compile Include="Linker.Conditionals\BasicBlockList.cs" />
     <Compile Include="Linker.Conditionals\BranchType.cs" />
     <Compile Include="Linker.Conditionals\MartinTestException.cs" />
@@ -111,7 +112,6 @@
     <Compile Include="Linker.Conditionals\IsWeakInstanceOfConditional.cs" />
     <Compile Include="Linker.Conditionals\IsFeatureSupportedConditional.cs" />
     <Compile Include="Linker.Conditionals\MarkFeatureConditional.cs" />
-    <Compile Include="Linker.Conditionals\BlockType.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
