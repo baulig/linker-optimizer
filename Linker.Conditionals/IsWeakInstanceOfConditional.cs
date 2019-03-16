@@ -24,18 +24,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
+
 namespace Mono.Linker.Conditionals
 {
 	public class IsWeakInstanceOfConditional : LinkerConditional
 	{
-		public IsWeakInstanceOfConditional (BasicBlockList blocks)
+		public TypeDefinition InstanceType {
+			get;
+		}
+
+		public bool HasLoadInstruction {
+			get;
+		}
+
+		public IsWeakInstanceOfConditional (BasicBlockList blocks, TypeDefinition type, bool hasLoad)
 			: base (blocks)
 		{
+			InstanceType = type;
+			HasLoadInstruction = hasLoad;
 		}
 
 		public override void RewriteConditional (ref BasicBlock block)
 		{
-			throw new NotImplementedException ();
+			Context.LogMessage ($"REWRITE CONDITIONAL: {this} {block}");
+
+			var evaluated = Context.Annotations.IsMarked (InstanceType);
+			var stackDepth = HasLoadInstruction ? 0 : 1;
+
+			RewriteConditional (ref block, stackDepth, evaluated);
+		}
+
+		public override string ToString ()
+		{
+			return $"[{GetType ().Name}: {InstanceType.Name} {HasLoadInstruction}]";
 		}
 	}
 }

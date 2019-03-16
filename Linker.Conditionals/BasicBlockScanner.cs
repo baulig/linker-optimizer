@@ -212,14 +212,23 @@ namespace Mono.Linker.Conditionals
 
 			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
 
+			bool hasLoad;
+			TypeDefinition instanceType;
 			if (CecilHelper.IsSimpleLoad (argument)) {
 				if (bb.Instructions.Count > 2)
 					BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 				bb.Type = BasicBlockType.SimpleWeakInstanceOf;
+				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [1]);
+				hasLoad = true;
 			} else {
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
 				bb.Type = BasicBlockType.WeakInstanceOf;
+				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [0]);
+				hasLoad = false;
 			}
+
+			bb.LinkerConditional = new IsWeakInstanceOfConditional (BlockList, instanceType, hasLoad);
+			bb.Type = BasicBlockType.LinkerConditional;
 
 			/*
 			 * Once we get here, the current block only contains the (optional) simple load

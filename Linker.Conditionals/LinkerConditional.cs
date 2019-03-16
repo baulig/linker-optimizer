@@ -72,17 +72,28 @@ namespace Mono.Linker.Conditionals
 
 		void RewriteReturn (ref BasicBlock block, int stackDepth, bool evaluated)
 		{
-			if (block.Count != stackDepth + 3)
+			if (false && block.Count != stackDepth + 3)
 				throw new MartinTestException ();
 			if (block.LastInstruction.OpCode.Code != Code.Ret)
 				throw new MartinTestException ();
 
-			if (stackDepth > 0)
-				throw new MartinTestException ();
-
 			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			BlockList.ReplaceInstructionAt (ref block, 0, constant);
-			BlockList.RemoveInstructionAt (block, 1);
+
+			// Remove everything except the first and last instruction.
+			for (int i = 1; i < block.Count - 1; i++)
+				BlockList.RemoveInstructionAt (block, 1);
+
+			if (stackDepth > 0) {
+				// Pop values from the stack then load the constant.
+				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
+				for (int i = 1; i < stackDepth; i++)
+					BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
+				BlockList.InsertInstructionAt (ref block, stackDepth, constant);
+			} else {
+				// Since we don't have any additional values on the stack, we can just load the constant.
+				BlockList.ReplaceInstructionAt (ref block, 0, constant);
+			}
+
 			block.Type = BasicBlockType.Branch;
 			block.BranchType = BranchType.Return;
 		}
@@ -131,15 +142,23 @@ namespace Mono.Linker.Conditionals
 
 		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool evaluated)
 		{
-			if (block.Count != stackDepth + 2)
-				throw new MartinTestException ();
-
-			if (stackDepth > 0)
-				throw new MartinTestException ();
-
 			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			BlockList.ReplaceInstructionAt (ref block, 0, constant);
-			BlockList.RemoveInstructionAt (block, 1);
+
+			// Remove everything except the first.
+			for (int i = 1; i < block.Count; i++)
+				BlockList.RemoveInstructionAt (block, 1);
+
+			if (stackDepth > 0) {
+				// Pop values from the stack then load the constant.
+				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
+				for (int i = 1; i < stackDepth; i++)
+					BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
+				BlockList.InsertInstructionAt (ref block, stackDepth, constant);
+			} else {
+				// Since we don't have any additional values on the stack, we can just load the constant.
+				BlockList.ReplaceInstructionAt (ref block, 0, constant);
+			}
+
 			block.Type = BasicBlockType.Normal;
 			block.BranchType = BranchType.None;
 		}

@@ -111,7 +111,6 @@
     <Compile Include="Linker.Conditionals\LinkerConditional.cs" />
     <Compile Include="Linker.Conditionals\IsWeakInstanceOfConditional.cs" />
     <Compile Include="Linker.Conditionals\IsFeatureSupportedConditional.cs" />
-    <Compile Include="Linker.Conditionals\MarkFeatureConditional.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
