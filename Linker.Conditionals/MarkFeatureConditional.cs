@@ -33,7 +33,7 @@ namespace Mono.Linker.Conditionals
 		{
 		}
 
-		public override bool RewriteConditional (ref BasicBlock block)
+		public override void RewriteConditional (ref BasicBlock block)
 		{
 			throw new NotImplementedException ();
 		}

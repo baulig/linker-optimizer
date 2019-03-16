@@ -41,12 +41,12 @@ namespace Mono.Linker.Conditionals
 			Feature = feature;
 		}
 
-		public override bool RewriteConditional (ref BasicBlock block)
+		public override void RewriteConditional (ref BasicBlock block)
 		{
 			var evaluated = Context.IsFeatureEnabled (Feature);
 			Context.LogMessage ($"REWRITE FEATURE CONDITIONAL: {Feature} {evaluated}");
 
-			return RewriteConditional (ref block, 0, evaluated);
+			RewriteConditional (ref block, 0, evaluated);
 		}
 
 		void RewriteBranch (BasicBlock block, bool condition, bool evaluated)

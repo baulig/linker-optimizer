@@ -462,12 +462,7 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.Dump ();
 
-			if (!block.LinkerConditional.RewriteConditional (ref block)) {
-				var feature = CecilHelper.GetFeatureArgument (block.Instructions [0]);
-				var evaluated = Context.IsFeatureEnabled (feature);
-
-				RewriteConditional (block, 2, evaluated);
-			}
+			block.LinkerConditional.RewriteConditional (ref block);
 
 			BlockList.ComputeOffsets ();
 

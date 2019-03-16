@@ -42,9 +42,9 @@ namespace Mono.Linker.Conditionals
 			BlockList = blocks;
 		}
 
-		public abstract bool RewriteConditional (ref BasicBlock block);
+		public abstract void RewriteConditional (ref BasicBlock block);
 
-		protected bool RewriteConditional (ref BasicBlock block, int stackDepth, bool evaluated)
+		protected void RewriteConditional (ref BasicBlock block, int stackDepth, bool evaluated)
 		{
 			/*
 			 * The conditional call will either be the last instruction in the block
@@ -55,16 +55,16 @@ namespace Mono.Linker.Conditionals
 			switch (block.BranchType) {
 			case BranchType.FeatureFalse:
 				RewriteBranch (ref block, stackDepth, !evaluated);
-				return true;
+				break;
 			case BranchType.FeatureTrue:
 				RewriteBranch (ref block, stackDepth, evaluated);
-				return true;
+				break;
 			case BranchType.Feature:
 				RewriteAsConstant (ref block, stackDepth, evaluated);
-				return true;
+				break;
 			case BranchType.FeatureReturn:
 				RewriteReturn (ref block, stackDepth, evaluated);
-				return true;
+				break;
 			default:
 				throw new MartinTestException ();
 			}
