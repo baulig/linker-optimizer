@@ -105,6 +105,7 @@
     <Compile Include="Linker.Conditionals\CecilHelper.cs" />
     <Compile Include="Linker.Conditionals\BasicBlock.cs" />
     <Compile Include="Linker.Conditionals\BasicBlockList.cs" />
+    <Compile Include="Linker.Conditionals\BranchType.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

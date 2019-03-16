@@ -39,6 +39,10 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public BranchType BranchType {
+			get; set;
+		}
+
 		public int Count => _instructions.Count;
 
 		public IReadOnlyList<Instruction> Instructions => _instructions;
@@ -53,6 +57,7 @@ namespace Mono.Linker.Conditionals
 		{
 			Index = index;
 			Type = type;
+			BranchType = BranchType.Unassigned;
 
 			AddInstruction (instruction);
 
@@ -62,6 +67,7 @@ namespace Mono.Linker.Conditionals
 		{
 			Index = index;
 			Type = type;
+			BranchType = BranchType.Unassigned;
 
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();

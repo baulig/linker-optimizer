@@ -69,6 +69,23 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => BlockList.Blocks;
 
+		void CloseBlock (ref BasicBlock block, Instruction instruction, Instruction target)
+		{
+			CloseBlock (ref block, CecilHelper.GetBranchType (instruction), target);
+		}
+
+		void CloseBlock (ref BasicBlock block, BranchType branch, Instruction target)
+		{
+			if (block != null) {
+				block.BranchType = branch;
+				if (block.Type == BasicBlock.BlockType.Normal)
+					block.Type = branch == BranchType.Switch ? BasicBlock.BlockType.Switch : BasicBlock.BlockType.Branch;
+				block = null;
+			}
+			if (!BlockList.HasBlock (target))
+				BlockList.NewBlock (target);
+		}
+
 		bool Scan ()
 		{
 			Context.LogMessage ($"SCAN: {Method}");
@@ -97,22 +114,13 @@ namespace Mono.Linker.Conditionals
 				case OperandType.ShortInlineBrTarget:
 					if (bb.Type == BasicBlock.BlockType.Normal)
 						bb.Type = BasicBlock.BlockType.Branch;
-					var target = (Instruction)instruction.Operand;
-					if (!BlockList.HasBlock (target)) {
-						Context.LogMessage ($"    JUMP TARGET BB: {CecilHelper.Format (target)}");
-						BlockList.NewBlock (target);
-						bb = null;
-					}
+					CloseBlock (ref bb, instruction, (Instruction)instruction.Operand);
 					continue;
 				case OperandType.InlineSwitch:
 					if (bb.Type == BasicBlock.BlockType.Normal)
 						bb.Type = BasicBlock.BlockType.Switch;
 					foreach (var label in (Instruction[])instruction.Operand) {
-						if (!BlockList.HasBlock (label)) {
-							Context.LogMessage ($"    SWITCH LABEL BB: {CecilHelper.Format (label)}");
-							BlockList.NewBlock (label);
-							bb = null;
-						}
+						CloseBlock (ref bb, BranchType.Switch, label);
 					}
 					continue;
 				case OperandType.InlineMethod:
