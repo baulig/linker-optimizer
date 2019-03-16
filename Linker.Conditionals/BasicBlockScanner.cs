@@ -621,26 +621,30 @@ namespace Mono.Linker.Conditionals
 				if (markNextBlock)
 					marked.Add (block);
 
-				switch (block.Type) {
-				case BasicBlock.BlockType.Branch:
-					markNextBlock = false;
-					break;
-				case BasicBlock.BlockType.Normal:
+				if (block.Type == BasicBlock.BlockType.Normal) {
 					markNextBlock = true;
-					break;
-				default:
-					throw new NotSupportedException ();
+					continue;
 				}
 
-				foreach (var instruction in block.Instructions) {
-					switch (instruction.OpCode.OperandType) {
-					case OperandType.InlineBrTarget:
-					case OperandType.ShortInlineBrTarget:
-						var target = (Instruction)instruction.Operand;
-						marked.Add (BlockList.GetBlock ((Instruction)instruction.Operand));
-						break;
-					}
+				if (block.Type != BasicBlock.BlockType.Branch)
+					throw new NotSupportedException ();
+
+				var branch = block.LastInstruction;
+				switch (branch.OpCode.Code) {
+				case Code.Br:
+				case Code.Br_S:
+					markNextBlock = false;
+					break;
+				case Code.Ret:
+				case Code.Throw:
+					markNextBlock = false;
+					continue;
+				default:
+					markNextBlock = true;
+					break;
 				}
+
+				marked.Add (BlockList.GetBlock ((Instruction)branch.Operand));
 			}
 
 			var removedDeadBlocks = false;
@@ -656,17 +660,28 @@ namespace Mono.Linker.Conditionals
 				--i;
 			}
 
+			if (removedDeadBlocks) {
+				BlockList.ComputeOffsets ();
+
+				BlockList.Dump ();
+			}
+
 			for (int i = 0; i < BlockList.Count - 1; i++) {
 				if (BlockList [i].Type != BasicBlock.BlockType.Branch)
 					continue;
 
 				var lastInstruction = BlockList [i].LastInstruction;
+				var nextInstruction = BlockList [i + 1].FirstInstruction;
 				if (lastInstruction.OpCode.Code != Code.Br && lastInstruction.OpCode.Code != Code.Br_S)
 					continue;
-				if ((Instruction)lastInstruction.Operand != BlockList [i + 1].FirstInstruction)
+				if ((Instruction)lastInstruction.Operand != nextInstruction)
 					continue;
 
 				Context.LogMessage ($"ELIMINATE DEAD JUMP: {lastInstruction}");
+
+				BlockList.AdjustJumpTargets (lastInstruction, nextInstruction);
+
+				removedDeadBlocks = true;
 
 				if (BlockList [i].Count == 1)
 					BlockList.DeleteBlock (BlockList [i--]);
@@ -674,6 +689,12 @@ namespace Mono.Linker.Conditionals
 					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
 					BlockList [i].Type = BasicBlock.BlockType.Normal;
 				}
+			}
+
+			if (removedDeadBlocks) {
+				BlockList.ComputeOffsets ();
+
+				BlockList.Dump ();
 			}
 
 			Context.LogMessage ($"DONE ELIMINATING DEAD BLOCKS");

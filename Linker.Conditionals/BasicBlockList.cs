@@ -75,11 +75,28 @@ namespace Mono.Linker.Conditionals
 				throw new ArgumentOutOfRangeException ();
 
 			var blockIndex = _block_list.IndexOf (block);
-			_bb_by_instruction.Remove (block.Instructions [0]);
+			var oldInstruction = block.Instructions [0];
+			oldInstruction.Offset = -1;
+
+			_bb_by_instruction.Remove (oldInstruction);
 
 			block = new BasicBlock (++_next_block_id, type, instructions);
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
+
+			AdjustJumpTargets (oldInstruction, instructions [0]);
+		}
+
+		public void AdjustJumpTargets (Instruction oldTarget, Instruction newTarget)
+		{
+			foreach (var instruction in Body.Instructions) {
+				if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
+				    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
+					continue;
+				if (instruction.Operand != oldTarget)
+					continue;
+				instruction.Operand = newTarget ?? throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");
+			}
 		}
 
 		public bool SplitBlockAt (ref BasicBlock block, int position)
@@ -141,11 +158,19 @@ namespace Mono.Linker.Conditionals
 		{
 			Context.LogMessage ($"{block}:");
 			foreach (var instruction in block.Instructions) {
-				if (instruction.OpCode.Code == Code.Ldstr)
-					Context.LogMessage ($"  {instruction.OpCode}");
-				else
+				if (instruction.OpCode.Code == Code.Ldstr) {
+					var text = (string)instruction.Operand;
+					text = '"' + EscapeString (text) + '"';
+					Context.LogMessage ($"  IL_{instruction.Offset:x4}: {instruction.OpCode} {text}");
+				} else {
 					Context.LogMessage ($"  {instruction}");
+				}
 			}
+		}
+
+		string EscapeString (string text)
+		{
+			return text.Replace ("{", "{{").Replace ("}", "}}");
 		}
 
 		public void RemoveInstruction (BasicBlock block, Instruction instruction)
@@ -164,6 +189,7 @@ namespace Mono.Linker.Conditionals
 			var instruction = block.Instructions [position];
 			Body.Instructions.Remove (instruction);
 			block.RemoveInstructionAt (position);
+			instruction.Offset = -1;
 		}
 
 		public void InsertInstructionAt (ref BasicBlock block, int position, Instruction instruction)
@@ -176,12 +202,10 @@ namespace Mono.Linker.Conditionals
 				var index = Body.Instructions.IndexOf (block.LastInstruction);
 				Body.Instructions.Insert (index + 1, instruction);
 				block.AddInstruction (instruction);
-				return;
 			} else if (position > 0) {
 				var index = Body.Instructions.IndexOf (block.Instructions [position]);
 				Body.Instructions.Insert (index, instruction);
 				block.InsertAt (position, instruction);
-				return;
 			}
 
 			/*
@@ -198,6 +222,7 @@ namespace Mono.Linker.Conditionals
 		{
 			var index = Body.Instructions.IndexOf (block.Instructions [position]);
 			Body.Instructions [index] = instruction;
+			instruction.Offset = -1;
 
 			if (position > 0) {
 				block.RemoveInstructionAt (position);
@@ -218,10 +243,14 @@ namespace Mono.Linker.Conditionals
 
 		public void DeleteBlock (BasicBlock block)
 		{
-			var startIndex = Body.Instructions.IndexOf (block.FirstInstruction);
-			for (int i = 0; i < block.Count; i++)
+			var firstInstruction = block.FirstInstruction;
+			var startIndex = Body.Instructions.IndexOf (firstInstruction);
+			for (int i = 0; i < block.Count; i++) {
+				Body.Instructions [startIndex].Offset = -1;
 				Body.Instructions.RemoveAt (startIndex);
+			}
 			RemoveBlock (block);
+			AdjustJumpTargets (firstInstruction, null);
 		}
 	}
 }
