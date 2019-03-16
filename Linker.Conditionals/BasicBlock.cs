@@ -29,7 +29,7 @@ using Mono.Cecil.Cil;
 
 namespace Mono.Linker.Conditionals
 {
-	public class BasicBlock
+	public partial class BasicBlock
 	{
 		public int Index {
 			get;
@@ -40,6 +40,10 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public BranchType BranchType {
+			get; set;
+		}
+
+		public LinkerConditional LinkerConditional {
 			get; set;
 		}
 
@@ -140,16 +144,6 @@ namespace Mono.Linker.Conditionals
 		public override string ToString ()
 		{
 			return $"[BB {Index}{((Type != BlockType.Normal ? $" ({Type})" : ""))}: {FirstInstruction.OpCode.Code}]";
-		}
-
-		public enum BlockType
-		{
-			Normal,
-			Branch,
-			Switch,
-			SimpleWeakInstanceOf,
-			WeakInstanceOf,
-			IsFeatureSupported
 		}
 	}
 }

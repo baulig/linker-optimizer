@@ -103,6 +103,9 @@ namespace Mono.Linker.Conditionals
 						Context.LogMessage ($"    NEW BB: {bb}");
 					}
 				} else if (BlockList.TryGetBlock (instruction, out var newBB)) {
+					if (bb.BranchType != BranchType.Unassigned)
+						throw new MartinTestException ();
+					bb.BranchType = BranchType.None;
 					bb = newBB;
 					Context.LogMessage ($"    KNOWN BB: {bb}");
 				} else {
@@ -112,16 +115,11 @@ namespace Mono.Linker.Conditionals
 				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
-					if (bb.Type == BasicBlock.BlockType.Normal)
-						bb.Type = BasicBlock.BlockType.Branch;
 					CloseBlock (ref bb, instruction, (Instruction)instruction.Operand);
 					continue;
 				case OperandType.InlineSwitch:
-					if (bb.Type == BasicBlock.BlockType.Normal)
-						bb.Type = BasicBlock.BlockType.Switch;
-					foreach (var label in (Instruction[])instruction.Operand) {
+					foreach (var label in (Instruction[])instruction.Operand)
 						CloseBlock (ref bb, BranchType.Switch, label);
-					}
 					continue;
 				case OperandType.InlineMethod:
 					HandleCall (ref bb, ref i, instruction);
