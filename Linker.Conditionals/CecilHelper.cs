@@ -135,5 +135,27 @@ namespace Mono.Linker.Conditionals
 				return false;
 			}
 		}
+
+		public static bool IsBrtrue (Instruction instruction)
+		{
+			switch (instruction.OpCode.Code) {
+			case Code.Brtrue:
+			case Code.Brtrue_S:
+				return true;
+			default:
+				return false;
+			}
+		}
+
+		public static bool IsBrfalse (Instruction instruction)
+		{
+			switch (instruction.OpCode.Code) {
+			case Code.Brfalse:
+			case Code.Brfalse_S:
+				return true;
+			default:
+				return false;
+			}
+		}
 	}
 }
