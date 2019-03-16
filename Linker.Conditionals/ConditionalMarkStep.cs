@@ -55,7 +55,7 @@ namespace Mono.Linker.Conditionals
 				MartinContext.LogDebug ($"  CONDITIONAL METHOD: {conditional}");
 				var scanner = _block_scanner_by_method [conditional];
 				scanner.RewriteConditionals ();
-				ScanBody (scanner, conditional.Body, true);
+				base.MarkMethodBody (conditional.Body);
 			}
 		}
 
@@ -84,54 +84,6 @@ namespace Mono.Linker.Conditionals
 
 			_conditional_methods.Enqueue (body.Method);
 			_block_scanner_by_method.Add (body.Method, scanner);
-
-			ScanBody (scanner, body, false);
-		}
-
-		void ScanBody (BasicBlockScanner scanner, MethodBody body, bool parseConditionals)
-		{
-			foreach (VariableDefinition var in body.Variables)
-				MarkType (var.VariableType);
-
-			foreach (ExceptionHandler eh in body.ExceptionHandlers)
-				if (eh.HandlerType == ExceptionHandlerType.Catch)
-					MarkType (eh.CatchType);
-
-			foreach (var block in scanner.BasicBlocks) {
-				switch (block.Type) {
-				case BasicBlock.BlockType.WeakInstanceOf:
-				case BasicBlock.BlockType.SimpleWeakInstanceOf:
-				case BasicBlock.BlockType.IsFeatureSupported:
-					if (!parseConditionals)
-						continue;
-					break;
-				}
-
-				MarkBasicBlock (block);
-			}
-
-			MarkInterfacesNeededByBodyStack (body);
-
-			MarkThingsUsedViaReflection (body);
-		}
-
-		void MarkBasicBlock (BasicBlock block)
-		{
-			foreach (Instruction instruction in block.Instructions)
-				MarkInstruction (instruction);
-		}
-
-		void MarkInterfacesNeededByBodyStack (MethodBody body)
-		{
-			// If a type could be on the stack in the body and an interface it implements could be on the stack on the body
-			// then we need to mark that interface implementation.  When this occurs it is not safe to remove the interface implementation from the type
-			// even if the type is never instantiated
-			var implementations = MethodBodyScanner.GetReferencedInterfaces (_context.Annotations, body);
-			if (implementations == null)
-				return;
-
-			foreach (var implementation in implementations)
-				MarkInterfaceImplementation (implementation);
 		}
 
 		protected override TypeDefinition MarkType (TypeReference reference)
