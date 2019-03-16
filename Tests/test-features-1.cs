@@ -13,7 +13,7 @@ namespace Martin.LinkerTest
 			Assert (!supported);
 
 			supported = RunFeature3 ();
-			Assert (supported);
+			Assert (!supported);
 		}
 
 		static void Assert (bool condition, [CallerMemberName] string caller = null)
