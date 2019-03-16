@@ -73,12 +73,6 @@ namespace Mono.Linker.Conditionals
 		{
 			Context.LogMessage ($"SCAN: {Method}");
 
-			if (Method.Body.ExceptionHandlers.Count > 0) {
-				if (!ThrowOnError)
-					return false;
-				throw new NotSupportedException ($"We don't support exception handlers yet: {Method.FullName}");
-			}
-
 			BasicBlock bb = null;
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
@@ -653,6 +647,7 @@ namespace Mono.Linker.Conditionals
 					break;
 				case Code.Ret:
 				case Code.Throw:
+				case Code.Rethrow:
 					markNextBlock = false;
 					continue;
 				default:

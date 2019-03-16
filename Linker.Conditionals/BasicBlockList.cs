@@ -95,7 +95,7 @@ namespace Mono.Linker.Conditionals
 					for (int i = 0; i < labels.Length; i++) {
 						if (labels [i] != oldTarget)
 							continue;
-						labels [i] = newTarget ?? throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");
+						labels [i] = newTarget ?? throw CannotRemoveTarget;
 					}
 					continue;
 				}
@@ -104,9 +104,24 @@ namespace Mono.Linker.Conditionals
 					continue;
 				if (instruction.Operand != oldTarget)
 					continue;
-				instruction.Operand = newTarget ?? throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");
+				instruction.Operand = newTarget ?? throw CannotRemoveTarget;
+			}
+
+			foreach (var handler in Body.ExceptionHandlers) {
+				if (handler.TryStart == oldTarget)
+					handler.TryStart = newTarget ?? throw CannotRemoveTarget;
+				if (handler.HandlerEnd == oldTarget)
+					handler.HandlerEnd = newTarget ?? throw CannotRemoveTarget;
+				if (handler.HandlerStart == oldTarget)
+					handler.HandlerStart = newTarget ?? throw CannotRemoveTarget;
+				if (handler.HandlerEnd == oldTarget)
+					handler.HandlerEnd = newTarget ?? throw CannotRemoveTarget;
+				if (handler.FilterStart == oldTarget)
+					handler.FilterStart = newTarget ?? throw CannotRemoveTarget;
 			}
 		}
+
+		Exception CannotRemoveTarget => throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");
 
 		public bool SplitBlockAt (ref BasicBlock block, int position)
 		{
