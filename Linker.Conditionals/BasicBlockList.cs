@@ -90,6 +90,15 @@ namespace Mono.Linker.Conditionals
 		public void AdjustJumpTargets (Instruction oldTarget, Instruction newTarget)
 		{
 			foreach (var instruction in Body.Instructions) {
+				if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {
+					var labels = (Instruction [])instruction.Operand;
+					for (int i = 0; i < labels.Length; i++) {
+						if (labels [i] != oldTarget)
+							continue;
+						labels [i] = newTarget ?? throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");
+					}
+					continue;
+				}
 				if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
 				    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
 					continue;

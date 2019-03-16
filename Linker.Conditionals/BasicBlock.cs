@@ -140,6 +140,7 @@ namespace Mono.Linker.Conditionals
 		{
 			Normal,
 			Branch,
+			Switch,
 			SimpleWeakInstanceOf,
 			WeakInstanceOf,
 			IsFeatureSupported

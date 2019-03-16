@@ -22,7 +22,8 @@ TEST_CASES := \
 	test-weak-instances-3.cs \
 	test-features-1.cs \
 	test-features-2.cs \
-	test-features-3.cs
+	test-features-3.cs \
+	test-features-4.cs
 
 compile-tests: $(TEST_CASES:.cs=.exe)
 

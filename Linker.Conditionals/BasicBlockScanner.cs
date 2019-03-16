@@ -111,9 +111,16 @@ namespace Mono.Linker.Conditionals
 					}
 					continue;
 				case OperandType.InlineSwitch:
-					if (!ThrowOnError)
-						return false;
-					throw new NotSupportedException ($"We don't support `switch` statements yet: {Method.FullName}");
+					if (bb.Type == BasicBlock.BlockType.Normal)
+						bb.Type = BasicBlock.BlockType.Switch;
+					foreach (var label in (Instruction[])instruction.Operand) {
+						if (!BlockList.HasBlock (label)) {
+							Context.LogMessage ($"    SWITCH LABEL BB: {CecilHelper.Format (label)}");
+							BlockList.NewBlock (label);
+							bb = null;
+						}
+					}
+					continue;
 				case OperandType.InlineMethod:
 					HandleCall (ref bb, ref i, instruction);
 					continue;
@@ -313,6 +320,7 @@ namespace Mono.Linker.Conditionals
 				switch (block.Type) {
 				case BasicBlock.BlockType.Normal:
 				case BasicBlock.BlockType.Branch:
+				case BasicBlock.BlockType.Switch:
 					continue;
 				case BasicBlock.BlockType.WeakInstanceOf:
 				case BasicBlock.BlockType.SimpleWeakInstanceOf:
@@ -622,6 +630,14 @@ namespace Mono.Linker.Conditionals
 					marked.Add (block);
 
 				if (block.Type == BasicBlock.BlockType.Normal) {
+					markNextBlock = true;
+					continue;
+				}
+
+				if (block.Type == BasicBlock.BlockType.Switch) {
+					foreach (var label in (Instruction[])block.LastInstruction.Operand) {
+						marked.Add (BlockList.GetBlock (label));
+					}
 					markNextBlock = true;
 					continue;
 				}
