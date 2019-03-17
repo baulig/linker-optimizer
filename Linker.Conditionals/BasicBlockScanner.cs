@@ -331,7 +331,7 @@ namespace Mono.Linker.Conditionals
 			var type = CecilHelper.GetBranchType (next);
 
 			if (type == BranchType.None) {
-				CloseBlock (ref bb, BranchType.Feature);
+				CloseBlock (ref bb, BranchType.None);
 				return;
 			}
 

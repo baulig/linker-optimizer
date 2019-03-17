@@ -57,7 +57,7 @@ namespace Mono.Linker.Conditionals
 			case BranchType.True:
 				RewriteBranch (ref block, stackDepth, condition);
 				break;
-			case BranchType.Feature:
+			case BranchType.None:
 				RewriteAsConstant (ref block, stackDepth, condition);
 				break;
 			case BranchType.Return:
