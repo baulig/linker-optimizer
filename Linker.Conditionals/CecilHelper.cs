@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -219,6 +220,39 @@ namespace Mono.Linker.Conditionals
 			default:
 				return BranchType.None;
 			}
+		}
+
+		public static IEnumerable<Instruction> GetAllTargets (MethodBody body)
+		{
+			var targets = new HashSet<Instruction> ();
+
+			foreach (var instruction in body.Instructions) {
+				switch (instruction.OpCode.OperandType) {
+				case OperandType.InlineBrTarget:
+				case OperandType.ShortInlineBrTarget:
+					targets.Add ((Instruction)instruction.Operand);
+					break;
+				case OperandType.InlineSwitch:
+					foreach (var label in (Instruction [])instruction.Operand)
+						targets.Add (label);
+					break;
+				}
+			}
+
+			foreach (var handler in body.ExceptionHandlers) {
+				if (handler.TryStart != null)
+					targets.Add (handler.TryStart);
+				if (handler.TryEnd != null)
+					targets.Add (handler.TryEnd);
+				if (handler.HandlerStart != null)
+					targets.Add (handler.HandlerStart);
+				if (handler.HandlerEnd != null)
+					targets.Add (handler.HandlerEnd);
+				if (handler.FilterStart != null)
+					targets.Add (handler.FilterStart);
+			}
+
+			return targets;
 		}
 
 		// Unused template listing all possible opcode types.

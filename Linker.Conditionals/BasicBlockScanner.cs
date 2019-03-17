@@ -85,6 +85,8 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
+			throw new MartinTestException ();
+
 			var index = targetBlock.IndexOf (target);
 			Context.LogMessage ($"EXISTING TARGET: {targetBlock} {index} {target}");
 
@@ -97,6 +99,11 @@ namespace Mono.Linker.Conditionals
 
 			BasicBlock bb = null;
 			var block_by_ins = new Dictionary<Instruction, BasicBlock> ();
+
+			var allTargets = CecilHelper.GetAllTargets (Method.Body);
+			foreach (var instruction in allTargets) {
+				BlockList.NewBlock (instruction);
+			}
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
 				var instruction = Method.Body.Instructions [i];
