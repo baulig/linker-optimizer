@@ -167,8 +167,10 @@ namespace Mono.Linker.Conditionals
 			}
 
 			_block_list.Sort ((first, second) => first.FirstInstruction.Offset.CompareTo (second.FirstInstruction.Offset));
-		}
 
+			for (int i = 0; i < _block_list.Count; i++)
+				_block_list [i].Index = i;
+		}
 
 		public void Dump ()
 		{

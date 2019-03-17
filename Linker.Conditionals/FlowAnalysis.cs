@@ -50,7 +50,8 @@ namespace Mono.Linker.Conditionals
 		protected AssemblyDefinition Assembly => Method.DeclaringType.Module.Assembly;
 
 		Dictionary<BasicBlock, Reachability> _reachability_status;
-		Dictionary<BasicBlock, BlockEntry> _block_list;
+		Dictionary<BasicBlock, BlockEntry> _entry_by_block;
+		List<BlockEntry> _block_list;
 
 		void UpdateStatus (ref Reachability current, Reachability reachability)
 		{
@@ -82,11 +83,12 @@ namespace Mono.Linker.Conditionals
 			var block = BlockList.GetBlock (target);
 			if (block == entry.Block)
 				return;
-			if (_block_list.TryGetValue (block, out var targetEntry))
+			if (_entry_by_block.TryGetValue (block, out var targetEntry))
 				targetEntry.AddOrigin (entry.Block, reachability);
 			else {
 				targetEntry = new BlockEntry (block, reachability);
-				_block_list.Add (block, targetEntry);
+				_entry_by_block.Add (block, targetEntry);
+				_block_list.Add (targetEntry);
 			}
 		}
 
@@ -95,8 +97,9 @@ namespace Mono.Linker.Conditionals
 			if (Method.Body.HasExceptionHandlers)
 				return;
 
-			_reachability_status = new Dictionary<BasicBlock, Reachability> ();
-			_block_list = new Dictionary<BasicBlock, BlockEntry> ();
+			_entry_by_block = new Dictionary<BasicBlock, BlockEntry> ();
+			_block_list = new List<BlockEntry> ();
+
 			var reachability = Reachability.Normal;
 			Origin current = null;
 
@@ -107,9 +110,10 @@ namespace Mono.Linker.Conditionals
 			foreach (var block in BlockList.Blocks) {
 				Context.LogMessage ($"ANALYZE #1: {block} {reachability}");
 
-				if (!_block_list.TryGetValue (block, out var entry)) {
+				if (!_entry_by_block.TryGetValue (block, out var entry)) {
 					entry = new BlockEntry (block, reachability);
-					_block_list.Add (block, entry);
+					_entry_by_block.Add (block, entry);
+					_block_list.Add (entry);
 				}
 
 				if (current != null) {
@@ -147,38 +151,39 @@ namespace Mono.Linker.Conditionals
 
 			Context.LogMessage ($"ANALYZE #3: {Method.Name}");
 
-			var entries = _block_list.Values.ToArray ();
-			for (int i = 0; i < entries.Length; i++) {
-				Context.LogMessage ($"    {i} {entries[i]}");
+			_block_list.Sort ((first, second) => first.Block.Index.CompareTo (second.Block.Index));
 
-				foreach (var origin in entries[i].Origins) {
-					var originEntry = _block_list [origin.Block];
+			for (int i = 0; i < _block_list.Count; i++) {
+				var entry = _block_list [i];
+				Context.LogMessage ($"    {i} {entry}");
+
+				foreach (var origin in entry.Origins) {
+					var originEntry = _entry_by_block [origin.Block];
 					var effectiveOrigin = And (originEntry.Reachability, origin.Reachability);
 					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
 					if (originEntry.Reachability == Reachability.Dead)
 						continue;
-					switch (entries [i].Reachability) {
+					switch (entry.Reachability) {
 					case Reachability.Dead:
 						throw new MartinTestException ();
 					case Reachability.Unreachable:
-						entries [i].Reachability = effectiveOrigin;
+						entry.Reachability = effectiveOrigin;
 						break;
 					case Reachability.Conditional:
 						if (effectiveOrigin == Reachability.Normal)
-							entries [i].Reachability = Reachability.Normal;
+							entry.Reachability = Reachability.Normal;
 						break;
 					}
 				}
 
-				if (entries [i].Reachability == Reachability.Unreachable)
-					entries [i].Reachability = Reachability.Dead;
+				if (entry.Reachability == Reachability.Unreachable)
+					entry.Reachability = Reachability.Dead;
 			}
 
 			Context.LogMessage ($"ANALYZE #4");
 
-			entries = _block_list.Values.ToArray ();
-			for (int i = 0; i < entries.Length; i++) {
-				Context.LogMessage ($"    {i} {entries [i]}");
+			for (int i = 0; i < _block_list.Count; i++) {
+				Context.LogMessage ($"    {i} {_block_list [i]}");
 
 			}
 
@@ -187,6 +192,68 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"FLOW ANALYSIS COMPLETE");
 
 			return;
+		}
+
+		public bool RemoveDeadBlocks ()
+		{
+			var removedDeadBlocks = false;
+			for (int i = 0; i < _block_list.Count; i++) {
+				if (_block_list [i].Reachability != Reachability.Dead)
+					continue;
+
+				Context.LogMessage ($"  DEAD BLOCK: {_block_list [i]}");
+
+				var block = _block_list [i].Block;
+				BlockList.DeleteBlock (ref block);
+
+				removedDeadBlocks = true;
+			}
+
+			if (removedDeadBlocks) {
+				BlockList.ComputeOffsets ();
+
+				BlockList.Dump ();
+			}
+
+			return removedDeadBlocks;
+		}
+
+		public bool RemoveDeadJumps ()
+		{
+			var removedDeadBlocks = false;
+
+			for (int i = 0; i < BlockList.Count - 1; i++) {
+				if (BlockList [i].BranchType != BranchType.Jump)
+					continue;
+
+				var lastInstruction = BlockList [i].LastInstruction;
+				var nextInstruction = BlockList [i + 1].FirstInstruction;
+				if (lastInstruction.OpCode.Code != Code.Br && lastInstruction.OpCode.Code != Code.Br_S)
+					continue;
+				if ((Instruction)lastInstruction.Operand != nextInstruction)
+					continue;
+
+				Context.LogMessage ($"ELIMINATE DEAD JUMP: {lastInstruction}");
+
+				BlockList.AdjustJumpTargets (lastInstruction, nextInstruction);
+
+				removedDeadBlocks = true;
+
+				if (BlockList [i].Count == 1) {
+					var block = BlockList [i--];
+					BlockList.DeleteBlock (ref block);
+				} else {
+					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
+				}
+			}
+
+			if (removedDeadBlocks) {
+				BlockList.ComputeOffsets ();
+
+				BlockList.Dump ();
+			}
+
+			return removedDeadBlocks;
 		}
 
 		enum Reachability

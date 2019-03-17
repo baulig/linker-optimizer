@@ -354,6 +354,7 @@ namespace Mono.Linker.Conditionals
 
 			var flow = new FlowAnalysis (BlockList);
 			flow.Analyze ();
+			return flow.RemoveDeadBlocks ();
 
 			BlockList.Dump ();
 

@@ -32,7 +32,7 @@ namespace Mono.Linker.Conditionals
 	public class BasicBlock
 	{
 		public int Index {
-			get;
+			get; set;
 		}
 
 		public BranchType BranchType {
