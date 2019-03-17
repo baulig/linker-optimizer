@@ -10,7 +10,14 @@
 		.method public static hidebysig default void Main ()  cil managed 
 		{
 			.entrypoint
-			call void class Martin.LinkerTest.TestConditionals::RunFeature1 ()
+			call bool class Martin.LinkerTest.TestConditionals::RunFeature1 ()
+			brtrue feature2
+
+			ldstr "I LIVE ON THE MOON!"
+			newobj instance void class [mscorlib]System.InvalidTimeZoneException::'.ctor'(string)
+			throw
+
+		feature2:
 			call void class Martin.LinkerTest.TestConditionals::RunFeature2 ()
 			call void class Martin.LinkerTest.TestConditionals::RunFeature3 ()
 			call void class Martin.LinkerTest.TestConditionals::RunFeature4 ()
@@ -18,9 +25,9 @@
 			ret 
 		}
 
-		.method private static hidebysig default void RunFeature1 ()  cil managed 
+		.method private static hidebysig default bool RunFeature1 ()  cil managed 
 		{
-			.locals init (int32 test)
+			.locals init (int32 test, bool result)
 
 			ldc.i4.2
 			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
@@ -36,9 +43,12 @@
 			sub
 			dup
 			stloc.0
+			ldc.i4.1
+			stloc.1
 			brtrue loop
 
 		return:
+			ldloc.1
 			ret
 		}
 
