@@ -35,7 +35,7 @@ ILTEST_CASES := \
 
 compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe)
 
-run: $(TEST_CASES:.cs=) build
+run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 
 test-%.exe: test-%.cs $(CORLIB_SOURCES)
 	$(TESTS_COMPILER) /optimize /out:$@ $^

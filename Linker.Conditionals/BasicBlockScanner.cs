@@ -69,36 +69,11 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => BlockList.Blocks;
 
-		void XCloseBlock (ref BasicBlock block, BranchType branch, Instruction target)
-		{
-			if (!BlockList.HasBlock (target))
-				BlockList.NewBlock (target);
-			block = null;
-		}
-
-		void MarkTargetBlock (Dictionary<Instruction, BasicBlock> dict, Instruction target)
-		{
-			if (BlockList.HasBlock (target))
-				return;
-			if (!dict.TryGetValue (target, out var targetBlock)) {
-				BlockList.NewBlock (target);
-				return;
-			}
-
-			throw new MartinTestException ();
-
-			var index = targetBlock.IndexOf (target);
-			Context.LogMessage ($"EXISTING TARGET: {targetBlock} {index} {target}");
-
-			BlockList.SplitBlockAt (ref targetBlock, index);
-		}
-
 		bool Scan ()
 		{
 			Context.LogMessage ($"SCAN: {Method}");
 
 			BasicBlock bb = null;
-			var block_by_ins = new Dictionary<Instruction, BasicBlock> ();
 
 			var allTargets = CecilHelper.GetAllTargets (Method.Body);
 			foreach (var instruction in allTargets) {
@@ -124,8 +99,6 @@ namespace Mono.Linker.Conditionals
 					bb.AddInstruction (instruction);
 				}
 
-				block_by_ins.Add (instruction, bb);
-
 				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {
 					Context.LogMessage ($"    CALL: {CecilHelper.Format (instruction)}");
 					HandleCall (ref bb, ref i, instruction);
@@ -141,16 +114,7 @@ namespace Mono.Linker.Conditionals
 				case BranchType.False:
 				case BranchType.True:
 				case BranchType.Jump:
-					MarkTargetBlock (block_by_ins, (Instruction)instruction.Operand);
-					bb = null;
-					break;
-
 				case BranchType.Switch:
-					foreach (var label in (Instruction [])instruction.Operand)
-						MarkTargetBlock (block_by_ins, label);
-					bb = null;
-					break;
-
 				case BranchType.Exit:
 				case BranchType.Return:
 					bb = null;
