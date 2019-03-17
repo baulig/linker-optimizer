@@ -69,7 +69,7 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => BlockList.Blocks;
 
-		void CloseBlock (ref BasicBlock block, BranchType branch, Instruction target)
+		void XCloseBlock (ref BasicBlock block, BranchType branch, Instruction target)
 		{
 			if (!BlockList.HasBlock (target))
 				BlockList.NewBlock (target);
@@ -323,20 +323,15 @@ namespace Mono.Linker.Conditionals
 			var next = Method.Body.Instructions [index + 1];
 			var type = CecilHelper.GetBranchType (next);
 
-			if (type == BranchType.None) {
-				bb = null;
-				return;
-			}
-
-			bb.AddInstruction (next);
-			index++;
-
 			switch (type) {
+			case BranchType.None:
+				bb = null;
+				break;
 			case BranchType.False:
 			case BranchType.True:
-				CloseBlock (ref bb, type, (Instruction)next.Operand);
-				break;
 			case BranchType.Return:
+				bb.AddInstruction (next);
+				index++;
 				bb = null;
 				break;
 			default:
