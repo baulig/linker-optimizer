@@ -13,6 +13,7 @@ TEST_EXEC = MONO_PATH=$(LINKER_OUTPUT) $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-a
 TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(topdir)/class/lib/$(PROFILE_DIRECTORY)/mscorlib.dll
 
 CORLIB_SOURCES = $(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs
+IL_CORLIB_SOURCES = il-support.il
 
 CLEAN_FILES += *.exe *.dll *.pdb
 
@@ -29,6 +30,9 @@ TEST_CASES := \
 	test-features-6.cs \
 	test-conditionals-1.cs
 
+ILTEST_CASES := \
+	iltest-conditionals-1.il
+
 compile-tests: $(TEST_CASES:.cs=.exe)
 
 run: $(TEST_CASES:.cs=) build
@@ -36,7 +40,23 @@ run: $(TEST_CASES:.cs=) build
 test-%.exe: test-%.cs $(CORLIB_SOURCES)
 	$(TESTS_COMPILER) /optimize /out:$@ $^
 
+iltest-%.exe: iltest-%.il $(IL_CORLIB_SOURCES)
+	$(ILASM) /out:$@ $^
+
 test-%: test-%.exe build
+	@echo RUN TEST $@
+	@rm -rf $(LINKER_OUTPUT)
+	@mkdir $(LINKER_OUTPUT)
+	$(LINKER_DEFAULT) --dump-dependencies --martin -a $@
+	gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
+	monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
+	monodis $(LINKER_OUTPUT)/$(@F).exe > $(LINKER_OUTPUT)/$(@F).il
+	monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
+	ls -lR $(LINKER_OUTPUT)
+	(cd $(LINKER_OUTPUT); MONO_PATH=. $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot ./$(@F).exe)
+	#@rm -rf $(LINKER_OUTPUT)
+
+iltest-%: iltest-%.exe build
 	@echo RUN TEST $@
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
