@@ -352,6 +352,9 @@ namespace Mono.Linker.Conditionals
 		{
 			Context.LogMessage ($"ELIMINATING DEAD BLOCKS");
 
+			var flow = new FlowAnalysis (BlockList);
+			flow.Analyze ();
+
 			BlockList.Dump ();
 
 			var markNextBlock = true;
