@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -124,12 +125,14 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"ANALYZE: {Method.Name}");
 
 			foreach (var block in BlockList.Blocks) {
+				Context.LogMessage ($"ANALYZE #1: {block} {reachability}");
+
 				if (!_block_list.TryGetValue (block, out var entry)) {
 					entry = new BlockEntry (block, reachability);
 					_block_list.Add (block, entry);
 				}
 
-				Context.LogMessage ($"ANALYZE #1: {entry} {reachability}");
+				Context.LogMessage ($"ANALYZE #2: {entry} {reachability}");
 				BlockList.Dump (block);
 
 				switch (block.BranchType) {
@@ -155,7 +158,38 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			Context.LogMessage ($"ANALYZE #2: {Method.Name}");
+			Context.LogMessage ($"ANALYZE #3: {Method.Name}");
+
+			var entries = _block_list.Values.ToArray ();
+			for (int i = 0; i < entries.Length; i++) {
+				Context.LogMessage ($"    {i} {entries[i]}");
+
+				foreach (var origin in entries[i].Origins) {
+					var originEntry = _block_list [origin.Block];
+					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry}");
+					if (originEntry.Reachability == Reachability.Dead)
+						continue;
+					if (entries [i].Reachability == Reachability.Unreachable)
+						entries [i].Reachability = originEntry.Reachability;
+				}
+
+				if (entries [i].Reachability == Reachability.Unreachable)
+					entries [i].Reachability = Reachability.Dead;
+			}
+
+			Context.LogMessage ($"ANALYZE #4");
+
+			entries = _block_list.Values.ToArray ();
+			for (int i = 0; i < entries.Length; i++) {
+				Context.LogMessage ($"    {i} {entries [i]}");
+
+			}
+
+			Context.LogMessage ($"ANALYZE #5");
+
+			BlockList.Dump ();
+
+			return;
 
 			foreach (var block in BlockList.Blocks) {
 				Context.LogMessage ($"ANALYZE #2: {block} {_reachability_status.ContainsKey (block)} {reachability}");
@@ -282,7 +316,7 @@ namespace Mono.Linker.Conditionals
 			}
 
 			public Reachability Reachability {
-				get;
+				get; set;
 			}
 
 			public List<Origin> Origins {
