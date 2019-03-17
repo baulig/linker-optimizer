@@ -52,40 +52,6 @@ namespace Mono.Linker.Conditionals
 		Dictionary<BasicBlock, Reachability> _reachability_status;
 		Dictionary<BasicBlock, BlockEntry> _block_list;
 
-		void MarkBlock (Reachability reachability, Instruction instruction)
-		{
-			var block = BlockList.GetBlock (instruction);
-			MarkBlock (reachability, block);
-		}
-
-		void MarkBlock (Reachability reachability, BasicBlock block)
-		{
-			if (!_reachability_status.TryGetValue (block, out var status)) {
-				_reachability_status.Add (block, reachability);
-				return;
-			}
-		}
-
-		void CheckCurrentBlock (ref Reachability current, BasicBlock block)
-		{
-			if (!_reachability_status.TryGetValue (block, out var status)) {
-				_reachability_status.Add (block, current);
-				return;
-			}
-
-			// UpdateStatus (ref current, status);
-			switch (current) {
-			case Reachability.Unreachable:
-			case Reachability.Dead:
-				current = status;
-				break;
-			case Reachability.Conditional:
-				if (status == Reachability.Normal)
-					current = status;
-				break;
-			}
-		}
-
 		void UpdateStatus (ref Reachability current, Reachability reachability)
 		{
 			switch (reachability) {
@@ -114,6 +80,8 @@ namespace Mono.Linker.Conditionals
 		void MarkBlock (BlockEntry entry, Reachability reachability, Instruction target)
 		{
 			var block = BlockList.GetBlock (target);
+			if (block == entry.Block)
+				return;
 			if (_block_list.TryGetValue (block, out var targetEntry))
 				targetEntry.AddOrigin (entry.Block, reachability);
 			else {
@@ -216,94 +184,9 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.Dump ();
 
-			return;
-
-			foreach (var block in BlockList.Blocks) {
-				Context.LogMessage ($"ANALYZE #2: {block} {_reachability_status.ContainsKey (block)} {reachability}");
-				BlockList.Dump (block);
-
-				if (_reachability_status.TryGetValue (block, out var status)) {
-					Context.LogMessage ($"ANALYZE #3: {status}");
-				}
-
-//				CheckCurrentBlock (ref reachability, block);
-
-				switch (block.BranchType) {
-				case BranchType.None:
-					break;
-				case BranchType.Conditional:
-				case BranchType.False:
-				case BranchType.True:
-					// MarkBlock (Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
-					UpdateStatus (ref reachability, Reachability.Conditional);
-					break;
-				case BranchType.Exit:
-				case BranchType.Return:
-					UpdateStatus (ref reachability, Reachability.Unreachable);
-					break;
-				case BranchType.Jump:
-					// MarkBlock (Reachability.Normal, (Instruction)block.LastInstruction.Operand);
-					UpdateStatus (ref reachability, Reachability.Unreachable);
-					break;
-				case BranchType.Switch:
-					// foreach (var label in (Instruction [])block.LastInstruction.Operand)
-					//	MarkBlock (Reachability.Conditional, label);
-					UpdateStatus (ref reachability, Reachability.Conditional);
-					break;
-				}
-			}
-
 			Context.LogMessage ($"FLOW ANALYSIS COMPLETE");
 
 			return;
-
-			foreach (var block in BlockList.Blocks) {
-				MarkBlock (Reachability.Normal, block);
-
-				switch (block.BranchType) {
-				case BranchType.Conditional:
-				case BranchType.False:
-				case BranchType.True:
-					MarkBlock (Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
-					break;
-				case BranchType.Jump:
-					MarkBlock (Reachability.Normal, (Instruction)block.LastInstruction.Operand);
-					break;
-				case BranchType.Switch:
-					foreach (var label in (Instruction [])block.LastInstruction.Operand)
-						MarkBlock (Reachability.Conditional, label);
-					break;
-				}
-			}
-
-			foreach (var block in BlockList.Blocks) {
-				MarkBlock (Reachability.Normal, block);
-
-				switch (block.BranchType) {
-				case BranchType.None:
-					break;
-				case BranchType.Conditional:
-				case BranchType.False:
-				case BranchType.True:
-					MarkBlock (Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
-					UpdateStatus (ref reachability, Reachability.Conditional);
-					break;
-				case BranchType.Exit:
-				case BranchType.Return:
-					UpdateStatus (ref reachability, Reachability.Unreachable);
-					break;
-				case BranchType.Jump:
-					MarkBlock (Reachability.Normal, (Instruction)block.LastInstruction.Operand);
-					UpdateStatus (ref reachability, Reachability.Unreachable);
-					break;
-				case BranchType.Switch:
-					foreach (var label in (Instruction [])block.LastInstruction.Operand)
-						MarkBlock (Reachability.Conditional, label);
-					UpdateStatus (ref reachability, Reachability.Conditional);
-					break;
-				}
-			}
-
 		}
 
 		enum Reachability
