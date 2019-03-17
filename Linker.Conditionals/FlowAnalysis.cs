@@ -125,6 +125,9 @@ namespace Mono.Linker.Conditionals
 				BlockList.Dump (block);
 
 				switch (block.BranchType) {
+				case BranchType.None:
+					current = new Origin (block, Reachability.Normal);
+					break;
 				case BranchType.Conditional:
 				case BranchType.False:
 				case BranchType.True:
@@ -156,6 +159,7 @@ namespace Mono.Linker.Conditionals
 			for (int i = 0; i < _block_list.Count; i++) {
 				var entry = _block_list [i];
 				Context.LogMessage ($"    {i} {entry}");
+				bool foundOrigin = false;
 
 				foreach (var origin in entry.Origins) {
 					var originEntry = _entry_by_block [origin.Block];
@@ -163,6 +167,7 @@ namespace Mono.Linker.Conditionals
 					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
 					if (originEntry.Reachability == Reachability.Dead)
 						continue;
+					foundOrigin = true;
 					switch (entry.Reachability) {
 					case Reachability.Dead:
 						throw new MartinTestException ();
@@ -176,7 +181,7 @@ namespace Mono.Linker.Conditionals
 					}
 				}
 
-				if (entry.Reachability == Reachability.Unreachable)
+				if (!foundOrigin && entry.Reachability == Reachability.Unreachable)
 					entry.Reachability = Reachability.Dead;
 			}
 
@@ -196,6 +201,9 @@ namespace Mono.Linker.Conditionals
 
 		public bool RemoveDeadBlocks ()
 		{
+			if (Method.Body.HasExceptionHandlers)
+				return false;
+
 			var removedDeadBlocks = false;
 			for (int i = 0; i < _block_list.Count; i++) {
 				if (_block_list [i].Reachability != Reachability.Dead)
