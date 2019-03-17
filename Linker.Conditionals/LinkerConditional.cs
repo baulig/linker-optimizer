@@ -37,6 +37,10 @@ namespace Mono.Linker.Conditionals
 
 		protected MartinContext Context => BlockList.Context;
 
+		protected MethodDefinition Method => BlockList.Body.Method;
+
+		protected AssemblyDefinition Assembly => Method.DeclaringType.Module.Assembly;
+
 		protected LinkerConditional (BasicBlockList blocks)
 		{
 			BlockList = blocks;

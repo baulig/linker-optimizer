@@ -74,7 +74,9 @@ namespace Mono.Linker.Conditionals
 			 *
 			 */
 
-			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, InstanceType));
+			var reference = Assembly.MainModule.ImportReference (InstanceType);
+
+			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, reference));
 
 			block.BranchType = branchType;
 

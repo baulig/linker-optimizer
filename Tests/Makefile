@@ -20,12 +20,14 @@ TEST_CASES := \
 	test-weak-instances-1.cs \
 	test-weak-instances-2.cs \
 	test-weak-instances-3.cs \
+	test-weak-instances-4.cs \
 	test-features-1.cs \
 	test-features-2.cs \
 	test-features-3.cs \
 	test-features-4.cs \
 	test-features-5.cs \
-	test-features-6.cs
+	test-features-6.cs \
+	test-conditionals-1.cs
 
 compile-tests: $(TEST_CASES:.cs=.exe)
 
