@@ -49,6 +49,7 @@ namespace Mono.Linker.Conditionals
 		protected AssemblyDefinition Assembly => Method.DeclaringType.Module.Assembly;
 
 		Dictionary<BasicBlock, Reachability> _reachability_status;
+		Dictionary<BasicBlock, BlockEntry> _block_list;
 
 		void MarkBlock (Reachability reachability, Instruction instruction)
 		{
@@ -98,12 +99,24 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		void MarkBlock (BlockEntry entry, Reachability reachability, Instruction target)
+		{
+			var block = BlockList.GetBlock (target);
+			if (_block_list.TryGetValue (block, out var targetEntry))
+				targetEntry.AddOrigin (entry.Block, reachability);
+			else {
+				targetEntry = new BlockEntry (block, reachability);
+				_block_list.Add (block, targetEntry);
+			}
+		}
+
 		public void Analyze ()
 		{
 			if (Method.Body.HasExceptionHandlers)
 				return;
 
 			_reachability_status = new Dictionary<BasicBlock, Reachability> ();
+			_block_list = new Dictionary<BasicBlock, BlockEntry> ();
 			var reachability = Reachability.Normal;
 
 			BlockList.Dump ();
@@ -111,18 +124,19 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"ANALYZE: {Method.Name}");
 
 			foreach (var block in BlockList.Blocks) {
-				CheckCurrentBlock (ref reachability, block);
+				if (!_block_list.TryGetValue (block, out var entry)) {
+					entry = new BlockEntry (block, reachability);
+					_block_list.Add (block, entry);
+				}
 
-				Context.LogMessage ($"ANALYZE: {block} {_reachability_status.ContainsKey (block)} {reachability}");
+				Context.LogMessage ($"ANALYZE #1: {entry} {reachability}");
 				BlockList.Dump (block);
 
 				switch (block.BranchType) {
-				case BranchType.None:
-					break;
 				case BranchType.Conditional:
 				case BranchType.False:
 				case BranchType.True:
-					MarkBlock (Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
+					MarkBlock (entry, Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
 					UpdateStatus (ref reachability, Reachability.Conditional);
 					break;
 				case BranchType.Exit:
@@ -130,12 +144,49 @@ namespace Mono.Linker.Conditionals
 					UpdateStatus (ref reachability, Reachability.Unreachable);
 					break;
 				case BranchType.Jump:
-					MarkBlock (Reachability.Normal, (Instruction)block.LastInstruction.Operand);
+					MarkBlock (entry, Reachability.Normal, (Instruction)block.LastInstruction.Operand);
 					UpdateStatus (ref reachability, Reachability.Unreachable);
 					break;
 				case BranchType.Switch:
 					foreach (var label in (Instruction [])block.LastInstruction.Operand)
-						MarkBlock (Reachability.Conditional, label);
+						MarkBlock (entry, Reachability.Conditional, label);
+					UpdateStatus (ref reachability, Reachability.Conditional);
+					break;
+				}
+			}
+
+			Context.LogMessage ($"ANALYZE #2: {Method.Name}");
+
+			foreach (var block in BlockList.Blocks) {
+				Context.LogMessage ($"ANALYZE #2: {block} {_reachability_status.ContainsKey (block)} {reachability}");
+				BlockList.Dump (block);
+
+				if (_reachability_status.TryGetValue (block, out var status)) {
+					Context.LogMessage ($"ANALYZE #3: {status}");
+				}
+
+//				CheckCurrentBlock (ref reachability, block);
+
+				switch (block.BranchType) {
+				case BranchType.None:
+					break;
+				case BranchType.Conditional:
+				case BranchType.False:
+				case BranchType.True:
+					// MarkBlock (Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
+					UpdateStatus (ref reachability, Reachability.Conditional);
+					break;
+				case BranchType.Exit:
+				case BranchType.Return:
+					UpdateStatus (ref reachability, Reachability.Unreachable);
+					break;
+				case BranchType.Jump:
+					// MarkBlock (Reachability.Normal, (Instruction)block.LastInstruction.Operand);
+					UpdateStatus (ref reachability, Reachability.Unreachable);
+					break;
+				case BranchType.Switch:
+					// foreach (var label in (Instruction [])block.LastInstruction.Operand)
+					//	MarkBlock (Reachability.Conditional, label);
 					UpdateStatus (ref reachability, Reachability.Conditional);
 					break;
 				}
@@ -200,6 +251,60 @@ namespace Mono.Linker.Conditionals
 			Unreachable,
 			Conditional,
 			Dead
+		}
+
+		class Origin
+		{
+			public BasicBlock Block {
+				get;
+			}
+
+			public Reachability Reachability {
+				get;
+			}
+
+			public Origin (BasicBlock block, Reachability reachability)
+			{
+				Block = block;
+				Reachability = reachability;
+			}
+
+			public override string ToString ()
+			{
+				return $"[{Block}: {Reachability}]";
+			}
+		}
+
+		class BlockEntry
+		{
+			public BasicBlock Block {
+				get;
+			}
+
+			public Reachability Reachability {
+				get;
+			}
+
+			public List<Origin> Origins {
+				get;
+			}
+
+			public void AddOrigin (BasicBlock block, Reachability reachability)
+			{
+				Origins.Add (new Origin (block, reachability));
+			}
+
+			public BlockEntry (BasicBlock block, Reachability reachability)
+			{
+				Block = block;
+				Reachability = reachability;
+				Origins = new List<Origin> ();
+			}
+
+			public override string ToString ()
+			{
+				return $"[{Reachability}: {Block}]";
+			}
 		}
 	}
 }

@@ -12,6 +12,7 @@
 			.entrypoint
 			call void class Martin.LinkerTest.TestConditionals::RunFeature1 ()
 			call void class Martin.LinkerTest.TestConditionals::RunFeature2 ()
+			call void class Martin.LinkerTest.TestConditionals::RunFeature3 ()
 			ret 
 		}
 
@@ -63,5 +64,38 @@
 			ret
 		}
 
+		.method private static hidebysig default void RunFeature3 ()  cil managed 
+		{
+			.locals init (int32 V_0, int32 V_1)
+
+			ldc.i4.3
+			stloc.1
+
+			ldc.i4.2
+			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
+			brfalse return
+
+		conditional:
+			ldc.i4.4
+			stloc.0
+		
+		loop:
+			ldc.i4.0
+			stloc.1
+
+		loop1:
+			ldloc.0
+			ldc.i4.1
+			sub
+			dup
+			stloc.0
+			brtrue loop
+
+		return:
+			ldloc.1
+			brtrue loop
+
+			ret
+		}
 	}
 }
