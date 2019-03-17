@@ -31,9 +31,6 @@ namespace Mono.Linker.Conditionals
 		Normal,
 		Branch,
 		Switch,
-		LinkerConditional,
-		SimpleWeakInstanceOf,
-		WeakInstanceOf,
-		IsFeatureSupported
+		LinkerConditional
 	}
 }

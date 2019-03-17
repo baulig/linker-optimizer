@@ -217,12 +217,10 @@ namespace Mono.Linker.Conditionals
 			if (CecilHelper.IsSimpleLoad (argument)) {
 				if (bb.Instructions.Count > 2)
 					BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
-				bb.Type = BasicBlockType.SimpleWeakInstanceOf;
 				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [1]);
 				hasLoad = true;
 			} else {
 				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
-				bb.Type = BasicBlockType.WeakInstanceOf;
 				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [0]);
 				hasLoad = false;
 			}
@@ -365,15 +363,6 @@ namespace Mono.Linker.Conditionals
 				case BasicBlockType.Branch:
 				case BasicBlockType.Switch:
 					continue;
-				case BasicBlockType.WeakInstanceOf:
-				case BasicBlockType.SimpleWeakInstanceOf:
-					RewriteWeakInstanceOf (block);
-					foundConditionals = true;
-					break;
-				case BasicBlockType.IsFeatureSupported:
-					RewriteIsFeatureSupported (block);
-					foundConditionals = true;
-					break;
 				case BasicBlockType.LinkerConditional:
 					RewriteLinkerConditional (block);
 					foundConditionals = true;
@@ -397,69 +386,6 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"DONE REWRITING CONDITIONALS");
 		}
 
-		void RewriteWeakInstanceOf (BasicBlock block)
-		{
-			Context.LogMessage ($"REWRITE WEAK INSTANCE");
-
-			BlockList.Dump ();
-
-			bool evaluated;
-			int nextIndex;
-			TypeDefinition type;
-			switch (block.Type) {
-			case BasicBlockType.WeakInstanceOf:
-				/*
-				 * The argument came from a complicated expression, so we started
-				 * a new basic block with the call instruction; it's argument has
-				 * already been loaded onto the stack.
-				 */
-				type = CecilHelper.GetWeakInstanceArgument (block.Instructions [0]);
-				evaluated = Context.Annotations.IsMarked (type);
-				nextIndex = 1;
-				break;
-			case BasicBlockType.SimpleWeakInstanceOf:
-				/*
-				 * The argument came from a simple load, so the block starts with
-				 * the load instruction followed by the call.
-				 */
-				type = CecilHelper.GetWeakInstanceArgument (block.Instructions [1]);
-				evaluated = Context.Annotations.IsMarked (type);
-				nextIndex = 2;
-				break;
-			default:
-				throw new NotSupportedException ();
-			}
-
-			Context.LogMessage ($"REWRITE WEAK INSTANCE OF: {block} {type} {evaluated}");
-
-			if (evaluated)
-				RewriteAsIsinst (ref block, type);
-			else
-				RewriteConditional (block, nextIndex, false);
-
-			BlockList.ComputeOffsets ();
-
-			BlockList.Dump ();
-
-			Context.LogMessage ($"REWRITE WEAK INSTANCE DONE: {block} {evaluated}");
-		}
-
-		void RewriteIsFeatureSupported (BasicBlock block)
-		{
-			Context.LogMessage ($"REWRITE IS FEATURE SUPPORTED");
-
-			BlockList.Dump ();
-
-			var feature = CecilHelper.GetFeatureArgument (block.Instructions [0]);
-			var evaluated = Context.IsFeatureEnabled (feature);
-
-			Context.LogMessage ($"REWRITE IS FEATURE SUPPORTED #1: {feature} {evaluated}");
-
-			RewriteConditional (block, 2, evaluated);
-
-			BlockList.Dump ();
-		}
-
 		void RewriteLinkerConditional (BasicBlock block)
 		{
 			Context.LogMessage ($"REWRITE LINKER CONDITIONAL: {block.LinkerConditional}");
@@ -473,209 +399,6 @@ namespace Mono.Linker.Conditionals
 			BlockList.Dump ();
 
 			Context.LogMessage ($"DONE REWRITING LINKER CONDITIONAL: {block.LinkerConditional}");
-		}
-
-		void RewriteConditional (BasicBlock block, int nextIndex, bool evaluated)
-		{
-			/*
-			 * The conditional call will either be the last instruction in the block
-			 * or it will be followed by a conditional branch (since the call returns a
-			 * boolean, it cannot be an unconditional branch).
-			 */
-
-			if (block.Instructions.Count == nextIndex + 1) {
-				var next = block.Instructions [nextIndex];
-				switch (next.OpCode.Code) {
-				case Code.Brfalse:
-				case Code.Brfalse_S:
-					Context.LogMessage ($"  BR FALSE");
-					RewriteBranch (ref block, !evaluated);
-					return;
-				case Code.Brtrue:
-				case Code.Brtrue_S:
-					Context.LogMessage ($"  BR TRUE");
-					RewriteBranch (ref block, evaluated);
-					return;
-				default:
-					throw new NotSupportedException ($"Invalid instruction `{next}` after conditional call.");
-				}
-			}
-
-			RewriteAsConstant (ref block, evaluated);
-		}
-
-		void RewriteBranch (ref BasicBlock block, bool evaluated)
-		{
-			var target = (Instruction)block.LastInstruction.Operand;
-
-			Context.LogMessage ($"  REWRITING BRANCH: {block} {evaluated} {target}");
-
-			BlockList.Dump (block);
-
-			/*
-			 * If the instruction immediately following the conditional call is a
-			 * conditional branch, then we can resolve the conditional and do not
-			 * need to load the boolean conditional value onto the stack.
-			 */
-
-			var pop = Instruction.Create (OpCodes.Pop);
-			var branch = Instruction.Create (OpCodes.Br, target);
-
-			switch (block.Type) {
-			case BasicBlockType.SimpleWeakInstanceOf:
-			case BasicBlockType.IsFeatureSupported:
-				/*
-				 * The block contains a simple load, the conditional call and the branch.
-				 *
-				 * If the branch opcode was a conditional branch and it's condition
-				 * evaluated to false, then we can just simply remove the entire block.
-				 *
-				 * Otherwise, we will replace the entire block with an unconditional
-				 * branch to the target.
-				 *
-				 */
-				if (evaluated) {
-					BlockList.ReplaceInstructionAt (ref block, 0, branch);
-					BlockList.RemoveInstructionAt (block, 1);
-					BlockList.RemoveInstructionAt (block, 1);
-					block.Type = BasicBlockType.Branch;
-				} else {
-					BlockList.DeleteBlock (ref block);
-				}
-				break;
-
-			case BasicBlockType.WeakInstanceOf:
-				/*
-				 * The block contains the conditional call and the branch.  Since the
-				 * call argument has already been pushed onto the stack, we need to
-				 * insert a `pop` to discard it.
-				 *
-				 * Then we can resolve the conditional into either using an unconditional
-				 * branch or no branch at all.
-				 *
-				 */
-				BlockList.ReplaceInstructionAt (ref block, 0, pop);
-				BlockList.RemoveInstructionAt (block, 1);
-				if (evaluated) {
-					BlockList.InsertInstructionAt (ref block, 1, branch);
-					block.Type = BasicBlockType.Branch;
-				} else {
-					block.Type = BasicBlockType.Normal;
-				}
-				break;
-
-			default:
-				throw new NotSupportedException ();
-			}
-		}
-
-		void RewriteAsConstant (ref BasicBlock block, bool evaluated)
-		{
-			Context.LogMessage ($"  REWRITING AS CONSTANT");
-
-			/*
-			 * The instruction following the conditional call was not a branch.
-			 * In this case, the conditional call is always the last instruction
-			 * in the block.
-			 */
-
-			var constant = Instruction.Create (evaluated ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			var pop = Instruction.Create (OpCodes.Pop);
-
-			switch (block.Type) {
-			case BasicBlockType.SimpleWeakInstanceOf:
-			case BasicBlockType.IsFeatureSupported:
-				/*
-				 * The block contains a simple load and the conditional call.
-				 * Replace both with the constant load.
-				 */
-				if (block.Instructions.Count != 2)
-					throw new NotSupportedException ();
-				BlockList.ReplaceInstructionAt (ref block, 0, constant);
-				BlockList.RemoveInstructionAt (block, 1);
-				block.Type = BasicBlockType.Normal;
-				break;
-
-			case BasicBlockType.WeakInstanceOf:
-				/*
-				 * The block only contains the conditional call, but it's argument
-				 * has already been pushed onto the stack, so we need to insert a
-				 * `pop` to discard it.
-				 */
-				if (block.Instructions.Count != 1)
-					throw new NotSupportedException ();
-				BlockList.ReplaceInstructionAt (ref block, 0, pop);
-				BlockList.InsertInstructionAt (ref block, 1, constant);
-				block.Type = BasicBlockType.Normal;
-				break;
-
-			default:
-				throw new NotSupportedException ();
-			}
-		}
-
-		void RewriteAsIsinst (ref BasicBlock block, TypeDefinition type)
-		{
-			Context.LogMessage ($"  REWRITING AS ISINST: {type}");
-
-			/*
-			 * The feature is available, so we replace the conditional call with `isinst`.
-			 */
-
-			int index;
-			switch (block.Type) {
-			case BasicBlockType.SimpleWeakInstanceOf:
-				/*
-				 * The block contains a simple load, the conditional call
-				 * and an optional branch.
-				 */
-				index = 1;
-				break;
-			case BasicBlockType.WeakInstanceOf:
-				/*
-				 * The block contains the conditional call (with the argument already
-				 * on the stack) and an optional branch.
-				 *
-				 * Since we cannot replace the a basic block's first instruction,
-				 * we need to replace the entire block.
-				 */
-				index = 0;
-				break;
-			default:
-				throw new NotSupportedException ();
-			}
-
-			BasicBlockType blockType;
-			/*
-			 * The call instruction is optionally followed by a branch.
-			 */
-			if (block.Count == index + 1) {
-				blockType = BasicBlockType.Normal;
-			} else if (block.Count == index + 2) {
-				if (!CecilHelper.IsConditionalBranch (block.Instructions [index + 1]))
-					throw new NotSupportedException ();
-				blockType = BasicBlockType.Branch;
-			} else {
-				throw new NotSupportedException ();
-			}
-
-			/*
-			 * If we're followed by a branch (which will always be a conditional
-			 * branch due to the value on the stack), then we can simply use `isinst`.
-			 *
-			 */
-
-			Context.LogMessage ($"  REWRITING AS ISINST #1: {Method.Name} {type} {index} {blockType}");
-
-			BlockList.ReplaceInstructionAt (ref block, index, Instruction.Create (OpCodes.Isinst, type));
-
-			if (blockType == BasicBlockType.Normal) {
-				// Convert it into a bool.
-				BlockList.InsertInstructionAt (ref block, index + 1, Instruction.Create (OpCodes.Ldnull));
-				BlockList.InsertInstructionAt (ref block, index + 2, Instruction.Create (OpCodes.Cgt_Un));
-			}
-
-			block.Type = blockType;
 		}
 
 		bool EliminateDeadBlocks ()
