@@ -142,7 +142,12 @@ namespace Mono.Linker.Conditionals
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					HandleWeakInstanceOf (ref bb, ref index, conditionalType);
+					HandleIsWeakInstanceOf (ref bb, ref index, conditionalType);
+				} else if (genericInstance.ElementMethod == Context.AsWeakInstanceOfMethod) {
+					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
+					if (conditionalType == null)
+						throw new ResolutionException (genericInstance.GenericArguments [0]);
+					HandleAsWeakInstanceOf (ref bb, ref index, conditionalType);
 				}
 			} else if (target == Context.IsFeatureSupportedMethod) {
 				HandleIsFeatureSupported (ref bb, ref index);
@@ -151,7 +156,7 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void HandleWeakInstanceOf (ref BasicBlock bb, ref int index, TypeDefinition type)
+		void HandleIsWeakInstanceOf (ref BasicBlock bb, ref int index, TypeDefinition type)
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
@@ -187,6 +192,47 @@ namespace Mono.Linker.Conditionals
 			}
 
 			bb.LinkerConditional = new IsWeakInstanceOfConditional (BlockList, instanceType, hasLoad);
+
+			/*
+			 * Once we get here, the current block only contains the (optional) simple load
+			 * and the conditional call itself.
+			 */
+
+			FoundConditionals = true;
+
+			if (index + 1 >= Method.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			LookAheadAfterConditional (ref bb, ref index);
+		}
+
+		void HandleAsWeakInstanceOf (ref BasicBlock bb, ref int index, TypeDefinition type)
+		{
+			if (bb.Instructions.Count < 2)
+				throw new NotSupportedException ();
+			if (index + 1 >= Method.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			/*
+			 * `bool MonoLinkerSupport.AsWeakInstance<T> (object obj, out T instance)`
+			 */
+
+			var load = Method.Body.Instructions [index - 2];
+			var output = Method.Body.Instructions [index - 1];
+
+			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {load} {output}");
+
+			if (!CecilHelper.IsSimpleLoad (load))
+				throw new NotSupportedException ();
+			if (output.OpCode.Code != Code.Ldloca && output.OpCode.Code != Code.Ldloca_S)
+				throw new NotSupportedException ();
+
+			if (bb.Instructions.Count > 3)
+				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+			var instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [2]);
+			var variable = ((VariableReference)output.Operand).Resolve () ?? throw new NotSupportedException ();
+
+			bb.LinkerConditional = new AsWeakInstanceOfConditional (BlockList, instanceType, variable);
 
 			/*
 			 * Once we get here, the current block only contains the (optional) simple load

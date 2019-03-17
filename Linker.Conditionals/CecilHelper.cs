@@ -124,6 +124,19 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		public static bool IsIndirectLoad (Instruction instruction)
+		{
+			switch (instruction.OpCode.Code) {
+			case Code.Ldloca:
+			case Code.Ldloca_S:
+			case Code.Ldarga:
+			case Code.Ldarga_S:
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		public static bool IsConditionalBranch (Instruction instruction)
 		{
 			switch (instruction.OpCode.Code) {

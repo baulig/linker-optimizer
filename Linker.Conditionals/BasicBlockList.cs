@@ -212,15 +212,19 @@ namespace Mono.Linker.Conditionals
 			if (position < 0 || position > block.Count)
 				throw new ArgumentOutOfRangeException (nameof (position));
 
+			int index;
 			if (position == block.Count) {
 				// Appending to the end.
-				var index = Body.Instructions.IndexOf (block.LastInstruction);
+				index = Body.Instructions.IndexOf (block.LastInstruction);
 				Body.Instructions.Insert (index + 1, instruction);
 				block.AddInstruction (instruction);
 				return;
-			} else if (position > 0) {
-				var index = Body.Instructions.IndexOf (block.Instructions [position]);
-				Body.Instructions.Insert (index, instruction);
+			}
+
+			index = Body.Instructions.IndexOf (block.Instructions [position]);
+			Body.Instructions.Insert (index, instruction);
+
+			if (position > 0) {
 				block.InsertAt (position, instruction);
 				return;
 			}

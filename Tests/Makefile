@@ -22,6 +22,7 @@ TEST_CASES := \
 	test-weak-instances-2.cs \
 	test-weak-instances-3.cs \
 	test-weak-instances-4.cs \
+	test-weak-instances-5.cs \
 	test-features-1.cs \
 	test-features-2.cs \
 	test-features-3.cs \
