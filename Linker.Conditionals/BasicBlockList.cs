@@ -81,7 +81,6 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Remove (oldInstruction);
 
 			block = new BasicBlock (++_next_block_id, instructions);
-			block.BranchType = CecilHelper.GetBranchType (block.LastInstruction);
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
 
@@ -137,12 +136,10 @@ namespace Mono.Linker.Conditionals
 			var nextInstructions = block.GetInstructions (position);
 
 			var previousBlock = new BasicBlock (++_next_block_id, previousInstructions);
-			previousBlock.BranchType = CecilHelper.GetBranchType (previousBlock.LastInstruction);
 			_block_list [blockIndex] = previousBlock;
 			_bb_by_instruction [previousInstructions [0]] = previousBlock;
 
 			block = new BasicBlock (++_next_block_id, nextInstructions);
-			block.BranchType = CecilHelper.GetBranchType (block.LastInstruction);
 			_block_list.Insert (blockIndex + 1, block);
 			_bb_by_instruction.Add (nextInstructions [0], block);
 			return true;

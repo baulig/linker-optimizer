@@ -71,15 +71,8 @@ namespace Mono.Linker.Conditionals
 
 		void CloseBlock (ref BasicBlock block, BranchType branch, Instruction target)
 		{
-			if (block != null)
-				CloseBlock (ref block, branch);
 			if (!BlockList.HasBlock (target))
 				BlockList.NewBlock (target);
-		}
-
-		void CloseBlock (ref BasicBlock block, BranchType branch)
-		{
-			block.BranchType = branch;
 			block = null;
 		}
 
@@ -116,10 +109,9 @@ namespace Mono.Linker.Conditionals
 						Context.LogMessage ($"  NEW BB: {bb}");
 					}
 				} else if (BlockList.TryGetBlock (instruction, out var newBB)) {
-					if (bb.BranchType != BranchType.Unassigned && bb.BranchType != BranchType.None)
+					if (bb.BranchType != BranchType.None)
 						throw new MartinTestException ();
 					Context.LogMessage ($"  KNOWN BB: {bb} -> {newBB}");
-					bb.BranchType = BranchType.None;
 					bb = newBB;
 				} else {
 					bb.AddInstruction (instruction);
@@ -143,18 +135,18 @@ namespace Mono.Linker.Conditionals
 				case BranchType.True:
 				case BranchType.Jump:
 					MarkTargetBlock (block_by_ins, (Instruction)instruction.Operand);
-					CloseBlock (ref bb, type);
+					bb = null;
 					break;
 
 				case BranchType.Switch:
 					foreach (var label in (Instruction [])instruction.Operand)
 						MarkTargetBlock (block_by_ins, label);
-					CloseBlock (ref bb, BranchType.Switch);
+					bb = null;
 					break;
 
 				case BranchType.Exit:
 				case BranchType.Return:
-					CloseBlock (ref bb, type);
+					bb = null;
 					break;
 
 				default:
@@ -165,11 +157,6 @@ namespace Mono.Linker.Conditionals
 			BlockList.ComputeOffsets ();
 
 			BlockList.Dump ();
-
-			foreach (var block in BlockList.Blocks) {
-				if (block.BranchType == BranchType.Unassigned)
-					throw new MartinTestException ();
-			}
 
 			return true;
 		}
@@ -330,7 +317,7 @@ namespace Mono.Linker.Conditionals
 			var type = CecilHelper.GetBranchType (next);
 
 			if (type == BranchType.None) {
-				CloseBlock (ref bb, BranchType.None);
+				bb = null;
 				return;
 			}
 
@@ -343,7 +330,7 @@ namespace Mono.Linker.Conditionals
 				CloseBlock (ref bb, type, (Instruction)next.Operand);
 				break;
 			case BranchType.Return:
-				CloseBlock (ref bb, type);
+				bb = null;
 				break;
 			default:
 				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
@@ -405,9 +392,6 @@ namespace Mono.Linker.Conditionals
 			var marked = new HashSet<BasicBlock> ();
 
 			foreach (var block in BlockList.Blocks) {
-				if (block.BranchType == BranchType.Unassigned)
-					throw new MartinTestException ();
-
 				if (markNextBlock)
 					marked.Add (block);
 
@@ -493,7 +477,6 @@ namespace Mono.Linker.Conditionals
 					BlockList.DeleteBlock (ref block);
 				} else {
 					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
- 					BlockList [i].BranchType = BranchType.None;
 				}
 			}
 

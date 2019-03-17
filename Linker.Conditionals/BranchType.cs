@@ -27,7 +27,6 @@ namespace Mono.Linker.Conditionals
 {
 	public enum BranchType
 	{
-		Unassigned,
 		None,
 		Jump,
 		Return,

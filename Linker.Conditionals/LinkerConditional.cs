@@ -81,8 +81,6 @@ namespace Mono.Linker.Conditionals
 			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 			ReplaceWithInstruction (ref block, stackDepth, constant);
 			BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
-
-			block.BranchType = BranchType.Return;
 		}
 
 		void RewriteBranch (ref BasicBlock block, int stackDepth, bool condition)
@@ -100,16 +98,12 @@ namespace Mono.Linker.Conditionals
 				 */
 				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
 				ReplaceWithInstruction (ref block, stackDepth, branch);
-
-				block.BranchType = BranchType.Jump;
 			} else if (stackDepth > 0) {
 				/*
 				 * The condition is false, but there are still values on the stack that
 				 * we need to pop.
 				 */
 				ReplaceWithInstruction (ref block, stackDepth, null);
-
-				block.BranchType = BranchType.None;
 			} else {
 				/*
 				 * The condition is false and there are no additional values on the stack.
@@ -126,8 +120,6 @@ namespace Mono.Linker.Conditionals
 			 */
 			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 			ReplaceWithInstruction (ref block, stackDepth, constant);
-
-			block.BranchType = BranchType.None;
 		}
 
 		/*
@@ -153,7 +145,6 @@ namespace Mono.Linker.Conditionals
 
 			if (stackDepth == 0) {
 				BlockList.ReplaceInstructionAt (ref block, 0, instruction);
-				block.BranchType = CecilHelper.GetBranchType (instruction);
 				return;
 			}
 
@@ -163,8 +154,6 @@ namespace Mono.Linker.Conditionals
 
 			if (instruction != null)
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
-
-			block.BranchType = CecilHelper.GetBranchType (block.LastInstruction);
 		}
 	}
 }

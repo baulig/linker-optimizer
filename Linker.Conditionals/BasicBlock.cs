@@ -36,7 +36,8 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public BranchType BranchType {
-			get; set;
+			get;
+			private set;
 		}
 
 		public LinkerConditional LinkerConditional {
@@ -56,19 +57,15 @@ namespace Mono.Linker.Conditionals
 		public BasicBlock (int index, Instruction instruction)
 		{
 			Index = index;
-			BranchType = BranchType.Unassigned;
+			BranchType = BranchType.None;
 
 			AddInstruction (instruction);
 		}
 
 		public BasicBlock (int index, IList<Instruction> instructions)
-			: this (index, BranchType.Unassigned, instructions)
-		{ }
-
-		public BasicBlock (int index, BranchType branch, IList<Instruction> instructions)
 		{
 			Index = index;
-			BranchType = branch;
+			BranchType = BranchType.None;
 
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
@@ -76,13 +73,18 @@ namespace Mono.Linker.Conditionals
 			AddInstructions (instructions);
 		}
 
+		void Update ()
+		{
+			BranchType = CecilHelper.GetBranchType (LastInstruction);
+		}
+
 		public void AddInstruction (Instruction instruction)
 		{
-			if (BranchType != BranchType.Unassigned && BranchType != BranchType.None)
-				throw new MartinTestException ();
+			if (BranchType != BranchType.None)
+				throw new NotSupportedException ();
 
 			_instructions.Add (instruction);
-			BranchType = CecilHelper.GetBranchType (instruction);
+			Update ();
 		}
 
 		public void AddInstructions (IList<Instruction> instructions)
@@ -104,12 +106,8 @@ namespace Mono.Linker.Conditionals
 			if (position == 0)
 				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
 			_instructions.RemoveAt (position);
-		}
-
-		public void InsertAfter (Instruction position, Instruction instruction)
-		{
-			var index = _instructions.IndexOf (position);
-			_instructions.Insert (index, instruction);
+			if (position == _instructions.Count)
+				Update ();
 		}
 
 		public void InsertAt (int position, Instruction instruction)
@@ -117,6 +115,8 @@ namespace Mono.Linker.Conditionals
 			if (position == 0)
 				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
 			_instructions.Insert (position, instruction);
+			if (position == _instructions.Count - 1)
+				Update ();
 		}
 
 		public int IndexOf (Instruction instruction)
