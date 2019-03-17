@@ -417,10 +417,16 @@ namespace Mono.Linker.Conditionals
 				if (markNextBlock)
 					marked.Add (block);
 
+#if FIXME
 				if (block.Type == BasicBlockType.Normal) {
 					markNextBlock = true;
 					continue;
 				}
+
+				var first = block.Type == BasicBlockType.Switch;
+				var second = block.BranchType == BranchType.Switch;
+				if (first != second)
+					throw new MartinTestException ();
 
 				if (block.Type == BasicBlockType.Switch) {
 					foreach (var label in (Instruction[])block.LastInstruction.Operand) {
@@ -432,6 +438,34 @@ namespace Mono.Linker.Conditionals
 
 				if (block.Type != BasicBlockType.Branch)
 					throw new NotSupportedException ();
+#endif
+
+				switch (block.BranchType) {
+				case BranchType.None:
+					markNextBlock = true;
+					continue;
+				case BranchType.Conditional:
+				case BranchType.False:
+				case BranchType.True:
+					marked.Add (BlockList.GetBlock ((Instruction)block.LastInstruction.Operand));
+					markNextBlock = true;
+					break;
+				case BranchType.Exit:
+				case BranchType.Return:
+					markNextBlock = false;
+					break;
+				case BranchType.Jump:
+					marked.Add (BlockList.GetBlock ((Instruction)block.LastInstruction.Operand));
+					markNextBlock = false;
+					break;
+				case BranchType.Switch:
+					foreach (var label in (Instruction [])block.LastInstruction.Operand)
+						marked.Add (BlockList.GetBlock (label));
+					markNextBlock = true;
+					break;
+				}
+
+				continue;
 
 				var branch = block.LastInstruction;
 				switch (branch.OpCode.Code) {
@@ -451,6 +485,20 @@ namespace Mono.Linker.Conditionals
 
 				marked.Add (BlockList.GetBlock ((Instruction)branch.Operand));
 			}
+
+			foreach (var handler in Method.Body.ExceptionHandlers) {
+				if (handler.TryStart != null)
+					marked.Add (BlockList.GetBlock (handler.TryStart));
+				if (handler.TryEnd != null)
+					marked.Add (BlockList.GetBlock (handler.TryEnd));
+				if (handler.HandlerStart != null)
+					marked.Add (BlockList.GetBlock (handler.HandlerStart));
+				if (handler.HandlerEnd != null)
+					marked.Add (BlockList.GetBlock (handler.HandlerEnd));
+				if (handler.FilterStart != null)
+					marked.Add (BlockList.GetBlock (handler.FilterStart));
+			}
+
 
 			var removedDeadBlocks = false;
 			for (int i = 0; i < BlockList.Count; i++) {
@@ -495,6 +543,7 @@ namespace Mono.Linker.Conditionals
 				} else {
 					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
 					BlockList [i].Type = BasicBlockType.Normal;
+					BlockList [i].BranchType = BranchType.None;
 				}
 			}
 

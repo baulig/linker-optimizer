@@ -24,7 +24,8 @@ TEST_CASES := \
 	test-features-2.cs \
 	test-features-3.cs \
 	test-features-4.cs \
-	test-features-5.cs
+	test-features-5.cs \
+	test-features-6.cs
 
 compile-tests: $(TEST_CASES:.cs=.exe)
 

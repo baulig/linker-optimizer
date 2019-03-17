@@ -153,6 +153,7 @@ namespace Mono.Linker.Conditionals
 
 			if (stackDepth == 0) {
 				BlockList.ReplaceInstructionAt (ref block, 0, instruction);
+				block.BranchType = CecilHelper.GetBranchType (instruction);
 				return;
 			}
 
@@ -162,6 +163,8 @@ namespace Mono.Linker.Conditionals
 
 			if (instruction != null)
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
+
+			block.BranchType = CecilHelper.GetBranchType (block.LastInstruction);
 		}
 	}
 }

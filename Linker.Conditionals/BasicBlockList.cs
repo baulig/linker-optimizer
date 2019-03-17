@@ -81,7 +81,7 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Remove (oldInstruction);
 
 			block = new BasicBlock (++_next_block_id, type, instructions);
-			block.BranchType = CecilHelper.GetBranchType (block.LastInstruction);
+//			block.BranchType = CecilHelper.GetBranchType (block.LastInstruction);
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
 
@@ -111,8 +111,8 @@ namespace Mono.Linker.Conditionals
 			foreach (var handler in Body.ExceptionHandlers) {
 				if (handler.TryStart == oldTarget)
 					handler.TryStart = newTarget ?? throw CannotRemoveTarget;
-				if (handler.HandlerEnd == oldTarget)
-					handler.HandlerEnd = newTarget ?? throw CannotRemoveTarget;
+				if (handler.TryEnd == oldTarget)
+					handler.TryEnd = newTarget ?? throw CannotRemoveTarget;
 				if (handler.HandlerStart == oldTarget)
 					handler.HandlerStart = newTarget ?? throw CannotRemoveTarget;
 				if (handler.HandlerEnd == oldTarget)
