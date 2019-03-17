@@ -100,6 +100,17 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		Reachability And (Reachability first, Reachability second)
+		{
+			if (first == Reachability.Dead || second == Reachability.Dead)
+				return Reachability.Dead;
+			if (first == Reachability.Unreachable || second == Reachability.Unreachable)
+				return Reachability.Unreachable;
+			if (first == Reachability.Conditional || second == Reachability.Conditional)
+				return Reachability.Conditional;
+			return Reachability.Normal;
+		}
+
 		void MarkBlock (BlockEntry entry, Reachability reachability, Instruction target)
 		{
 			var block = BlockList.GetBlock (target);
@@ -119,6 +130,7 @@ namespace Mono.Linker.Conditionals
 			_reachability_status = new Dictionary<BasicBlock, Reachability> ();
 			_block_list = new Dictionary<BasicBlock, BlockEntry> ();
 			var reachability = Reachability.Normal;
+			Origin current = null;
 
 			BlockList.Dump ();
 
@@ -132,6 +144,11 @@ namespace Mono.Linker.Conditionals
 					_block_list.Add (block, entry);
 				}
 
+				if (current != null) {
+					entry.Origins.Add (current);
+					current = null;
+				}
+
 				Context.LogMessage ($"ANALYZE #2: {entry} {reachability}");
 				BlockList.Dump (block);
 
@@ -141,6 +158,7 @@ namespace Mono.Linker.Conditionals
 				case BranchType.True:
 					MarkBlock (entry, Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
 					UpdateStatus (ref reachability, Reachability.Conditional);
+					current = new Origin (block, Reachability.Conditional);
 					break;
 				case BranchType.Exit:
 				case BranchType.Return:
@@ -154,6 +172,7 @@ namespace Mono.Linker.Conditionals
 					foreach (var label in (Instruction [])block.LastInstruction.Operand)
 						MarkBlock (entry, Reachability.Conditional, label);
 					UpdateStatus (ref reachability, Reachability.Conditional);
+					current = new Origin (block, Reachability.Conditional);
 					break;
 				}
 			}
@@ -166,11 +185,21 @@ namespace Mono.Linker.Conditionals
 
 				foreach (var origin in entries[i].Origins) {
 					var originEntry = _block_list [origin.Block];
-					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry}");
+					var effectiveOrigin = And (originEntry.Reachability, origin.Reachability);
+					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
 					if (originEntry.Reachability == Reachability.Dead)
 						continue;
-					if (entries [i].Reachability == Reachability.Unreachable)
-						entries [i].Reachability = originEntry.Reachability;
+					switch (entries [i].Reachability) {
+					case Reachability.Dead:
+						throw new MartinTestException ();
+					case Reachability.Unreachable:
+						entries [i].Reachability = effectiveOrigin;
+						break;
+					case Reachability.Conditional:
+						if (effectiveOrigin == Reachability.Normal)
+							entries [i].Reachability = Reachability.Normal;
+						break;
+					}
 				}
 
 				if (entries [i].Reachability == Reachability.Unreachable)
@@ -184,8 +213,6 @@ namespace Mono.Linker.Conditionals
 				Context.LogMessage ($"    {i} {entries [i]}");
 
 			}
-
-			Context.LogMessage ($"ANALYZE #5");
 
 			BlockList.Dump ();
 
