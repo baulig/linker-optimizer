@@ -81,19 +81,12 @@ namespace Mono.Linker.Conditionals
 			switch (block.BranchType) {
 			case BranchType.False:
 			case BranchType.True:
-				block.Type = BasicBlockType.Branch;
 				break;
+			case BranchType.None:
 			case BranchType.Return:
 				// Convert it into a bool.
 				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
 				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
-				block.Type = BasicBlockType.Branch;
-				break;
-			case BranchType.None:
-				// Convert it into a bool.
-				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
-				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
-				block.Type = BasicBlockType.Normal;
 				break;
 			default:
 				throw new MartinTestException ();

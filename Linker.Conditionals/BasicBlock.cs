@@ -29,14 +29,10 @@ using Mono.Cecil.Cil;
 
 namespace Mono.Linker.Conditionals
 {
-	public partial class BasicBlock
+	public class BasicBlock
 	{
 		public int Index {
 			get;
-		}
-
-		public BasicBlockType Type {
-			get; set;
 		}
 
 		public BranchType BranchType {
@@ -57,24 +53,22 @@ namespace Mono.Linker.Conditionals
 
 		readonly List<Instruction> _instructions = new List<Instruction> ();
 
-		public BasicBlock (int index, BasicBlockType type, Instruction instruction)
+		public BasicBlock (int index, Instruction instruction)
 		{
 			Index = index;
-			Type = type;
 			BranchType = BranchType.Unassigned;
 
 			AddInstruction (instruction);
 
 		}
 
-		public BasicBlock (int index, BasicBlockType type, IList<Instruction> instructions)
-			: this (index, type, BranchType.Unassigned, instructions)
+		public BasicBlock (int index, IList<Instruction> instructions)
+			: this (index, BranchType.Unassigned, instructions)
 		{ }
 
-		public BasicBlock (int index, BasicBlockType type, BranchType branch, IList<Instruction> instructions)
+		public BasicBlock (int index, BranchType branch, IList<Instruction> instructions)
 		{
 			Index = index;
-			Type = type;
 			BranchType = branch;
 
 			if (instructions.Count < 1)
@@ -147,7 +141,7 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[BB {Index} ({Type}, {BranchType}): {FirstInstruction.OpCode.Code}]";
+			return $"[BB {Index} ({BranchType}): {FirstInstruction.OpCode.Code}]";
 		}
 	}
 }

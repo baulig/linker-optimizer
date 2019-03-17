@@ -85,24 +85,6 @@ namespace Mono.Linker.Conditionals
 		void CloseBlock (ref BasicBlock block, BranchType branch)
 		{
 			block.BranchType = branch;
-			if (block.Type == BasicBlockType.Normal) {
-				switch (branch) {
-				case BranchType.None:
-					break;
-				case BranchType.Switch:
-					block.Type = BasicBlockType.Switch;
-					break;
-				case BranchType.Conditional:
-				case BranchType.Exit:
-				case BranchType.False:
-				case BranchType.True:
-				case BranchType.Jump:
-					block.Type = BasicBlockType.Branch;
-					break;
-				default:
-					throw new MartinTestException ();
-				}
-			}
 			block = null;
 		}
 
@@ -226,7 +208,6 @@ namespace Mono.Linker.Conditionals
 			}
 
 			bb.LinkerConditional = new IsWeakInstanceOfConditional (BlockList, instanceType, hasLoad);
-			bb.Type = BasicBlockType.LinkerConditional;
 
 			/*
 			 * Once we get here, the current block only contains the (optional) simple load
@@ -258,7 +239,6 @@ namespace Mono.Linker.Conditionals
 
 			var feature = CecilHelper.GetFeatureArgument (bb.FirstInstruction);
 			bb.LinkerConditional = new IsFeatureSupportedConditional (BlockList, feature);
-			bb.Type = BasicBlockType.LinkerConditional;
 
 			FoundConditionals = true;
 
@@ -358,17 +338,10 @@ namespace Mono.Linker.Conditionals
 			var foundConditionals = false;
 
 			foreach (var block in BlockList.Blocks.ToArray ()) {
-				switch (block.Type) {
-				case BasicBlockType.Normal:
-				case BasicBlockType.Branch:
-				case BasicBlockType.Switch:
-					continue;
-				case BasicBlockType.LinkerConditional:
+				if (block.LinkerConditional != null) {
 					RewriteLinkerConditional (block);
+					block.LinkerConditional = null;
 					foundConditionals = true;
-					break;
-				default:
-					throw new NotSupportedException ();
 				}
 			}
 
@@ -417,29 +390,6 @@ namespace Mono.Linker.Conditionals
 				if (markNextBlock)
 					marked.Add (block);
 
-#if FIXME
-				if (block.Type == BasicBlockType.Normal) {
-					markNextBlock = true;
-					continue;
-				}
-
-				var first = block.Type == BasicBlockType.Switch;
-				var second = block.BranchType == BranchType.Switch;
-				if (first != second)
-					throw new MartinTestException ();
-
-				if (block.Type == BasicBlockType.Switch) {
-					foreach (var label in (Instruction[])block.LastInstruction.Operand) {
-						marked.Add (BlockList.GetBlock (label));
-					}
-					markNextBlock = true;
-					continue;
-				}
-
-				if (block.Type != BasicBlockType.Branch)
-					throw new NotSupportedException ();
-#endif
-
 				switch (block.BranchType) {
 				case BranchType.None:
 					markNextBlock = true;
@@ -464,26 +414,6 @@ namespace Mono.Linker.Conditionals
 					markNextBlock = true;
 					break;
 				}
-
-				continue;
-
-				var branch = block.LastInstruction;
-				switch (branch.OpCode.Code) {
-				case Code.Br:
-				case Code.Br_S:
-					markNextBlock = false;
-					break;
-				case Code.Ret:
-				case Code.Throw:
-				case Code.Rethrow:
-					markNextBlock = false;
-					continue;
-				default:
-					markNextBlock = true;
-					break;
-				}
-
-				marked.Add (BlockList.GetBlock ((Instruction)branch.Operand));
 			}
 
 			foreach (var handler in Method.Body.ExceptionHandlers) {
@@ -521,7 +451,7 @@ namespace Mono.Linker.Conditionals
 			}
 
 			for (int i = 0; i < BlockList.Count - 1; i++) {
-				if (BlockList [i].Type != BasicBlockType.Branch)
+				if (BlockList [i].BranchType != BranchType.Jump)
 					continue;
 
 				var lastInstruction = BlockList [i].LastInstruction;
@@ -542,8 +472,7 @@ namespace Mono.Linker.Conditionals
 					BlockList.DeleteBlock (ref block);
 				} else {
 					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
-					BlockList [i].Type = BasicBlockType.Normal;
-					BlockList [i].BranchType = BranchType.None;
+ 					BlockList [i].BranchType = BranchType.None;
 				}
 			}
 

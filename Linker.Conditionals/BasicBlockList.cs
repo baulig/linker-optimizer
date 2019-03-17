@@ -55,9 +55,9 @@ namespace Mono.Linker.Conditionals
 			_block_list = new List<BasicBlock> ();
 		}
 
-		public BasicBlock NewBlock (Instruction instruction, BasicBlockType type = BasicBlockType.Normal)
+		public BasicBlock NewBlock (Instruction instruction)
 		{
-			var block = new BasicBlock (++_next_block_id, type, instruction);
+			var block = new BasicBlock (++_next_block_id, instruction);
 			_bb_by_instruction.Add (instruction, block);
 			_block_list.Add (block);
 			return block;
@@ -69,7 +69,7 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Remove (block.Instructions [0]);
 		}
 
-		public void ReplaceBlock (ref BasicBlock block, BasicBlockType type, IList<Instruction> instructions)
+		public void ReplaceBlock (ref BasicBlock block, IList<Instruction> instructions)
 		{
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
@@ -80,7 +80,7 @@ namespace Mono.Linker.Conditionals
 
 			_bb_by_instruction.Remove (oldInstruction);
 
-			block = new BasicBlock (++_next_block_id, type, instructions);
+			block = new BasicBlock (++_next_block_id, instructions);
 //			block.BranchType = CecilHelper.GetBranchType (block.LastInstruction);
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
@@ -136,11 +136,11 @@ namespace Mono.Linker.Conditionals
 			var previousInstructions = block.GetInstructions (0, position);
 			var nextInstructions = block.GetInstructions (position);
 
-			var previousBlock = new BasicBlock (++_next_block_id, BasicBlockType.Normal, BranchType.None, previousInstructions);
+			var previousBlock = new BasicBlock (++_next_block_id, BranchType.None, previousInstructions);
 			_block_list [blockIndex] = previousBlock;
 			_bb_by_instruction [previousInstructions [0]] = previousBlock;
 
-			block = new BasicBlock (++_next_block_id, block.Type, nextInstructions);
+			block = new BasicBlock (++_next_block_id, nextInstructions);
 			_block_list.Insert (blockIndex + 1, block);
 			_bb_by_instruction.Add (nextInstructions [0], block);
 			return true;
@@ -231,7 +231,7 @@ namespace Mono.Linker.Conditionals
 
 			var instructions = block.Instructions.ToList ();
 			instructions.Insert (0, instruction);
-			ReplaceBlock (ref block, block.Type, instructions);
+			ReplaceBlock (ref block, instructions);
 		}
 
 		public void ReplaceInstructionAt (ref BasicBlock block, int position, Instruction instruction)
@@ -254,7 +254,7 @@ namespace Mono.Linker.Conditionals
 			var instructions = block.Instructions.ToArray ();
 			instructions [position] = instruction;
 
-			ReplaceBlock (ref block, block.Type, instructions);
+			ReplaceBlock (ref block, instructions);
 		}
 
 		public void DeleteBlock (ref BasicBlock block)

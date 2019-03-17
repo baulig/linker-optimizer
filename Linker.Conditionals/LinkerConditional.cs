@@ -78,7 +78,6 @@ namespace Mono.Linker.Conditionals
 			ReplaceWithInstruction (ref block, stackDepth, constant);
 			BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
 
-			block.Type = BasicBlockType.Branch;
 			block.BranchType = BranchType.Return;
 		}
 
@@ -98,7 +97,6 @@ namespace Mono.Linker.Conditionals
 				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
 				ReplaceWithInstruction (ref block, stackDepth, branch);
 
-				block.Type = BasicBlockType.Branch;
 				block.BranchType = BranchType.Jump;
 			} else if (stackDepth > 0) {
 				/*
@@ -107,7 +105,6 @@ namespace Mono.Linker.Conditionals
 				 */
 				ReplaceWithInstruction (ref block, stackDepth, null);
 
-				block.Type = BasicBlockType.Normal;
 				block.BranchType = BranchType.None;
 			} else {
 				/*
@@ -126,7 +123,6 @@ namespace Mono.Linker.Conditionals
 			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 			ReplaceWithInstruction (ref block, stackDepth, constant);
 
-			block.Type = BasicBlockType.Normal;
 			block.BranchType = BranchType.None;
 		}
 
