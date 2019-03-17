@@ -49,7 +49,6 @@ namespace Mono.Linker.Conditionals
 
 		protected AssemblyDefinition Assembly => Method.DeclaringType.Module.Assembly;
 
-		Dictionary<BasicBlock, Reachability> _reachability_status;
 		Dictionary<BasicBlock, BlockEntry> _entry_by_block;
 		List<BlockEntry> _block_list;
 
@@ -64,6 +63,9 @@ namespace Mono.Linker.Conditionals
 				if (current == Reachability.Normal)
 					current = reachability;
 				break;
+			case Reachability.Exception:
+				current = Reachability.Conditional;
+				break;
 			}
 		}
 
@@ -75,6 +77,8 @@ namespace Mono.Linker.Conditionals
 				return Reachability.Unreachable;
 			if (first == Reachability.Conditional || second == Reachability.Conditional)
 				return Reachability.Conditional;
+			if (first == Reachability.Exception || second == Reachability.Exception)
+				throw new MartinTestException ();
 			return Reachability.Normal;
 		}
 
@@ -92,13 +96,23 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		void MarkExceptionHandler (Instruction instruction)
+		{
+			var block = BlockList.GetBlock (instruction);
+			var entry = new BlockEntry (block, Reachability.Exception);
+			_entry_by_block.Add (block, entry);
+			_block_list.Add (entry);
+		}
+
 		public void Analyze ()
 		{
-			if (Method.Body.HasExceptionHandlers)
-				return;
-
 			_entry_by_block = new Dictionary<BasicBlock, BlockEntry> ();
 			_block_list = new List<BlockEntry> ();
+
+			foreach (var handler in Method.Body.ExceptionHandlers) {
+				if (handler.HandlerStart != null)
+					MarkExceptionHandler (handler.HandlerStart);
+			}
 
 			var reachability = Reachability.Normal;
 			Origin current = null;
@@ -201,9 +215,6 @@ namespace Mono.Linker.Conditionals
 
 		public bool RemoveDeadBlocks ()
 		{
-			if (Method.Body.HasExceptionHandlers)
-				return false;
-
 			var removedDeadBlocks = false;
 			for (int i = 0; i < _block_list.Count; i++) {
 				if (_block_list [i].Reachability != Reachability.Dead)
@@ -269,6 +280,7 @@ namespace Mono.Linker.Conditionals
 			Normal,
 			Unreachable,
 			Conditional,
+			Exception,
 			Dead
 		}
 
