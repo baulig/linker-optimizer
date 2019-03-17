@@ -326,11 +326,9 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.Dump ();
 
-			while (EliminateDeadBlocks ()) { }
-
-			BlockList.Dump ();
-
 			Context.LogMessage ($"DONE REWRITING CONDITIONALS");
+
+			EliminateDeadBlocks ();
 		}
 
 		void RewriteLinkerConditional (BasicBlock block)
@@ -348,13 +346,16 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"DONE REWRITING LINKER CONDITIONAL");
 		}
 
-		bool EliminateDeadBlocks ()
+		void EliminateDeadBlocks ()
 		{
 			Context.LogMessage ($"ELIMINATING DEAD BLOCKS");
 
 			var flow = new FlowAnalysis (BlockList);
 			flow.Analyze ();
-			return flow.RemoveDeadBlocks () || flow.RemoveDeadJumps ();
+			flow.RemoveDeadBlocks ();
+			flow.RemoveDeadJumps ();
+
+			Context.LogMessage ($"ELIMINATING DEAD BLOCKS DONE");
 		}
 	}
 }

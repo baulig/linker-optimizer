@@ -170,33 +170,8 @@ namespace Mono.Linker.Conditionals
 
 			_block_list.Sort ((first, second) => first.Block.Index.CompareTo (second.Block.Index));
 
-			for (int i = 0; i < _block_list.Count; i++) {
-				var entry = _block_list [i];
-				Context.LogMessage ($"    {i} {entry}");
-				bool foundOrigin = false;
-
-				foreach (var origin in entry.Origins) {
-					var originEntry = _entry_by_block [origin.Block];
-					var effectiveOrigin = And (originEntry.Reachability, origin.Reachability);
-					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
-					if (originEntry.Reachability == Reachability.Dead)
-						continue;
-					foundOrigin = true;
-					switch (entry.Reachability) {
-					case Reachability.Dead:
-						throw new MartinTestException ();
-					case Reachability.Unreachable:
-						entry.Reachability = effectiveOrigin;
-						break;
-					case Reachability.Conditional:
-						if (effectiveOrigin == Reachability.Normal)
-							entry.Reachability = Reachability.Normal;
-						break;
-					}
-				}
-
-				if (!foundOrigin && entry.Reachability == Reachability.Unreachable)
-					entry.Reachability = Reachability.Dead;
+			while (ResolveOrigins ()) {
+				Context.LogMessage ($"ANALYZE #3 -> AGAIN");
 			}
 
 			Context.LogMessage ($"ANALYZE #4");
@@ -213,10 +188,55 @@ namespace Mono.Linker.Conditionals
 			return;
 		}
 
+		bool ResolveOrigins ()
+		{
+			bool foundUnreachable = false;
+			for (int i = 0; i < _block_list.Count; i++) {
+				var entry = _block_list [i];
+				Context.LogMessage ($"    {i} {entry}");
+				bool foundOrigin = false;
+
+				for (int j = 0; j < entry.Origins.Count; j++) {
+					var origin = entry.Origins [j];
+					var originEntry = _entry_by_block [origin.Block];
+					var effectiveOrigin = And (originEntry.Reachability, origin.Reachability);
+					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
+					if (originEntry.Reachability == Reachability.Dead) {
+						entry.Origins.RemoveAt (j--);
+						continue;
+					}
+
+					foundOrigin = true;
+					switch (entry.Reachability) {
+					case Reachability.Dead:
+						throw new MartinTestException ();
+					case Reachability.Unreachable:
+						entry.Reachability = effectiveOrigin;
+						break;
+					case Reachability.Conditional:
+						if (effectiveOrigin == Reachability.Normal)
+							entry.Reachability = Reachability.Normal;
+						break;
+					}
+				}
+
+				if (entry.Reachability == Reachability.Unreachable) {
+					if (foundOrigin || entry.Origins.Count == 0)
+						entry.Reachability = Reachability.Dead;
+					else
+						foundUnreachable = true;
+				}
+			}
+
+			return foundUnreachable;
+		}
+
 		public bool RemoveDeadBlocks ()
 		{
 			var removedDeadBlocks = false;
 			for (int i = 0; i < _block_list.Count; i++) {
+				if (_block_list [i].Reachability == Reachability.Unreachable)
+					throw new MartinTestException ();
 				if (_block_list [i].Reachability != Reachability.Dead)
 					continue;
 

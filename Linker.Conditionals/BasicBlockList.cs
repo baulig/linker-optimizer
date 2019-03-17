@@ -267,7 +267,7 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (startIndex);
 			}
 			var blockIndex = _block_list.IndexOf (block);
-			var nextInstruction = blockIndex < Count ? _block_list [blockIndex + 1].FirstInstruction : null;
+			var nextInstruction = blockIndex + 1 < Count ? _block_list [blockIndex + 1].FirstInstruction : null;
 			_block_list.RemoveAt (blockIndex);
 			_bb_by_instruction.Remove (firstInstruction);
 			AdjustJumpTargets (firstInstruction, nextInstruction);
