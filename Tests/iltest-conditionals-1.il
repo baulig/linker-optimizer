@@ -16,6 +16,25 @@
 
 		.method private static hidebysig default void RunFeature ()  cil managed 
 		{
+			.locals init (int32 test)
+
+			ldc.i4.2
+			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
+			brtrue return
+
+		conditional:
+			ldc.i4.4
+			stloc.0
+		
+		loop:
+			ldloc.0
+			ldc.i4.1
+			sub
+			dup
+			stloc.0
+			brtrue loop
+
+		return:
 			ret
 		}
 	}

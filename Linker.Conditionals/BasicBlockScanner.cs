@@ -69,11 +69,6 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => BlockList.Blocks;
 
-		void CloseBlock (ref BasicBlock block, Instruction instruction, Instruction target)
-		{
-			CloseBlock (ref block, CecilHelper.GetBranchType (instruction), target);
-		}
-
 		void CloseBlock (ref BasicBlock block, BranchType branch, Instruction target)
 		{
 			if (block != null)
@@ -88,56 +83,82 @@ namespace Mono.Linker.Conditionals
 			block = null;
 		}
 
+		void MarkTargetBlock (Dictionary<Instruction, BasicBlock> dict, Instruction target)
+		{
+			if (BlockList.HasBlock (target))
+				return;
+			if (!dict.TryGetValue (target, out var targetBlock)) {
+				BlockList.NewBlock (target);
+				return;
+			}
+
+			var index = targetBlock.IndexOf (target);
+			Context.LogMessage ($"EXISTING TARGET: {targetBlock} {index} {target}");
+
+			BlockList.SplitBlockAt (ref targetBlock, index);
+		}
+
 		bool Scan ()
 		{
 			Context.LogMessage ($"SCAN: {Method}");
 
 			BasicBlock bb = null;
+			var block_by_ins = new Dictionary<Instruction, BasicBlock> ();
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
 				var instruction = Method.Body.Instructions [i];
 
 				if (bb == null) {
 					if (BlockList.TryGetBlock (instruction, out bb)) {
-						Context.LogMessage ($"    KNOWN BB: {bb}");
+						Context.LogMessage ($"  KNOWN BB: {bb}");
 					} else {
 						bb = BlockList.NewBlock (instruction);
-						Context.LogMessage ($"    NEW BB: {bb}");
+						Context.LogMessage ($"  NEW BB: {bb}");
 					}
 				} else if (BlockList.TryGetBlock (instruction, out var newBB)) {
 					if (bb.BranchType != BranchType.Unassigned)
 						throw new MartinTestException ();
+					Context.LogMessage ($"  KNOWN BB: {bb} -> {newBB}");
 					bb.BranchType = BranchType.None;
 					bb = newBB;
-					Context.LogMessage ($"    KNOWN BB: {bb}");
 				} else {
 					bb.AddInstruction (instruction);
 				}
 
-				switch (instruction.OpCode.OperandType) {
-				case OperandType.InlineBrTarget:
-				case OperandType.ShortInlineBrTarget:
-					CloseBlock (ref bb, instruction, (Instruction)instruction.Operand);
-					continue;
-				case OperandType.InlineSwitch:
-					foreach (var label in (Instruction[])instruction.Operand)
-						CloseBlock (ref bb, BranchType.Switch, label);
-					continue;
-				case OperandType.InlineMethod:
+				block_by_ins.Add (instruction, bb);
+
+				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {
+					Context.LogMessage ($"    CALL: {CecilHelper.Format (instruction)}");
 					HandleCall (ref bb, ref i, instruction);
 					continue;
 				}
 
-				switch (instruction.OpCode.Code) {
-				case Code.Throw:
-				case Code.Rethrow:
-					Context.LogMessage ($"    THROW");
-					CloseBlock (ref bb, BranchType.Exit);
+				var type = CecilHelper.GetBranchType (instruction);
+				Context.LogMessage ($"    INS: {CecilHelper.Format (instruction)} {type}");
+				switch (type) {
+				case BranchType.None:
 					break;
-				case Code.Ret:
-					Context.LogMessage ($"    RET");
-					CloseBlock (ref bb, BranchType.Exit);
+				case BranchType.Conditional:
+				case BranchType.False:
+				case BranchType.True:
+				case BranchType.Jump:
+					MarkTargetBlock (block_by_ins, (Instruction)instruction.Operand);
+					CloseBlock (ref bb, type);
 					break;
+
+				case BranchType.Switch:
+					foreach (var label in (Instruction [])instruction.Operand)
+						MarkTargetBlock (block_by_ins, label);
+					CloseBlock (ref bb, BranchType.Switch);
+					break;
+
+				case BranchType.Exit:
+				case BranchType.Return:
+					CloseBlock (ref bb, type);
+					break;
+
+				default:
+					throw new NotSupportedException ();
 				}
 			}
 

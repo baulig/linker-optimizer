@@ -33,7 +33,7 @@ TEST_CASES := \
 ILTEST_CASES := \
 	iltest-conditionals-1.il
 
-compile-tests: $(TEST_CASES:.cs=.exe)
+compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe)
 
 run: $(TEST_CASES:.cs=) build
 
