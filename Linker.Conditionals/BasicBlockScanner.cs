@@ -116,7 +116,7 @@ namespace Mono.Linker.Conditionals
 						Context.LogMessage ($"  NEW BB: {bb}");
 					}
 				} else if (BlockList.TryGetBlock (instruction, out var newBB)) {
-					if (bb.BranchType != BranchType.Unassigned)
+					if (bb.BranchType != BranchType.Unassigned && bb.BranchType != BranchType.None)
 						throw new MartinTestException ();
 					Context.LogMessage ($"  KNOWN BB: {bb} -> {newBB}");
 					bb.BranchType = BranchType.None;

@@ -59,7 +59,6 @@ namespace Mono.Linker.Conditionals
 			BranchType = BranchType.Unassigned;
 
 			AddInstruction (instruction);
-
 		}
 
 		public BasicBlock (int index, IList<Instruction> instructions)
@@ -79,7 +78,11 @@ namespace Mono.Linker.Conditionals
 
 		public void AddInstruction (Instruction instruction)
 		{
+			if (BranchType != BranchType.Unassigned && BranchType != BranchType.None)
+				throw new MartinTestException ();
+
 			_instructions.Add (instruction);
+			BranchType = CecilHelper.GetBranchType (instruction);
 		}
 
 		public void AddInstructions (IList<Instruction> instructions)
