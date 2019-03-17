@@ -63,7 +63,6 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"REWRITE AS ISINST: {block.Count} {block}");
 
 			var index = HasLoadInstruction ? 1 : 0;
-			var branchType = block.BranchType;
 
 			/*
 			 * The block consists of the following:
@@ -76,7 +75,7 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, InstanceType));
 
-			switch (branchType) {
+			switch (block.BranchType) {
 			case BranchType.False:
 			case BranchType.True:
 				block.Type = BasicBlockType.Branch;

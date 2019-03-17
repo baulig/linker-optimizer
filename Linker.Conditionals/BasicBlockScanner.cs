@@ -411,6 +411,9 @@ namespace Mono.Linker.Conditionals
 			var marked = new HashSet<BasicBlock> ();
 
 			foreach (var block in BlockList.Blocks) {
+				if (block.BranchType == BranchType.Unassigned)
+					throw new MartinTestException ();
+
 				if (markNextBlock)
 					marked.Add (block);
 
