@@ -398,7 +398,7 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.Dump ();
 
-			Context.LogMessage ($"DONE REWRITING LINKER CONDITIONAL: {block.LinkerConditional}");
+			Context.LogMessage ($"DONE REWRITING LINKER CONDITIONAL");
 		}
 
 		bool EliminateDeadBlocks ()

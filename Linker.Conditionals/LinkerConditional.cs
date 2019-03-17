@@ -148,7 +148,7 @@ namespace Mono.Linker.Conditionals
 			}
 
 			// Remove everything except the first instruction.
-			for (int i = 1; i < block.Count; i++)
+			while (block.Count > 1)
 				BlockList.RemoveInstructionAt (block, 1);
 
 			if (stackDepth == 0) {

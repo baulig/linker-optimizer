@@ -12,7 +12,7 @@ namespace Martin.LinkerTest
 
 		public static void RunFeature ()
 		{
-			while (true) {
+			for (int i = 0; i < 3; i++) {
 				if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Martin))
 					break;
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
