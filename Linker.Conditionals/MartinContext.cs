@@ -147,7 +147,7 @@ namespace Mono.Linker.Conditionals
 
 		internal int GetDebugLevel (MethodDefinition method)
 		{
-			return EnableDebugging (method.DeclaringType) ? 1 : 0;
+			return EnableDebugging (method.DeclaringType) ? 5 : 0;
 		}
 
 		readonly Dictionary<MonoLinkerFeature, bool> enabled_features = new Dictionary<MonoLinkerFeature, bool> ();

@@ -90,6 +90,7 @@ namespace Mono.Linker.Conditionals
 				targetEntry.AddOrigin (entry.Block, reachability);
 			else {
 				targetEntry = new BlockEntry (block, reachability);
+				targetEntry.AddOrigin (entry.Block, reachability);
 				_entry_by_block.Add (block, targetEntry);
 				_block_list.Add (targetEntry);
 			}
@@ -113,12 +114,12 @@ namespace Mono.Linker.Conditionals
 					MarkExceptionHandler (handler.HandlerStart);
 			}
 
-			var reachability = Reachability.Normal;
-			Origin current = null;
-
 			Scanner.DumpBlocks ();
 
 			Scanner.LogDebug (1, $"ANALYZE: {Method.Name}");
+
+			var reachability = Reachability.Normal;
+			Origin current = null;
 
 			foreach (var block in BlockList.Blocks) {
 				Scanner.LogDebug (2, $"ANALYZE #1: {block} {reachability}");
@@ -144,8 +145,8 @@ namespace Mono.Linker.Conditionals
 				case BranchType.Conditional:
 				case BranchType.False:
 				case BranchType.True:
-					MarkBlock (entry, Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
 					UpdateStatus (ref reachability, Reachability.Conditional);
+					MarkBlock (entry, reachability, (Instruction)block.LastInstruction.Operand);
 					current = new Origin (block, Reachability.Conditional);
 					break;
 				case BranchType.Exit:
@@ -165,9 +166,11 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			Scanner.LogDebug (1, $"ANALYZE #3: {Method.Name}");
-
 			_block_list.Sort ((first, second) => first.Block.Index.CompareTo (second.Block.Index));
+
+			DumpBlockList ();
+
+			Scanner.LogDebug (1, "ANALYZE #3");
 
 			while (ResolveOrigins ()) {
 				Scanner.LogDebug (1, $"ANALYZE #3 -> AGAIN");
@@ -175,15 +178,23 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"ANALYZE #4");
 
-			for (int i = 0; i < _block_list.Count; i++) {
-				Scanner.LogDebug (1, $"    {i} {_block_list [i]}");
-			}
+			DumpBlockList ();
 
 			Scanner.DumpBlocks ();
 
 			Scanner.LogDebug (1, $"FLOW ANALYSIS COMPLETE");
 
 			return;
+		}
+
+		void DumpBlockList ()
+		{
+			Scanner.LogDebug (2, $"BLOCK LIST: {Method.Name}");
+			for (int i = 0; i < _block_list.Count; i++) {
+				Scanner.LogDebug (2, $"  #{i}: {_block_list [i]}");
+				foreach (var origin in _block_list [i].Origins)
+					Scanner.LogDebug (2, $"        {origin}");
+			}
 		}
 
 		bool ResolveOrigins ()
@@ -219,9 +230,10 @@ namespace Mono.Linker.Conditionals
 				}
 
 				if (entry.Reachability == Reachability.Unreachable) {
-					if (foundOrigin || entry.Origins.Count == 0)
+					if (foundOrigin || entry.Origins.Count == 0) {
 						entry.Reachability = Reachability.Dead;
-					else
+						Scanner.LogDebug (3, $"    MARKING DEAD");
+					} else
 						foundUnreachable = true;
 				}
 			}
@@ -252,7 +264,7 @@ namespace Mono.Linker.Conditionals
 				Scanner.DumpBlocks ();
 			}
 
-			return removedDeadBlocks;
+			return false;
 		}
 
 		public bool RemoveDeadJumps ()

@@ -36,14 +36,12 @@ namespace Martin.LinkerTest
 				Interlocked.CompareExchange (ref collators, new Dictionary<string, ISimpleCollator> (StringComparer.Ordinal), null);
 			}
 
-#if FIXME
 			lock (collators) {
 				if (!collators.TryGetValue (_sortName, out collator)) {
 					collator = new SimpleCollator (CultureInfo.GetCultureInfo (m_name));
 					collators [_sortName] = collator;
 				}
 			}
-#endif
 
 			return collator;
 		}
