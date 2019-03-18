@@ -13,6 +13,9 @@ namespace System.Runtime.CompilerServices
 		public static bool IsWeakInstanceOf<T> (object obj) => obj is T;
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
+		public static bool IsTypeAvailable<T> () => true;
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static bool AsWeakInstanceOf<T> (object obj, out T instance) where T : class
 		{
 			instance = obj as T;

@@ -41,6 +41,14 @@
 		}
 
 		.method public static hidebysig 
+			default bool IsTypeAvailable<T> ()  cil managed noinlining 
+		{
+			.maxstack 8
+			ldc.i4.1 
+			ret 
+		}
+
+		.method public static hidebysig 
 			default void MarkFeature (valuetype System.Runtime.CompilerServices.MonoLinkerFeature feature)  cil managed noinlining 
 		{
 			.maxstack 8

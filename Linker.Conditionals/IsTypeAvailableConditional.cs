@@ -1,5 +1,5 @@
 ﻿//
-// IsFeatureSupportedConditional.cs
+// IsTypeAvailableConditional.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -24,46 +24,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 
 namespace Mono.Linker.Conditionals
 {
-	public class IsFeatureSupportedConditional : LinkerConditional
+	public class IsTypeAvailableConditional : LinkerConditional
 	{
-		public int Feature {
+		public TypeDefinition InstanceType {
 			get;
 		}
 
-		IsFeatureSupportedConditional (BasicBlockList blocks, int feature)
+		IsTypeAvailableConditional (BasicBlockList blocks, TypeDefinition type)
 			: base (blocks)
 		{
-			Feature = feature;
+			InstanceType = type;
 		}
 
 		public override void RewriteConditional (ref BasicBlock block)
 		{
-			var evaluated = Context.IsFeatureEnabled (Feature);
-			Context.LogMessage ($"REWRITE FEATURE CONDITIONAL: {Feature} {evaluated}");
+			var evaluated = Context.Annotations.IsMarked (InstanceType);
+			Context.LogMessage ($"REWRITE FEATURE CONDITIONAL: {InstanceType} {evaluated}");
 
 			RewriteConditional (ref block, 0, evaluated);
 		}
 
-		public static IsFeatureSupportedConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index)
+		public static IsTypeAvailableConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index, TypeDefinition type)
 		{
-			if (bb.Instructions.Count == 1)
-				throw new NotSupportedException ();
 			if (index + 1 >= blocks.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			/*
-			 * `bool MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature feature)`
+			 * `bool MonoLinkerSupport.IsTypeAvailable<T> ()`
 			 *
 			 */
 
-			if (bb.Instructions.Count > 2)
-				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+			if (bb.Instructions.Count > 1)
+				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
 
-			var feature = CecilHelper.GetFeatureArgument (bb.FirstInstruction);
-			var instance = new IsFeatureSupportedConditional (blocks, feature);
+			var instance = new IsTypeAvailableConditional (blocks, type);
 			bb.LinkerConditional = instance;
 
 			LookAheadAfterConditional (blocks, ref bb, ref index);
@@ -73,7 +71,8 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[{GetType ().Name}: {Feature}]";
+			return $"[{GetType ().Name}: {InstanceType}]";
 		}
+
 	}
 }

@@ -112,6 +112,7 @@
     <Compile Include="Linker.Conditionals\IsFeatureSupportedConditional.cs" />
     <Compile Include="Linker.Conditionals\FlowAnalysis.cs" />
     <Compile Include="Linker.Conditionals\AsWeakInstanceOfConditional.cs" />
+    <Compile Include="Linker.Conditionals\IsTypeAvailableConditional.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

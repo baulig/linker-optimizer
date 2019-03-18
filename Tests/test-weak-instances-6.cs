@@ -12,7 +12,7 @@ namespace Martin.LinkerTest
 
 		public static void RunWeakInstance ()
 		{
-			var supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
+			var supported = MonoLinkerSupport.IsTypeAvailable<Foo> ();
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
 			if (supported)
 				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");

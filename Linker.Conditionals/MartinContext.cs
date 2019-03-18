@@ -92,6 +92,10 @@ namespace Mono.Linker.Conditionals
 			if (IsFeatureSupportedMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsFeatureSupported()`.");
 
+			IsTypeAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsTypeAvailable");
+			if (IsTypeAvailableMethod == null)
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsTypeAvailable()`.");
+
 			MarkFeatureMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "MarkFeature");
 			if (MarkFeatureMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.MarkFeature()`.");
@@ -103,6 +107,11 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public MethodDefinition IsWeakInstanceOfMethod {
+			get;
+			private set;
+		}
+
+		public MethodDefinition IsTypeAvailableMethod {
 			get;
 			private set;
 		}

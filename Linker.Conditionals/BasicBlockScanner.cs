@@ -150,6 +150,12 @@ namespace Mono.Linker.Conditionals
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
 					AsWeakInstanceOfConditional.Create (BlockList, ref bb, ref index, conditionalType);
 					FoundConditionals = true;
+				} else if (genericInstance.ElementMethod == Context.IsTypeAvailableMethod) {
+					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
+					if (conditionalType == null)
+						throw new ResolutionException (genericInstance.GenericArguments [0]);
+					IsTypeAvailableConditional.Create (BlockList, ref bb, ref index, conditionalType);
+					FoundConditionals = true;
 				}
 			} else if (target == Context.IsFeatureSupportedMethod) {
 				IsFeatureSupportedConditional.Create (BlockList, ref bb, ref index);
