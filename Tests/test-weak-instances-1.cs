@@ -13,32 +13,23 @@ namespace Martin.LinkerTest
 			RunWeakInstance4 ();
 
 			var supported = RunWeakInstance5 ();
-			Assert (!supported);
+			TestHelpers.Assert (!supported);
 
 			RunWeakInstance6 (out supported);
-			Assert (!supported);
+			TestHelpers.Assert (!supported);
 
 			RunWeakInstance7 (ref supported);
-			Assert (!supported);
+			TestHelpers.Assert (!supported);
 
 			RunWeakInstance8 ();
 
 			supported = RunWeakInstance9 (null);
-			Assert (!supported);
+			TestHelpers.Assert (!supported);
 
 			RunWeakInstance10 ();
 			RunWeakInstance11 ();
 			RunWeakInstance12 ();
 			RunWeakInstance13 ();
-		}
-
-		static void Assert (bool condition, [CallerMemberName] string caller = null)
-		{
-			if (condition)
-				return;
-			if (!string.IsNullOrEmpty (caller))
-				throw new ApplicationException ($"Assertion failed: {caller}");
-			throw new ApplicationException ("Assertion failed");
 		}
 
 		public static void RunWeakInstance1 ()
@@ -47,7 +38,7 @@ namespace Martin.LinkerTest
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
 			{
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
-				Assert (false);
+				TestHelpers.Assert (false);
 			}
 
 			Console.Error.WriteLine ("DONE");
@@ -74,7 +65,7 @@ namespace Martin.LinkerTest
 		{
 			var supported = MonoLinkerSupport.IsWeakInstanceOf<Foo> (null);
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
-			Assert (!supported);
+			TestHelpers.Assert (!supported);
 		}
 
 		public static bool RunWeakInstance5 ()
@@ -97,7 +88,7 @@ namespace Martin.LinkerTest
 			var instance = new InstanceTest ();
 			instance.Run ();
 			Console.WriteLine (instance.Supported);
-			Assert (!instance.Supported);
+			TestHelpers.Assert (!instance.Supported);
 		}
 
 		public static bool RunWeakInstance9 (object instance)

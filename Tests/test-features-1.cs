@@ -10,19 +10,10 @@ namespace Martin.LinkerTest
 			RunFeature1 ();
 
 			var supported = RunFeature2 ();
-			Assert (!supported);
+			TestHelpers.Assert (!supported);
 
 			supported = RunFeature3 ();
-			Assert (!supported);
-		}
-
-		static void Assert (bool condition, [CallerMemberName] string caller = null)
-		{
-			if (condition)
-				return;
-			if (!string.IsNullOrEmpty (caller))
-				throw new ApplicationException ($"Assertion failed: {caller}");
-			throw new ApplicationException ("Assertion failed");
+			TestHelpers.Assert (!supported);
 		}
 
 		public static void RunFeature1 ()

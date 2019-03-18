@@ -17,6 +17,10 @@ IL_CORLIB_SOURCES = il-support.il
 
 CLEAN_FILES += *.exe *.dll *.pdb
 
+TEST_HELPER_SOURCES := \
+	AssertionException.cs \
+	TestHelpers.cs
+
 TEST_CASES := \
 	test-weak-instances-1.cs \
 	test-weak-instances-2.cs \
@@ -39,10 +43,7 @@ compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe)
 
 run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 
-test-%.exe: test-%.cs $(CORLIB_SOURCES)
-	$(TESTS_COMPILER) /optimize /out:$@ $^
-
-xtest-%.exe: xtest-%.cs $(CORLIB_SOURCES)
+test-%.exe: test-%.cs $(CORLIB_SOURCES) $(TEST_HELPER_SOURCES)
 	$(TESTS_COMPILER) /optimize /out:$@ $^
 
 iltest-%.exe: iltest-%.il $(IL_CORLIB_SOURCES)

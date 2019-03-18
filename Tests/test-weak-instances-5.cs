@@ -11,21 +11,12 @@ namespace Martin.LinkerTest
 			RunWeakInstance (new Bar ());
 		}
 
-		static void Assert (bool condition, [CallerMemberName] string caller = null)
-		{
-			if (condition)
-				return;
-			if (!string.IsNullOrEmpty (caller))
-				throw new ApplicationException ($"Assertion failed: {caller}");
-			throw new ApplicationException ("Assertion failed");
-		}
-
 		public static void RunWeakInstance (object instance)
 		{
 			if (MonoLinkerSupport.AsWeakInstanceOf<Foo> (instance, out var foo)) {
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
 				foo.Hello ();
-				Assert (false);
+				TestHelpers.Assert (false);
 			}
 
 			Console.Error.WriteLine ("DONE");
