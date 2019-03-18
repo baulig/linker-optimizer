@@ -36,17 +36,12 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public BasicBlockType Type {
-			get;
-			private set;
+			get; set;
 		}
 
 		public BranchType BranchType {
 			get;
 			private set;
-		}
-
-		public ExceptionHandler ExceptionHandler {
-			get;
 		}
 
 		public LinkerConditional LinkerConditional {
@@ -57,11 +52,14 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyList<Instruction> Instructions => _instructions;
 
+		public IList<ExceptionHandler> ExceptionHandlers => _exception_handlers;
+
 		public Instruction FirstInstruction => _instructions [0];
 
 		public Instruction LastInstruction => _instructions [_instructions.Count - 1];
 
 		readonly List<Instruction> _instructions = new List<Instruction> ();
+		readonly List<ExceptionHandler> _exception_handlers = new List<ExceptionHandler> ();
 
 		public BasicBlock (int index, Instruction instruction)
 		{
@@ -71,11 +69,10 @@ namespace Mono.Linker.Conditionals
 			AddInstruction (instruction);
 		}
 
-		internal BasicBlock (int index, BasicBlockType type, Instruction instruction, ExceptionHandler handler)
+		internal BasicBlock (int index, BasicBlockType type, Instruction instruction)
 			: this (index, instruction)
 		{
 			Type = type;
-			ExceptionHandler = handler;
 		}
 
 		public BasicBlock (int index, IList<Instruction> instructions)

@@ -41,12 +41,17 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public bool ScanAllAssemblies {
+			get; set;
+		}
+
 		public AnnotationStore Annotations => Context.Annotations;
 
 		MartinContext (LinkContext context)
 		{
 			Context = context;
 			NoConditionalRedefinition = true;
+			ScanAllAssemblies = false;
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
@@ -142,7 +147,7 @@ namespace Mono.Linker.Conditionals
 
 		public bool IsEnabled (MethodDefinition method)
 		{
-			return EnableDebugging (method.DeclaringType);
+			return ScanAllAssemblies || EnableDebugging (method.DeclaringType);
 		}
 
 		internal int GetDebugLevel (MethodDefinition method)

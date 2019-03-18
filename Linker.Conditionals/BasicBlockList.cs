@@ -63,19 +63,24 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
-		BasicBlock NewBlock (BasicBlockType type, Instruction instruction, ExceptionHandler handler = null)
+		BasicBlock NewBlock (BasicBlockType type, Instruction instruction)
 		{
-			var block = new BasicBlock (++_next_block_id, type, instruction, handler);
+			var block = new BasicBlock (++_next_block_id, type, instruction);
 			_bb_by_instruction.Add (instruction, block);
 			_block_list.Add (block);
 			return block;
 		}
 
-		BasicBlock EnsureBlock (Instruction instruction)
+		BasicBlock EnsureBlock (BasicBlockType type, Instruction instruction)
 		{
-			if (_bb_by_instruction.TryGetValue (instruction, out var block))
+			if (_bb_by_instruction.TryGetValue (instruction, out var block)) {
+				if (block.Type == BasicBlockType.Normal)
+					block.Type = type;
+				else if (block.Type != type)
+					throw new MartinTestException ();
 				return block;
-			return NewBlock (instruction);
+			}
+			return NewBlock (type, instruction);
 		}
 
 		public void RemoveBlock (BasicBlock block)
@@ -142,24 +147,24 @@ namespace Mono.Linker.Conditionals
 
 			foreach (var handler in Body.ExceptionHandlers) {
 				if (handler.TryStart != null)
-					NewBlock (BasicBlockType.Try, handler.TryStart, handler);
+					EnsureBlock (BasicBlockType.Try, handler.TryStart).ExceptionHandlers.Add (handler);
 				if (handler.HandlerStart != null)
-					NewBlock (BasicBlockType.Catch, handler.HandlerStart, handler);
+					EnsureBlock (BasicBlockType.Catch, handler.HandlerStart).ExceptionHandlers.Add (handler);
 				if (handler.HandlerEnd != null)
-					NewBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
+					EnsureBlock (BasicBlockType.Normal, handler.HandlerEnd).ExceptionHandlers.Add (handler);
 				if (handler.FilterStart != null)
-					NewBlock (BasicBlockType.Filter, handler.FilterStart, handler);
+					EnsureBlock (BasicBlockType.Filter, handler.FilterStart).ExceptionHandlers.Add (handler);
 			}
 
 			foreach (var instruction in Body.Instructions) {
 				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
-					EnsureBlock ((Instruction)instruction.Operand);
+					EnsureBlock (BasicBlockType.Normal, (Instruction)instruction.Operand);
 					break;
 				case OperandType.InlineSwitch:
 					foreach (var label in (Instruction [])instruction.Operand)
-						EnsureBlock (label);
+						EnsureBlock (BasicBlockType.Normal, label);
 					break;
 				}
 			}

@@ -258,12 +258,18 @@ namespace Mono.Linker.Conditionals
 				throw new MartinTestException ();
 
 			var index = BlockList.IndexOf (entry.Block);
-			var end = BlockList.GetBlock (entry.Block.ExceptionHandler.HandlerEnd);
-			var end_index = BlockList.IndexOf (end);
+			int end_index = index + 1;
 
-			Scanner.LogDebug (2, $"    MARK DEAD TRY: {index} {end} {end_index}");
+			foreach (var handler in entry.Block.ExceptionHandlers) {
+				var handler_block = BlockList.GetBlock (handler.HandlerEnd);
+				var handler_index = BlockList.IndexOf (handler_block);
+				if (handler_index > end_index)
+					end_index = handler_index;
+			}
 
-			for (int i = index + 1; i < end_index; i++) {
+			Scanner.LogDebug (2, $"    MARK DEAD TRY: {index} {end_index}");
+
+			for (int i = index; i < end_index; i++) {
 				var delete = _entry_by_block [BlockList [i]];
 				Scanner.LogDebug (2, $"    MARK DEAD TRY #1: {i} {BlockList[i]}: {delete}");
 				delete.Reachability = Reachability.Dead;
@@ -309,10 +315,19 @@ namespace Mono.Linker.Conditionals
 				throw new InvalidOperationException ();
 
 			var index = BlockList.IndexOf (block);
-			var end = BlockList.GetBlock (block.ExceptionHandler.HandlerEnd);
-			var end_index = BlockList.IndexOf (end);
+			int end_index = index + 1;
 
-			Scanner.LogDebug (2, $"  DEAD EXCEPTION BLOCK: {block} {end}");
+			while (block.ExceptionHandlers.Count > 0) {
+				var handler = block.ExceptionHandlers [0];
+				var handler_index = BlockList.IndexOf (BlockList.GetBlock (handler.HandlerEnd));
+				if (handler_index > end_index)
+					end_index = handler_index;
+
+				block.ExceptionHandlers.RemoveAt (0);
+				BlockList.Body.ExceptionHandlers.Remove (handler);
+			}
+
+			Scanner.LogDebug (2, $"  DEAD EXCEPTION BLOCK: {block} {end_index}");
 
 			while (end_index > index) {
 				var current = BlockList [index];
@@ -328,8 +343,6 @@ namespace Mono.Linker.Conditionals
 				BlockList.DeleteBlock (ref current);
 				end_index--;
 			}
-
-			BlockList.Body.ExceptionHandlers.Remove (block.ExceptionHandler);
 
 			position = -1;
 			return true;
