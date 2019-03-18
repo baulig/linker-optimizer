@@ -145,8 +145,8 @@ namespace Mono.Linker.Conditionals
 				case BranchType.Conditional:
 				case BranchType.False:
 				case BranchType.True:
+					MarkBlock (entry, Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
 					UpdateStatus (ref reachability, Reachability.Conditional);
-					MarkBlock (entry, reachability, (Instruction)block.LastInstruction.Operand);
 					current = new Origin (block, Reachability.Conditional);
 					break;
 				case BranchType.Exit:
@@ -220,11 +220,15 @@ namespace Mono.Linker.Conditionals
 					case Reachability.Dead:
 						throw new MartinTestException ();
 					case Reachability.Unreachable:
+						if (entry.Reachability != effectiveOrigin)
+							Scanner.LogDebug (3, $"        -> EFFECTIVE ORIGIN {effectiveOrigin}");
 						entry.Reachability = effectiveOrigin;
 						break;
 					case Reachability.Conditional:
-						if (effectiveOrigin == Reachability.Normal)
+						if (effectiveOrigin == Reachability.Normal) {
+							Scanner.LogDebug (3, $"        -> NORMAL");
 							entry.Reachability = Reachability.Normal;
+						}
 						break;
 					}
 				}
@@ -232,7 +236,7 @@ namespace Mono.Linker.Conditionals
 				if (entry.Reachability == Reachability.Unreachable) {
 					if (foundOrigin || entry.Origins.Count == 0) {
 						entry.Reachability = Reachability.Dead;
-						Scanner.LogDebug (3, $"    MARKING DEAD");
+						Scanner.LogDebug (3, $"        -> MARKING DEAD");
 						MarkDead (entry);
 					} else
 						foundUnreachable = true;
@@ -279,10 +283,6 @@ namespace Mono.Linker.Conditionals
 
 				removedDeadBlocks = true;
 				DeleteBlock (ref i);
-//				if (DeleteBlock (_block_list [i].Block)) {
-//					i = -1;
-//					continue;
-//				}
 			}
 
 			if (removedDeadBlocks) {
@@ -291,7 +291,7 @@ namespace Mono.Linker.Conditionals
 				Scanner.DumpBlocks ();
 			}
 
-			return false;
+			return removedDeadBlocks;
 		}
 
 		bool DeleteBlock (ref int position)
