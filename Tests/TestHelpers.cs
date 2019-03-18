@@ -21,6 +21,9 @@ namespace Martin.LinkerTest
 			throw new AssertionException ($"Assertion failed: {message}");
 		}
 
+		/*
+		 * We scan the generated output for any references to this method and make the test fail.
+		 */
 		public static Exception AssertRemoved ()
 		{
 			throw new AssertionException ("This code should have been removed.");

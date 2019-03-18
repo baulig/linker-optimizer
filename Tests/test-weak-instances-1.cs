@@ -57,7 +57,7 @@ namespace Martin.LinkerTest
 		{
 			Console.Error.WriteLine ("HELLO");
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-				throw new AssertionException ("Conditional should have been removed.");
+				throw TestHelpers.AssertRemoved ();
 
 			Console.Error.WriteLine ("DONE");
 		}
@@ -123,7 +123,7 @@ namespace Martin.LinkerTest
 		{
 			var instance = new InstanceTest ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Instance))
-				throw new AssertionException ("Conditional should be linked out");
+				throw TestHelpers.AssertRemoved ();
 
 			Console.Error.WriteLine ("DONE");
 		}
