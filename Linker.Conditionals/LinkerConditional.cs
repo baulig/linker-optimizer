@@ -156,6 +156,78 @@ namespace Mono.Linker.Conditionals
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
 		}
 
+		public static bool Scan (BasicBlockList blocks, ref BasicBlock bb, ref int index, Instruction instruction)
+		{
+			var target = (MethodReference)instruction.Operand;
+			blocks.Context.LogMessage ($"    CALL: {target}");
+
+			if (instruction.Operand is GenericInstanceMethod genericInstance) {
+				if (genericInstance.ElementMethod == blocks.Context.IsWeakInstanceOfMethod) {
+					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
+					if (conditionalType == null)
+						throw new ResolutionException (genericInstance.GenericArguments [0]);
+					IsWeakInstanceOfConditional.Create (blocks, ref bb, ref index, conditionalType);
+					return true;
+				} else if (genericInstance.ElementMethod == blocks.Context.AsWeakInstanceOfMethod) {
+					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
+					if (conditionalType == null)
+						throw new ResolutionException (genericInstance.GenericArguments [0]);
+					AsWeakInstanceOfConditional.Create (blocks, ref bb, ref index, conditionalType);
+					return true;
+				} else if (genericInstance.ElementMethod == blocks.Context.IsTypeAvailableMethod) {
+					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
+					if (conditionalType == null)
+						throw new ResolutionException (genericInstance.GenericArguments [0]);
+					IsTypeAvailableConditional.Create (blocks, ref bb, ref index, conditionalType);
+					return true;
+				}
+			} else if (target == blocks.Context.IsFeatureSupportedMethod) {
+				IsFeatureSupportedConditional.Create (blocks, ref bb, ref index);
+				return true;
+			} else if (target == blocks.Context.MarkFeatureMethod) {
+				HandleMarkFeature (blocks, ref bb, ref index);
+				return true;
+			}
+
+			return false;
+		}
+
+		static void HandleMarkFeature (BasicBlockList blocks, ref BasicBlock bb, ref int index)
+		{
+			if (bb.Instructions.Count == 1)
+				throw new NotSupportedException ();
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			var feature = CecilHelper.GetFeatureArgument (bb.Instructions [bb.Count - 2]);
+			blocks.Context.SetFeatureEnabled (feature, true);
+
+			blocks.Context.LogMessage ($"MARK FEATURE: {feature}");
+
+			/*
+			 * `void MonoLinkerSupport.MarkFeature (MonoLinkerFeature feature)`
+			 *
+			 */
+
+			if (bb.Instructions.Count > 2) {
+				/*
+				 * If we are in the middle of a basic block, then we can simply remove
+				 * the two instructions.
+				 */
+				blocks.RemoveInstructionAt (bb, bb.Count - 1);
+				blocks.RemoveInstructionAt (bb, bb.Count - 1);
+				index -= 2;
+			} else {
+				/*
+				 * We are at the beginning of a basic block.  Since somebody might jump
+				 * to us, we replace the call with a `nop`.
+				 */
+				blocks.RemoveInstructionAt (bb, bb.Count - 1);
+				blocks.ReplaceInstructionAt (ref bb, bb.Count - 1, Instruction.Create (OpCodes.Nop));
+				index--;
+			}
+		}
+
 		protected static void LookAheadAfterConditional (BasicBlockList blocks, ref BasicBlock bb, ref int index)
 		{
 			if (index + 1 >= blocks.Body.Instructions.Count)

@@ -101,7 +101,8 @@ namespace Mono.Linker.Conditionals
 
 				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {
 					Context.LogMessage ($"    CALL: {CecilHelper.Format (instruction)}");
-					HandleCall (ref bb, ref i, instruction);
+					if (LinkerConditional.Scan (BlockList, ref bb, ref i, instruction))
+						FoundConditionals = true;
 					continue;
 				}
 
@@ -132,77 +133,6 @@ namespace Mono.Linker.Conditionals
 			return true;
 		}
 
-		void HandleCall (ref BasicBlock bb, ref int index, Instruction instruction)
-		{
-			var target = (MethodReference)instruction.Operand;
-			Context.LogMessage ($"    CALL: {target}");
-
-			if (instruction.Operand is GenericInstanceMethod genericInstance) {
-				if (genericInstance.ElementMethod == Context.IsWeakInstanceOfMethod) {
-					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
-					if (conditionalType == null)
-						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					IsWeakInstanceOfConditional.Create (BlockList, ref bb, ref index, conditionalType);
-					FoundConditionals = true;
-				} else if (genericInstance.ElementMethod == Context.AsWeakInstanceOfMethod) {
-					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
-					if (conditionalType == null)
-						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					AsWeakInstanceOfConditional.Create (BlockList, ref bb, ref index, conditionalType);
-					FoundConditionals = true;
-				} else if (genericInstance.ElementMethod == Context.IsTypeAvailableMethod) {
-					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
-					if (conditionalType == null)
-						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					IsTypeAvailableConditional.Create (BlockList, ref bb, ref index, conditionalType);
-					FoundConditionals = true;
-				}
-			} else if (target == Context.IsFeatureSupportedMethod) {
-				IsFeatureSupportedConditional.Create (BlockList, ref bb, ref index);
-				FoundConditionals = true;
-			} else if (target == Context.MarkFeatureMethod) {
-				HandleMarkFeature (ref bb, ref index);
-			}
-		}
-
-		void HandleMarkFeature (ref BasicBlock bb, ref int index)
-		{
-			if (bb.Instructions.Count == 1)
-				throw new NotSupportedException ();
-			if (index + 1 >= Method.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			var feature = CecilHelper.GetFeatureArgument (bb.Instructions [bb.Count - 2]);
-			Context.SetFeatureEnabled (feature, true);
-
-			Context.LogMessage ($"MARK FEATURE: {feature}");
-
-			/*
-			 * `void MonoLinkerSupport.MarkFeature (MonoLinkerFeature feature)`
-			 *
-			 */
-
-			if (bb.Instructions.Count > 2) {
-				/*
-				 * If we are in the middle of a basic block, then we can simply remove
-				 * the two instructions.
-				 */
-				BlockList.RemoveInstructionAt (bb, bb.Count - 1);
-				BlockList.RemoveInstructionAt (bb, bb.Count - 1);
-				index -= 2;
-				return;
-			} else {
-				/*
-				 * We are at the beginning of a basic block.  Since somebody might jump
-				 * to us, we replace the call with a `nop`.
-				 */
-				BlockList.RemoveInstructionAt (bb, bb.Count - 1);
-				BlockList.ReplaceInstructionAt (ref bb, bb.Count - 1, Instruction.Create (OpCodes.Nop));
-				index--;
-				return;
-			}
-		}
-
 		public void RewriteConditionals ()
 		{
 			Context.LogMessage ($"REWRITE CONDITIONALS");
@@ -212,11 +142,11 @@ namespace Mono.Linker.Conditionals
 			var foundConditionals = false;
 
 			foreach (var block in BlockList.Blocks.ToArray ()) {
-				if (block.LinkerConditional != null) {
-					RewriteLinkerConditional (block);
-					block.LinkerConditional = null;
-					foundConditionals = true;
-				}
+				if (block.LinkerConditional == null)
+					continue;
+				RewriteLinkerConditional (block);
+				block.LinkerConditional = null;
+				foundConditionals = true;
 			}
 
 			if (!foundConditionals)
