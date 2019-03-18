@@ -16,7 +16,7 @@ namespace Martin.LinkerTest
 			if (test)
 				return;
 			if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Martin))
-				throw new InvalidTimeZoneException ("I LIVE ON THE MOON");
+				throw new AssertionException ("I LIVE ON THE MOON");
 		}
 	}
 }

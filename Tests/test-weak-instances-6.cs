@@ -16,7 +16,7 @@ namespace Martin.LinkerTest
 			var supported = MonoLinkerSupport.IsTypeAvailable<Foo> ();
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
 			if (supported)
-				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("I LIVE ON THE MOON!");
 		}
 
 		public static void TestAvailable2 ()
@@ -24,7 +24,7 @@ namespace Martin.LinkerTest
 			var supported = MonoLinkerSupport.IsTypeAvailable ("Martin.LinkerTest.Foo");
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
 			if (supported)
-				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("I LIVE ON THE MOON!");
 
 			if (MonoLinkerSupport.IsTypeAvailable ("Martin.LinkerTest.Undefined"))
 				throw new InvalidOperationException ("Undefined type!");

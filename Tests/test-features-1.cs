@@ -19,7 +19,7 @@ namespace Martin.LinkerTest
 		public static void RunFeature1 ()
 		{
 			if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Remoting))
-				throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("I LIVE ON THE MOON!");
 		}
 
 		public static bool RunFeature2 ()
