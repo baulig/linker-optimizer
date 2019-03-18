@@ -115,6 +115,7 @@
     <Compile Include="Linker.Conditionals\IsTypeAvailableConditional.cs" />
     <Compile Include="Linker.Conditionals\XApiReader.cs" />
     <Compile Include="Linker.Conditionals\MonoLinkerFeature.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlockType.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

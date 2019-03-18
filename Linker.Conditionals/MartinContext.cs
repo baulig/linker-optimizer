@@ -142,7 +142,7 @@ namespace Mono.Linker.Conditionals
 
 		public bool IsEnabled (MethodDefinition method)
 		{
-			return true;
+			return EnableDebugging (method.DeclaringType);
 		}
 
 		internal int GetDebugLevel (MethodDefinition method)

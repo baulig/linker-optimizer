@@ -40,8 +40,6 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		// public MartinContext Context => BasicBlockScanner.Context;
-
 		readonly Dictionary<Instruction, BasicBlock> _bb_by_instruction;
 		readonly List<BasicBlock> _block_list;
 		int _next_block_id;
@@ -63,6 +61,21 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Add (instruction, block);
 			_block_list.Add (block);
 			return block;
+		}
+
+		BasicBlock NewBlock (BasicBlockType type, Instruction instruction, ExceptionHandler handler = null)
+		{
+			var block = new BasicBlock (++_next_block_id, type, instruction, handler);
+			_bb_by_instruction.Add (instruction, block);
+			_block_list.Add (block);
+			return block;
+		}
+
+		BasicBlock EnsureBlock (Instruction instruction)
+		{
+			if (_bb_by_instruction.TryGetValue (instruction, out var block))
+				return block;
+			return NewBlock (instruction);
 		}
 
 		public void RemoveBlock (BasicBlock block)
@@ -123,6 +136,35 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		public void ResolveJumpTargets ()
+		{
+			Dump ();
+
+			foreach (var handler in Body.ExceptionHandlers) {
+				if (handler.TryStart != null)
+					NewBlock (BasicBlockType.Try, handler.TryStart, handler);
+				if (handler.HandlerStart != null)
+					NewBlock (BasicBlockType.Catch, handler.HandlerStart, handler);
+				if (handler.HandlerEnd != null)
+					NewBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
+				if (handler.FilterStart != null)
+					NewBlock (BasicBlockType.Filter, handler.FilterStart, handler);
+			}
+
+			foreach (var instruction in Body.Instructions) {
+				switch (instruction.OpCode.OperandType) {
+				case OperandType.InlineBrTarget:
+				case OperandType.ShortInlineBrTarget:
+					EnsureBlock ((Instruction)instruction.Operand);
+					break;
+				case OperandType.InlineSwitch:
+					foreach (var label in (Instruction [])instruction.Operand)
+						EnsureBlock (label);
+					break;
+				}
+			}
+		}
+
 		Exception CannotRemoveTarget => throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");
 
 		public bool SplitBlockAt (ref BasicBlock block, int position)
@@ -159,6 +201,8 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public bool HasBlock (Instruction instruction) => _bb_by_instruction.ContainsKey (instruction);
+
+		public int IndexOf (BasicBlock block) => _block_list.IndexOf (block);
 
 		public void ComputeOffsets ()
 		{

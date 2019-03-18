@@ -35,9 +35,18 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public BasicBlockType Type {
+			get;
+			private set;
+		}
+
 		public BranchType BranchType {
 			get;
 			private set;
+		}
+
+		public ExceptionHandler ExceptionHandler {
+			get;
 		}
 
 		public LinkerConditional LinkerConditional {
@@ -60,6 +69,13 @@ namespace Mono.Linker.Conditionals
 			BranchType = BranchType.None;
 
 			AddInstruction (instruction);
+		}
+
+		internal BasicBlock (int index, BasicBlockType type, Instruction instruction, ExceptionHandler handler)
+			: this (index, instruction)
+		{
+			Type = type;
+			ExceptionHandler = handler;
 		}
 
 		public BasicBlock (int index, IList<Instruction> instructions)
@@ -144,7 +160,7 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[BB {Index} ({BranchType}): {FirstInstruction.OpCode.Code}]";
+			return $"[BB {Index} ({Type},{BranchType}): {FirstInstruction.OpCode.Code}]";
 		}
 	}
 }

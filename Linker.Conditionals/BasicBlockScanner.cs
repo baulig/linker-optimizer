@@ -102,10 +102,7 @@ namespace Mono.Linker.Conditionals
 
 			BasicBlock bb = null;
 
-			var allTargets = CecilHelper.GetAllTargets (Method.Body);
-			foreach (var instruction in allTargets) {
-				BlockList.NewBlock (instruction);
-			}
+			BlockList.ResolveJumpTargets ();
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
 				var instruction = Method.Body.Instructions [i];

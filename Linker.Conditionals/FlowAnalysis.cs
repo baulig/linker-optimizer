@@ -233,12 +233,37 @@ namespace Mono.Linker.Conditionals
 					if (foundOrigin || entry.Origins.Count == 0) {
 						entry.Reachability = Reachability.Dead;
 						Scanner.LogDebug (3, $"    MARKING DEAD");
+						MarkDead (entry);
 					} else
 						foundUnreachable = true;
 				}
 			}
 
 			return foundUnreachable;
+		}
+
+		void MarkDead (BlockEntry entry)
+		{
+			entry.Reachability = Reachability.Dead;
+			if (entry.Block.Type == BasicBlockType.Normal)
+				return;
+
+			Scanner.LogDebug (2, $"    MARK DEAD: {entry.Block}");
+
+			if (entry.Block.Type != BasicBlockType.Try)
+				throw new MartinTestException ();
+
+			var index = BlockList.IndexOf (entry.Block);
+			var end = BlockList.GetBlock (entry.Block.ExceptionHandler.HandlerEnd);
+			var end_index = BlockList.IndexOf (end);
+
+			Scanner.LogDebug (2, $"    MARK DEAD TRY: {index} {end} {end_index}");
+
+			for (int i = index + 1; i < end_index; i++) {
+				var delete = _entry_by_block [BlockList [i]];
+				Scanner.LogDebug (2, $"    MARK DEAD TRY #1: {i} {BlockList[i]}: {delete}");
+				delete.Reachability = Reachability.Dead;
+			}
 		}
 
 		public bool RemoveDeadBlocks ()
@@ -252,10 +277,12 @@ namespace Mono.Linker.Conditionals
 
 				Scanner.LogDebug (2, $"  DEAD BLOCK: {_block_list [i]}");
 
-				var block = _block_list [i].Block;
-				BlockList.DeleteBlock (ref block);
-
 				removedDeadBlocks = true;
+				DeleteBlock (ref i);
+//				if (DeleteBlock (_block_list [i].Block)) {
+//					i = -1;
+//					continue;
+//				}
 			}
 
 			if (removedDeadBlocks) {
@@ -265,6 +292,47 @@ namespace Mono.Linker.Conditionals
 			}
 
 			return false;
+		}
+
+		bool DeleteBlock (ref int position)
+		{
+			var block = _block_list [position].Block;
+
+			if (block.Type == BasicBlockType.Normal) {
+				_block_list.RemoveAt (position--);
+				_entry_by_block.Remove (block);
+				BlockList.DeleteBlock (ref block);
+				return false;
+			}
+
+			if (block.Type != BasicBlockType.Try)
+				throw new InvalidOperationException ();
+
+			var index = BlockList.IndexOf (block);
+			var end = BlockList.GetBlock (block.ExceptionHandler.HandlerEnd);
+			var end_index = BlockList.IndexOf (end);
+
+			Scanner.LogDebug (2, $"  DEAD EXCEPTION BLOCK: {block} {end}");
+
+			while (end_index > index) {
+				var current = BlockList [index];
+				var entry = _entry_by_block [BlockList [index]];
+				if (entry.Reachability != Reachability.Dead)
+					throw new MartinTestException ();
+
+				Scanner.LogDebug (2, $"      DELETE: {current} {entry}");
+
+				_entry_by_block.Remove (current);
+				_block_list.Remove (entry);
+
+				BlockList.DeleteBlock (ref current);
+				end_index--;
+			}
+
+			BlockList.Body.ExceptionHandlers.Remove (block.ExceptionHandler);
+
+			position = -1;
+			return true;
 		}
 
 		public bool RemoveDeadJumps ()
