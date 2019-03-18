@@ -128,16 +128,13 @@ namespace Mono.Linker.Conditionals
 			private set;
 		}
 
-		public bool IsEnabled (TypeDefinition type)
+		internal bool EnableDebugging (TypeDefinition type)
 		{
-			return true;
 			if (type.DeclaringType != null)
-				return IsEnabled (type.DeclaringType);
+				return EnableDebugging (type.DeclaringType);
 			switch (type.Namespace) {
 			case "Martin.LinkerTest":
 				return true;
-			case "Martin.LinkerSupport":
-				return false;
 			default:
 				return type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin");
 			}
@@ -145,7 +142,12 @@ namespace Mono.Linker.Conditionals
 
 		public bool IsEnabled (MethodDefinition method)
 		{
-			return IsEnabled (method.DeclaringType);
+			return true;
+		}
+
+		internal int GetDebugLevel (MethodDefinition method)
+		{
+			return EnableDebugging (method.DeclaringType) ? 1 : 0;
 		}
 
 		readonly Dictionary<MonoLinkerFeature, bool> enabled_features = new Dictionary<MonoLinkerFeature, bool> ();

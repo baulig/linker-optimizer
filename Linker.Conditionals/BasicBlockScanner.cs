@@ -52,7 +52,8 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public int DebugLevel {
-			get; set;
+			get;
+			private set;
 		}
 
 		BasicBlockScanner (MartinContext context, MethodDefinition method)
@@ -61,6 +62,8 @@ namespace Mono.Linker.Conditionals
 			Method = method;
 
 			BlockList = new BasicBlockList (this, method.Body);
+
+			DebugLevel = context.GetDebugLevel (method);
 		}
 
 		public static bool ThrowOnError;
