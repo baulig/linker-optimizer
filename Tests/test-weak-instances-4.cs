@@ -17,7 +17,7 @@ namespace Martin.LinkerTest
 			if ((object)type == null)
 				throw new ArgumentNullException ("type");
 			if (MonoLinkerSupport.IsWeakInstanceOf<TypeBuilder> (type))
-				throw new NotSupportedException ("I LIVE ON THE MOON");
+				throw new AssertionException ("Conditional should return false.");
 
 			Console.Error.WriteLine ("DONE");
 		}

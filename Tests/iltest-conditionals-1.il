@@ -13,8 +13,8 @@
 			call bool class Martin.LinkerTest.TestConditionals::RunFeature1 ()
 			brtrue feature2
 
-			ldstr "I LIVE ON THE MOON!"
-			newobj instance void class [mscorlib]System.InvalidTimeZoneException::'.ctor'(string)
+			ldstr "RunFeature1() should have returned true"
+			newobj instance void class [mscorlib]System.InvalidOperationException::'.ctor'(string)
 			throw
 
 		feature2:

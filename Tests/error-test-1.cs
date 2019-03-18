@@ -13,9 +13,9 @@ namespace Martin.LinkerTest
 		public static void RunErrorTest (object instance)
 		{
 			if (MonoLinkerSupport.AsWeakInstanceOf<Bar> (instance, out var bar)) {
-				Console.Error.WriteLine ("I LIVE ON THE MOON!");
+				TestHelpers.Debug ("Conditional should have been removed.");
 				bar.Hello ();
-				TestHelpers.Assert (false);
+				TestHelpers.AssertRemoved ();
 			}
 
 			/*

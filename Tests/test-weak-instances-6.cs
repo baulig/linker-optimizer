@@ -16,7 +16,7 @@ namespace Martin.LinkerTest
 			var supported = MonoLinkerSupport.IsTypeAvailable<Foo> ();
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
 			if (supported)
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("Conditional should have returned false.");
 		}
 
 		public static void TestAvailable2 ()

@@ -12,11 +12,10 @@ namespace Martin.LinkerTest
 
 		public static void RunWeakInstance ()
 		{
-			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-			{
+			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null)) {
 				Foo.Hello ();
-				TestHelpers.Debug ("Conditional should be linked out");
-				TestHelpers.AssertFail ("Conditional should be linked out");
+				TestHelpers.Debug ("Conditional should be linked out.");
+				throw TestHelpers.AssertRemoved ();
 			}
 
 			Console.Error.WriteLine ("DONE");

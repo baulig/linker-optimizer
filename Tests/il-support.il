@@ -49,6 +49,14 @@
 		}
 
 		.method public static hidebysig 
+			default bool IsTypeAvailable (string 'type')  cil managed noinlining 
+		{
+			.maxstack 8
+			ldc.i4.1 
+			ret 
+		}
+
+		.method public static hidebysig 
 			default bool AsWeakInstanceOf<class T> (object obj, [out] !!T& 'instance')  cil managed noinlining 
 		{
 			.maxstack 8

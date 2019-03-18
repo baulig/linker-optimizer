@@ -37,10 +37,9 @@ namespace Martin.LinkerTest
 		public static void RunWeakInstance1 ()
 		{
 			TryCatchMethod ();
-			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-			{
-				TestHelpers.Debug ("Conditional should be linked out");
-				TestHelpers.AssertFail ("Conditional should be linked out");
+			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null)) {
+				TestHelpers.Debug ("Conditional should return false.");
+				TestHelpers.AssertFail ("Conditional should return false.");
 			}
 
 			Console.Error.WriteLine ("DONE");

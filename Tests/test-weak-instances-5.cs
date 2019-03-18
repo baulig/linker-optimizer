@@ -14,9 +14,9 @@ namespace Martin.LinkerTest
 		public static void RunWeakInstance (object instance)
 		{
 			if (MonoLinkerSupport.AsWeakInstanceOf<Foo> (instance, out var foo)) {
-				TestHelpers.Debug ("Conditional should be linked out!");
+				TestHelpers.Debug ("Conditional should have been removed.");
 				foo.Hello ();
-				TestHelpers.Assert (false, "Conditional should be linked out");
+				TestHelpers.AssertRemoved ();
 			}
 
 			Console.Error.WriteLine ("DONE");
