@@ -48,7 +48,7 @@ namespace Mono.Linker.Conditionals
 
 		public override void RewriteConditional (ref BasicBlock block)
 		{
-			Context.LogMessage ($"REWRITE CONDITIONAL: {this} {BlockList.Body.Method.Name} {block}");
+			Scanner.LogDebug (1, $"REWRITE CONDITIONAL: {this} {BlockList.Body.Method.Name} {block}");
 
 			var evaluated = Context.Annotations.IsMarked (InstanceType);
 			Context.MarkConditionalType (InstanceType);
@@ -61,7 +61,7 @@ namespace Mono.Linker.Conditionals
 
 		void RewriteAsIsInst (ref BasicBlock block)
 		{
-			Context.LogMessage ($"REWRITE AS ISINST: {block.Count} {block}");
+			Scanner.LogDebug (1, $"REWRITE AS ISINST: {block.Count} {block}");
 
 			var index = HasLoadInstruction ? 1 : 0;
 

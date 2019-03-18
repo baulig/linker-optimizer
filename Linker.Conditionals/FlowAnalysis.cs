@@ -249,7 +249,7 @@ namespace Mono.Linker.Conditionals
 			if (removedDeadBlocks) {
 				BlockList.ComputeOffsets ();
 
-				BlockList.Dump ();
+				Scanner.DumpBlocks ();
 			}
 
 			return removedDeadBlocks;
@@ -287,7 +287,7 @@ namespace Mono.Linker.Conditionals
 			if (removedDeadBlocks) {
 				BlockList.ComputeOffsets ();
 
-				BlockList.Dump ();
+				Scanner.DumpBlocks ();
 			}
 
 			return removedDeadBlocks;

@@ -69,7 +69,7 @@ namespace Mono.Linker.Conditionals
 			var evaluated = EvaluateConditional ();
 			Context.MarkConditionalType (ConditionalType);
 
-			Context.LogMessage ($"REWRITE CONDITIONAL: {this} {evaluated}");
+			Scanner.LogDebug (1, $"REWRITE CONDITIONAL: {this} {evaluated}");
 
 			RewriteConditional (ref block, 0, evaluated);
 		}

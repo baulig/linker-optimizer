@@ -49,16 +49,6 @@ namespace Mono.Linker.Conditionals
 			NoConditionalRedefinition = true;
 		}
 
-		public void LogMessage (string message)
-		{
-			LogMessage (MessageImportance.Normal, message);
-		}
-
-		public void LogDebug (string message)
-		{
-			LogMessage (MessageImportance.Low, message);
-		}
-
 		public void LogMessage (MessageImportance importance, string message)
 		{
 			Context.Logger.LogMessage (importance, message);
@@ -81,7 +71,7 @@ namespace Mono.Linker.Conditionals
 
 		void Initialize ()
 		{
-			LogMessage ("Initializing Martin's Playground");
+			LogMessage (MessageImportance.High, "Initializing Martin's Playground");
 
 			MonoLinkerSupportType = Context.GetType (LinkerSupportType);
 			if (MonoLinkerSupportType == null)
@@ -98,9 +88,6 @@ namespace Mono.Linker.Conditionals
 			IsFeatureSupportedMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsFeatureSupported");
 			if (IsFeatureSupportedMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsFeatureSupported()`.");
-
-			foreach (var method in MonoLinkerSupportType.Methods)
-				LogMessage (method.FullName);
 
 			IsTypeAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.FullName == IsTypeAvailableName);
 			if (IsTypeAvailableMethod == null)

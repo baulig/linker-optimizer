@@ -78,7 +78,7 @@ namespace Mono.Linker.Conditionals
 		internal void LogDebug (int level, string message)
 		{
 			if (DebugLevel >= level)
-				Context.LogMessage (message);
+				Context.LogMessage (MessageImportance.Low, message);
 		}
 
 		internal void DumpBlocks (int level = 1)

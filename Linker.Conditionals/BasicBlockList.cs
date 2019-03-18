@@ -176,7 +176,7 @@ namespace Mono.Linker.Conditionals
 
 		public void Dump ()
 		{
-			Scanner.Context.LogMessage ($"BLOCK DUMP ({Body.Method})");
+			Scanner.Context.LogMessage (MessageImportance.Low, $"BLOCK DUMP ({Body.Method})");
 			foreach (var block in _block_list) {
 				Dump (block);
 			}
@@ -184,9 +184,9 @@ namespace Mono.Linker.Conditionals
 
 		public void Dump (BasicBlock block)
 		{
-			Scanner.Context.LogMessage ($"{block}:");
+			Scanner.Context.LogMessage (MessageImportance.Low, $"{block}:");
 			foreach (var instruction in block.Instructions) {
-				Scanner.Context.LogMessage ($"  {CecilHelper.Format (instruction)}");
+				Scanner.Context.LogMessage (MessageImportance.Low, $"  {CecilHelper.Format (instruction)}");
 			}
 		}
 
