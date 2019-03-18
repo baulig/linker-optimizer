@@ -73,7 +73,9 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
-			MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY: {body.Method}");
+			var debug = MartinContext.GetDebugLevel (body.Method);
+			if (debug > 0)
+				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY: {body.Method}");
 
 			var scanner = BasicBlockScanner.Scan (MartinContext, body.Method);
 			if (scanner == null) {
@@ -87,7 +89,8 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
-			MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY - CONDITIONAL: {body.Method}");
+			if(debug > 0)
+				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY - CONDITIONAL: {body.Method}");
 
 			_conditional_methods.Enqueue (body.Method);
 			_block_scanner_by_method.Add (body.Method, scanner);

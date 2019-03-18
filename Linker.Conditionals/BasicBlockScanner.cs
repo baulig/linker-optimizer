@@ -162,7 +162,7 @@ namespace Mono.Linker.Conditionals
 
 		public void RewriteConditionals ()
 		{
-			LogDebug (1, $"REWRITE CONDITIONALS");
+			LogDebug (1, $"REWRITE CONDITIONALS: {Method.Name}");
 
 			DumpBlocks ();
 
@@ -183,7 +183,7 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
-			LogDebug (1, $"DONE REWRITING CONDITIONALS");
+			LogDebug (1, $"DONE REWRITING CONDITIONALS: {Method.Name}");
 
 			EliminateDeadBlocks ();
 		}
@@ -203,17 +203,23 @@ namespace Mono.Linker.Conditionals
 			LogDebug (1, $"DONE REWRITING LINKER CONDITIONAL");
 		}
 
-		void EliminateDeadBlocks ()
+		bool EliminateDeadBlocks ()
 		{
 			LogDebug (1, $"ELIMINATING DEAD BLOCKS");
 
-			var flow = new FlowAnalysis (this);
-			flow.Analyze ();
-			flow.RemoveDeadBlocks ();
-			flow.RemoveDeadJumps ();
-			flow.RemoveUnusedVariables ();
+			bool removed;
 
-			LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE");
+			do {
+				var flow = new FlowAnalysis (this);
+				flow.Analyze ();
+				removed = flow.RemoveDeadBlocks ();
+				flow.RemoveDeadJumps ();
+				flow.RemoveUnusedVariables ();
+
+				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
+			} while (removed);
+
+			return removed;
 		}
 	}
 }

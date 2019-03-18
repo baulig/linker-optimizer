@@ -10,7 +10,7 @@ namespace Martin.LinkerTest
 	{
 		ISimpleCollator collator;
 		static Dictionary<string, ISimpleCollator> collators;
-		string m_name;
+		const string m_name = "test";
 		const string _sortName = "test";
 
 		public static void Main ()
@@ -36,12 +36,14 @@ namespace Martin.LinkerTest
 				Interlocked.CompareExchange (ref collators, new Dictionary<string, ISimpleCollator> (StringComparer.Ordinal), null);
 			}
 
+#if FIXME
 			lock (collators) {
 				if (!collators.TryGetValue (_sortName, out collator)) {
 					collator = new SimpleCollator (CultureInfo.GetCultureInfo (m_name));
 					collators [_sortName] = collator;
 				}
 			}
+#endif
 
 			return collator;
 		}
