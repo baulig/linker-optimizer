@@ -73,16 +73,22 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => BlockList.Blocks;
 
-		void LogDebug (int level, string message)
+		internal void LogDebug (int level, string message)
 		{
-			if (level >= DebugLevel)
+			if (DebugLevel >= level)
 				Context.LogMessage (message);
 		}
 
-		void DumpBlocks ()
+		internal void DumpBlocks (int level = 1)
 		{
-			if (DebugLevel > 0)
+			if (DebugLevel >= level)
 				BlockList.Dump ();
+		}
+
+		internal void DumpBlock (int level, BasicBlock block)
+		{
+			if (DebugLevel >= level)
+				BlockList.Dump (block);
 		}
 
 		bool Scan ()
@@ -196,7 +202,7 @@ namespace Mono.Linker.Conditionals
 		{
 			LogDebug (1, $"ELIMINATING DEAD BLOCKS");
 
-			var flow = new FlowAnalysis (BlockList);
+			var flow = new FlowAnalysis (this);
 			flow.Analyze ();
 			flow.RemoveDeadBlocks ();
 			flow.RemoveDeadJumps ();

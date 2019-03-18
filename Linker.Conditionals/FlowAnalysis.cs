@@ -33,17 +33,16 @@ namespace Mono.Linker.Conditionals
 {
 	public class FlowAnalysis
 	{
-		public BasicBlockList BlockList
-		{
+		public BasicBlockScanner Scanner {
 			get;
 		}
 
-		public FlowAnalysis (BasicBlockList blocks)
-		{
-			BlockList = blocks;
-		}
+		public BasicBlockList BlockList => Scanner.BlockList;
 
-		protected MartinContext Context => BlockList.Context;
+		public FlowAnalysis (BasicBlockScanner scanner)
+		{
+			Scanner = scanner;
+		}
 
 		protected MethodDefinition Method => BlockList.Body.Method;
 
@@ -117,12 +116,12 @@ namespace Mono.Linker.Conditionals
 			var reachability = Reachability.Normal;
 			Origin current = null;
 
-			BlockList.Dump ();
+			Scanner.DumpBlocks ();
 
-			Context.LogMessage ($"ANALYZE: {Method.Name}");
+			Scanner.LogDebug (1, $"ANALYZE: {Method.Name}");
 
 			foreach (var block in BlockList.Blocks) {
-				Context.LogMessage ($"ANALYZE #1: {block} {reachability}");
+				Scanner.LogDebug (2, $"ANALYZE #1: {block} {reachability}");
 
 				if (!_entry_by_block.TryGetValue (block, out var entry)) {
 					entry = new BlockEntry (block, reachability);
@@ -135,8 +134,8 @@ namespace Mono.Linker.Conditionals
 					current = null;
 				}
 
-				Context.LogMessage ($"ANALYZE #2: {entry} {reachability}");
-				BlockList.Dump (block);
+				Scanner.LogDebug (2, $"ANALYZE #2: {entry} {reachability}");
+				Scanner.DumpBlock (2, block);
 
 				switch (block.BranchType) {
 				case BranchType.None:
@@ -166,24 +165,23 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			Context.LogMessage ($"ANALYZE #3: {Method.Name}");
+			Scanner.LogDebug (1, $"ANALYZE #3: {Method.Name}");
 
 			_block_list.Sort ((first, second) => first.Block.Index.CompareTo (second.Block.Index));
 
 			while (ResolveOrigins ()) {
-				Context.LogMessage ($"ANALYZE #3 -> AGAIN");
+				Scanner.LogDebug (1, $"ANALYZE #3 -> AGAIN");
 			}
 
-			Context.LogMessage ($"ANALYZE #4");
+			Scanner.LogDebug (1, $"ANALYZE #4");
 
 			for (int i = 0; i < _block_list.Count; i++) {
-				Context.LogMessage ($"    {i} {_block_list [i]}");
-
+				Scanner.LogDebug (1, $"    {i} {_block_list [i]}");
 			}
 
-			BlockList.Dump ();
+			Scanner.DumpBlocks ();
 
-			Context.LogMessage ($"FLOW ANALYSIS COMPLETE");
+			Scanner.LogDebug (1, $"FLOW ANALYSIS COMPLETE");
 
 			return;
 		}
@@ -193,14 +191,14 @@ namespace Mono.Linker.Conditionals
 			bool foundUnreachable = false;
 			for (int i = 0; i < _block_list.Count; i++) {
 				var entry = _block_list [i];
-				Context.LogMessage ($"    {i} {entry}");
+				Scanner.LogDebug (3, $"    {i} {entry}");
 				bool foundOrigin = false;
 
 				for (int j = 0; j < entry.Origins.Count; j++) {
 					var origin = entry.Origins [j];
 					var originEntry = _entry_by_block [origin.Block];
 					var effectiveOrigin = And (originEntry.Reachability, origin.Reachability);
-					Context.LogMessage ($"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
+					Scanner.LogDebug (3, $"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
 					if (originEntry.Reachability == Reachability.Dead) {
 						entry.Origins.RemoveAt (j--);
 						continue;
@@ -240,7 +238,7 @@ namespace Mono.Linker.Conditionals
 				if (_block_list [i].Reachability != Reachability.Dead)
 					continue;
 
-				Context.LogMessage ($"  DEAD BLOCK: {_block_list [i]}");
+				Scanner.LogDebug (2, $"  DEAD BLOCK: {_block_list [i]}");
 
 				var block = _block_list [i].Block;
 				BlockList.DeleteBlock (ref block);
@@ -272,7 +270,7 @@ namespace Mono.Linker.Conditionals
 				if ((Instruction)lastInstruction.Operand != nextInstruction)
 					continue;
 
-				Context.LogMessage ($"ELIMINATE DEAD JUMP: {lastInstruction}");
+				Scanner.LogDebug (2, $"ELIMINATE DEAD JUMP: {lastInstruction}");
 
 				BlockList.AdjustJumpTargets (lastInstruction, nextInstruction);
 
@@ -301,10 +299,10 @@ namespace Mono.Linker.Conditionals
 			var marked = new HashSet<VariableDefinition> ();
 			var variables = Method.Body.Variables;
 
-			Context.LogMessage ($"REMOVE VARIABLES: {Method.Name}");
+			Scanner.LogDebug (1, $"REMOVE VARIABLES: {Method.Name}");
 
 			foreach (var instruction in Method.Body.Instructions) {
-				Context.LogMessage ($"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
+				Scanner.LogDebug (2, $"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
 
 				switch (instruction.OpCode.Code) {
 				case Code.Ldloc_0:
@@ -330,7 +328,7 @@ namespace Mono.Linker.Conditionals
 				case Code.Stloc_S:
 				case Code.Stloc:
 					var variable = ((VariableReference)instruction.Operand).Resolve ();
-					Context.LogMessage ($"    VARIABLE: {variable} {instruction}");
+					Scanner.LogDebug (2, $"    VARIABLE: {variable} {instruction}");
 					if (variable == null)
 						continue;
 					marked.Add (variable);
@@ -338,18 +336,18 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			Context.LogMessage ($"REMOVE VARIABLES #1");
+			Scanner.LogDebug (1, $"REMOVE VARIABLES #1");
 
 			for (int i = 0; i < Method.Body.Variables.Count; i++) {
 				if (marked.Contains (Method.Body.Variables [i]))
 					continue;
-				Context.LogMessage ($"    REMOVE: {Method.Body.Variables[i]}");
+				Scanner.LogDebug (2, $"    REMOVE: {Method.Body.Variables[i]}");
 				Method.Body.Variables.RemoveAt (i);
 				removed = true;
 				i--;
 			}
 
-			Context.LogMessage ($"REMOVE VARIABLES #2: {removed}");
+			Scanner.LogDebug (1, $"REMOVE VARIABLES #2: {removed}");
 
 			return removed;
 		}
