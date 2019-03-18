@@ -46,6 +46,7 @@ namespace Mono.Linker.Conditionals
 		MartinContext (LinkContext context)
 		{
 			Context = context;
+			NoConditionalRedefinition = true;
 		}
 
 		public void LogMessage (string message)

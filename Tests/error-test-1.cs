@@ -3,12 +3,11 @@ using System.Runtime.CompilerServices;
 
 namespace Martin.LinkerTest
 {
-	static class TestWeakInstances
+	static class ErrorTest
 	{
 		public static void Main ()
 		{
-			RunWeakInstance (null);
-			RunWeakInstance (new Bar ());
+			RunErrorTest (null);
 		}
 
 		static void Assert (bool condition, [CallerMemberName] string caller = null)
@@ -20,15 +19,20 @@ namespace Martin.LinkerTest
 			throw new ApplicationException ("Assertion failed");
 		}
 
-		public static void RunWeakInstance (object instance)
+		public static void RunErrorTest (object instance)
 		{
-			if (MonoLinkerSupport.AsWeakInstanceOf<Foo> (instance, out var foo)) {
+			if (MonoLinkerSupport.AsWeakInstanceOf<Bar> (instance, out var bar)) {
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
-				foo.Hello ();
+				bar.Hello ();
 				Assert (false);
 			}
 
-			Console.Error.WriteLine ("DONE");
+			/*
+			 * This line will produce an error message:
+			 *
+			 * Attempting to mark type `Martin.LinkerTest.Bar` after it's already been used in a conditional!
+			*/
+			Console.Error.WriteLine ($"DONE: {bar != null}");
 		}
 	}
 
