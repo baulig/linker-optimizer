@@ -184,6 +184,9 @@ namespace Mono.Linker.Conditionals
 			} else if (target == blocks.Context.IsFeatureSupportedMethod) {
 				IsFeatureSupportedConditional.Create (blocks, ref bb, ref index);
 				return true;
+			} else if (target == blocks.Context.IsTypeNameAvailableMethod) {
+				IsTypeAvailableConditional.Create (blocks, ref bb, ref index);
+				return true;
 			}
 
 			return false;

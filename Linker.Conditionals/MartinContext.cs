@@ -76,6 +76,8 @@ namespace Mono.Linker.Conditionals
 		}
 
 		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";
+		const string IsTypeAvailableName = "System.Boolean " + LinkerSupportType + "::IsTypeAvailable()";
+		const string IsTypeNameAvailableName = "System.Boolean " + LinkerSupportType + "::IsTypeAvailable(System.String)";
 
 		void Initialize ()
 		{
@@ -97,9 +99,16 @@ namespace Mono.Linker.Conditionals
 			if (IsFeatureSupportedMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsFeatureSupported()`.");
 
-			IsTypeAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsTypeAvailable");
+			foreach (var method in MonoLinkerSupportType.Methods)
+				LogMessage (method.FullName);
+
+			IsTypeAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.FullName == IsTypeAvailableName);
 			if (IsTypeAvailableMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsTypeAvailable()`.");
+
+			IsTypeNameAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.FullName == IsTypeNameAvailableName);
+			if (IsTypeNameAvailableMethod == null)
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsTypeAvailable(string)`.");
 		}
 
 		public TypeDefinition MonoLinkerSupportType {
@@ -113,6 +122,11 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public MethodDefinition IsTypeAvailableMethod {
+			get;
+			private set;
+		}
+
+		public MethodDefinition IsTypeNameAvailableMethod {
 			get;
 			private set;
 		}

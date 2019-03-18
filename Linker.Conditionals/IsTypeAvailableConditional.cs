@@ -25,29 +25,79 @@
 // THE SOFTWARE.
 using System;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.Linker.Conditionals
 {
 	public class IsTypeAvailableConditional : LinkerConditional
 	{
-		public TypeDefinition InstanceType {
+		public TypeDefinition ConditionalType {
+			get;
+		}
+
+		public string ConditionalTypeName {
 			get;
 		}
 
 		IsTypeAvailableConditional (BasicBlockList blocks, TypeDefinition type)
 			: base (blocks)
 		{
-			InstanceType = type;
+			ConditionalType = type;
+		}
+
+		IsTypeAvailableConditional (BasicBlockList blocks, string name)
+			: base (blocks)
+		{
+			ConditionalTypeName = name;
+		}
+
+		bool EvaluateConditional ()
+		{
+			if (ConditionalType != null)
+				return Context.Annotations.IsMarked (ConditionalType);
+
+			var type = Context.Context.GetType (ConditionalTypeName);
+			// It is legal to use MonoLinkerSupport.IsTypeAvailable(string) with undefined types.
+			if (type == null)
+				return false;
+
+			return Context.Annotations.IsMarked (type);
 		}
 
 		public override void RewriteConditional (ref BasicBlock block)
 		{
-			var evaluated = Context.Annotations.IsMarked (InstanceType);
-			Context.MarkConditionalType (InstanceType);
+			var evaluated = EvaluateConditional ();
+			Context.MarkConditionalType (ConditionalType);
 
-			Context.LogMessage ($"REWRITE FEATURE CONDITIONAL: {InstanceType} {evaluated}");
+			Context.LogMessage ($"REWRITE CONDITIONAL: {this} {evaluated}");
 
 			RewriteConditional (ref block, 0, evaluated);
+		}
+
+		public static IsTypeAvailableConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index)
+		{
+			if (bb.Instructions.Count == 1)
+				throw new NotSupportedException ();
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			/*
+			 * `bool MonoLinkerSupport.IsTypeAvailable (string)`
+			 *
+			 */
+
+			if (bb.Instructions.Count > 2)
+				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+
+			if (bb.FirstInstruction.OpCode.Code != Code.Ldstr)
+				throw new NotSupportedException ($"Invalid argument `{bb.FirstInstruction}` used in `MonoLinkerSupport.IsTypeAvailable(string)` conditional.");
+
+			var instance = new IsTypeAvailableConditional (blocks, (string)bb.FirstInstruction.Operand);
+			bb.LinkerConditional = instance;
+
+			LookAheadAfterConditional (blocks, ref bb, ref index);
+
+			return instance;
 		}
 
 		public static IsTypeAvailableConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index, TypeDefinition type)
@@ -73,8 +123,7 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[{GetType ().Name}: {InstanceType}]";
+			return $"[{GetType ().Name}: {ConditionalType?.ToString () ?? ConditionalTypeName}]";
 		}
-
 	}
 }

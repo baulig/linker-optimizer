@@ -16,6 +16,10 @@ namespace System.Runtime.CompilerServices
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static bool IsTypeAvailable<T> () => true;
 
+		// This should only be used in tests.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		public static bool IsTypeAvailable (string type) => true;
+
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static bool AsWeakInstanceOf<T> (object obj, out T instance) where T : class
 		{
