@@ -37,6 +37,7 @@ TEST_CASES := \
 	test-features-4.cs \
 	test-features-5.cs \
 	test-features-6.cs \
+	test-features-7.cs \
 	test-conditionals-1.cs \
 	test-conditionals-2.cs
 

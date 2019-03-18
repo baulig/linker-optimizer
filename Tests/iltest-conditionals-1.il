@@ -151,6 +151,12 @@
 			ldc.i4.3
 			stloc.1
 
+			ldloc 1
+			stloc.s 1
+
+			ldloca 1
+			pop
+
 			ldc.i4.2
 			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
 			brfalse return

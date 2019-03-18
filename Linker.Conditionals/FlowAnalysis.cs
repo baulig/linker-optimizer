@@ -388,11 +388,11 @@ namespace Mono.Linker.Conditionals
 
 		public bool RemoveUnusedVariables ()
 		{
+			Scanner.LogDebug (1, $"REMOVE VARIABLES: {Method.Name}");
+
 			var removed = false;
 			var marked = new HashSet<VariableDefinition> ();
 			var variables = Method.Body.Variables;
-
-			Scanner.LogDebug (1, $"REMOVE VARIABLES: {Method.Name}");
 
 			foreach (var instruction in Method.Body.Instructions) {
 				Scanner.LogDebug (2, $"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
@@ -431,18 +431,67 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"REMOVE VARIABLES #1");
 
-			for (int i = 0; i < Method.Body.Variables.Count; i++) {
+			for (int i = Method.Body.Variables.Count - 1; i >= 0; i--) {
 				if (marked.Contains (Method.Body.Variables [i]))
 					continue;
 				Scanner.LogDebug (2, $"    REMOVE: {Method.Body.Variables[i]}");
+				RemoveVariable (i);
 				Method.Body.Variables.RemoveAt (i);
 				removed = true;
-				i--;
 			}
 
 			Scanner.LogDebug (1, $"REMOVE VARIABLES #2: {removed}");
 
+			if (removed) {
+				BlockList.ComputeOffsets ();
+
+				Scanner.DumpBlocks ();
+			}
+
 			return removed;
+		}
+
+		void RemoveVariable (int index)
+		{
+			BlockList.Dump ();
+
+			for (int i = 0; i < BlockList.Count; i++) {
+				var block = BlockList [i];
+				for (int j = 0; j < block.Instructions.Count; j++) {
+					var instruction = block.Instructions [j];
+					Scanner.LogDebug (2, $"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
+
+					switch (instruction.OpCode.Code) {
+					case Code.Ldloc_0:
+					case Code.Stloc_0:
+						break;
+					case Code.Ldloc_1:
+						if (index < 1)
+							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_0));
+						break;
+					case Code.Stloc_1:
+						if (index < 1)
+							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Stloc_0));
+						break;
+					case Code.Ldloc_2:
+						if (index < 2)
+							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_1));
+						break;
+					case Code.Stloc_2:
+						if (index < 2)
+							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Stloc_1));
+						break;
+					case Code.Ldloc_3:
+						if (index < 3)
+							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_2));
+						break;
+					case Code.Stloc_3:
+						if (index < 3)
+							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Stloc_2));
+						break;
+					}
+				}
+			}
 		}
 
 		enum Reachability
