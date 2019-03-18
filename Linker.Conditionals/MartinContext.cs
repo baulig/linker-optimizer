@@ -155,18 +155,49 @@ namespace Mono.Linker.Conditionals
 			return IsEnabled (method.DeclaringType);
 		}
 
-		readonly Dictionary<int, bool> enabled_features = new Dictionary<int, bool> ();
+		readonly Dictionary<MonoLinkerFeature, bool> enabled_features = new Dictionary<MonoLinkerFeature, bool> ();
 		readonly HashSet<TypeDefinition> conditional_types = new HashSet<TypeDefinition> ();
 
-		public bool IsFeatureEnabled (int feature)
+		static MonoLinkerFeature FeatureByName (string name)
 		{
+			switch (name.ToLowerInvariant ()) {
+			case "sre":
+				return MonoLinkerFeature.ReflectionEmit;
+			case "remoting":
+				return MonoLinkerFeature.Remoting;
+			case "globalization":
+				return MonoLinkerFeature.Globalization;
+			case "martin":
+				return MonoLinkerFeature.Martin;
+			default:
+				throw new NotSupportedException ($"Unknown linker feature `{name}`.");
+			}
+		}
+
+		static MonoLinkerFeature FeatureByIndex (int index)
+		{
+			if (index < 0 || index > (int)MonoLinkerFeature.Martin)
+				throw new NotSupportedException ($"Unknown feature {index}.");
+			return (MonoLinkerFeature)index;
+		}
+
+		public bool IsFeatureEnabled (int index)
+		{
+			var feature = FeatureByIndex (index);
 			if (enabled_features.TryGetValue (feature, out var value))
 				return value;
 			return false;
 		}
 
-		public void SetFeatureEnabled (int feature, bool enabled)
+		public void SetFeatureEnabled (int index, bool enabled)
 		{
+			var feature = FeatureByIndex (index);
+			enabled_features [feature] = enabled;
+		}
+
+		public void SetFeatureEnabled (string name, bool enabled)
+		{
+			var feature = FeatureByName (name);
 			enabled_features [feature] = enabled;
 		}
 

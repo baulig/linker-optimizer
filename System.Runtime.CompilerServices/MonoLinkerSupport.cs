@@ -4,6 +4,7 @@ namespace System.Runtime.CompilerServices
 	{
 		ReflectionEmit,
 		Remoting,
+		Globalization,
 		Martin
 	}
 

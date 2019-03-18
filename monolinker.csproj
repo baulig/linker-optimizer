@@ -113,6 +113,8 @@
     <Compile Include="Linker.Conditionals\FlowAnalysis.cs" />
     <Compile Include="Linker.Conditionals\AsWeakInstanceOfConditional.cs" />
     <Compile Include="Linker.Conditionals\IsTypeAvailableConditional.cs" />
+    <Compile Include="Linker.Conditionals\XApiReader.cs" />
+    <Compile Include="Linker.Conditionals\MonoLinkerFeature.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
