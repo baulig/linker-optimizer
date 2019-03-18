@@ -51,6 +51,7 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"REWRITE CONDITIONAL: {this} {BlockList.Body.Method.Name} {block}");
 
 			var evaluated = Context.Annotations.IsMarked (InstanceType);
+			Context.MarkConditionalType (InstanceType);
 
 			if (!evaluated)
 				RewriteConditional (ref block, HasLoadInstruction ? 0 : 1, false);

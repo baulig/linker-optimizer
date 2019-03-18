@@ -39,6 +39,11 @@ namespace Mono.Linker.Conditionals
 		Queue<MethodDefinition> _conditional_methods;
 		Dictionary<MethodDefinition, BasicBlockScanner> _block_scanner_by_method;
 
+		public bool ProcessingConditionals {
+			get;
+			private set;
+		}
+
 		public ConditionalMarkStep ()
 		{
 			_conditional_methods = new Queue<MethodDefinition> ();
@@ -49,6 +54,8 @@ namespace Mono.Linker.Conditionals
 		{
 			if (_methods.Count > 0)
 				return;
+
+			ProcessingConditionals = true;
 
 			while (_conditional_methods.Count > 0) {
 				var conditional = _conditional_methods.Dequeue ();
@@ -88,9 +95,32 @@ namespace Mono.Linker.Conditionals
 
 		protected override TypeDefinition MarkType (TypeReference reference)
 		{
-			var type = reference?.Resolve ();
-			if (type != null && type.FullName.Contains ("Foo") && !Annotations.IsProcessed (type))
+			if (reference == null)
+				return null;
+
+			reference = GetOriginalType (reference);
+
+			if (reference is FunctionPointerType)
+				return null;
+
+			if (reference is GenericParameter)
+				return null;
+
+			var type = ResolveTypeDefinition (reference);
+			if (type == null) {
+				HandleUnresolvedType (reference);
+				return null;
+			}
+
+			if (Annotations.IsProcessed (type))
+				return null;
+
+			if (type.FullName.Contains ("Foo"))
 				MartinContext.LogMessage ($"FOO MARKED!");
+
+			if (ProcessingConditionals && MartinContext.IsConditionalTypeMarked (type))
+				MartinContext.AttemptingToRedefineConditional (type);
+
 			return base.MarkType (reference);
 		}
 	}

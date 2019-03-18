@@ -37,6 +37,10 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		public bool NoConditionalRedefinition {
+			get; set;
+		}
+
 		public AnnotationStore Annotations => Context.Annotations;
 
 		MartinContext (LinkContext context)
@@ -150,18 +154,37 @@ namespace Mono.Linker.Conditionals
 			return IsEnabled (method.DeclaringType);
 		}
 
-		readonly Dictionary<int, bool> enabledFeatures = new Dictionary<int, bool> ();
+		readonly Dictionary<int, bool> enabled_features = new Dictionary<int, bool> ();
+		readonly HashSet<TypeDefinition> conditional_types = new HashSet<TypeDefinition> ();
 
 		public bool IsFeatureEnabled (int feature)
 		{
-			if (enabledFeatures.TryGetValue (feature, out var value))
+			if (enabled_features.TryGetValue (feature, out var value))
 				return value;
 			return false;
 		}
 
 		public void SetFeatureEnabled (int feature, bool enabled)
 		{
-			enabledFeatures [feature] = enabled;
+			enabled_features [feature] = enabled;
+		}
+
+		public bool IsConditionalTypeMarked (TypeDefinition type)
+		{
+			return conditional_types.Contains (type);
+		}
+
+		public void MarkConditionalType (TypeDefinition type)
+		{
+			conditional_types.Add (type);
+		}
+
+		internal void AttemptingToRedefineConditional (TypeDefinition type)
+		{
+			var message = $"Attempting to mark type `{type}` after it's already been used in a conditional!";
+			LogMessage (MessageImportance.High, message);
+			if (NoConditionalRedefinition)
+				throw new NotSupportedException (message);
 		}
 
 		class InitializeStep : BaseStep

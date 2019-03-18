@@ -43,6 +43,8 @@ namespace Mono.Linker.Conditionals
 		public override void RewriteConditional (ref BasicBlock block)
 		{
 			var evaluated = Context.Annotations.IsMarked (InstanceType);
+			Context.MarkConditionalType (InstanceType);
+
 			Context.LogMessage ($"REWRITE FEATURE CONDITIONAL: {InstanceType} {evaluated}");
 
 			RewriteConditional (ref block, 0, evaluated);
