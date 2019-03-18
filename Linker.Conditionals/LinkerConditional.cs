@@ -155,5 +155,47 @@ namespace Mono.Linker.Conditionals
 			if (instruction != null)
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
 		}
+
+		protected static void LookAheadAfterConditional (BasicBlockList blocks, ref BasicBlock bb, ref int index)
+		{
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			/*
+			 * Look ahead at the instruction immediately following the call to the
+			 * conditional support method (`IsWeakInstanceOf<T>()` or `IsFeatureSupported()`).
+			 *
+			 * If it's a branch, then we add it to the current block.  Since the conditional
+			 * method leaves a `bool` value on the stack, the following instruction can never
+			 * be an unconditional branch.
+			 *
+			 * At the end of this method, the current basic block will always look like this:
+			 *
+			 *   - (optional) simple load
+			 *   - conditional call
+			 *   - (optional) conditional branch.
+			 *
+			 * We will also close out the current block and start a new one after this.
+			 */
+
+			var next = blocks.Body.Instructions [index + 1];
+			var type = CecilHelper.GetBranchType (next);
+
+			switch (type) {
+			case BranchType.None:
+				bb = null;
+				break;
+			case BranchType.False:
+			case BranchType.True:
+			case BranchType.Return:
+				bb.AddInstruction (next);
+				index++;
+				bb = null;
+				break;
+			default:
+				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
+			}
+		}
+
 	}
 }

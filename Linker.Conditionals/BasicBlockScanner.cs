@@ -142,132 +142,21 @@ namespace Mono.Linker.Conditionals
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					HandleIsWeakInstanceOf (ref bb, ref index, conditionalType);
+					IsWeakInstanceOfConditional.Create (BlockList, ref bb, ref index, conditionalType);
+					FoundConditionals = true;
 				} else if (genericInstance.ElementMethod == Context.AsWeakInstanceOfMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					HandleAsWeakInstanceOf (ref bb, ref index, conditionalType);
+					AsWeakInstanceOfConditional.Create (BlockList, ref bb, ref index, conditionalType);
+					FoundConditionals = true;
 				}
 			} else if (target == Context.IsFeatureSupportedMethod) {
-				HandleIsFeatureSupported (ref bb, ref index);
+				IsFeatureSupportedConditional.Create (BlockList, ref bb, ref index);
+				FoundConditionals = true;
 			} else if (target == Context.MarkFeatureMethod) {
 				HandleMarkFeature (ref bb, ref index);
 			}
-		}
-
-		void HandleIsWeakInstanceOf (ref BasicBlock bb, ref int index, TypeDefinition type)
-		{
-			if (bb.Instructions.Count == 1)
-				throw new NotSupportedException ();
-			if (index + 1 >= Method.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			/*
-			 * `bool MonoLinkerSupport.IsWeakInstance<T> (object instance)`
-			 *
-			 * If the function argument is a simple load (like for instance `Ldarg_0`),
-			 * then we can simply remove that load.  Otherwise, we need to insert a
-			 * `Pop` to discard the value on the stack.
-			 *
-			 * In either case, we always start a new basic block for the conditional.
-			 * Its first instruction will either be the simple load or the call itself.
-			 */
-
-			var argument = Method.Body.Instructions [index - 1];
-
-			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
-
-			bool hasLoad;
-			TypeDefinition instanceType;
-			if (CecilHelper.IsSimpleLoad (argument)) {
-				if (bb.Instructions.Count > 2)
-					BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
-				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [1]);
-				hasLoad = true;
-			} else {
-				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
-				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [0]);
-				hasLoad = false;
-			}
-
-			bb.LinkerConditional = new IsWeakInstanceOfConditional (BlockList, instanceType, hasLoad);
-
-			/*
-			 * Once we get here, the current block only contains the (optional) simple load
-			 * and the conditional call itself.
-			 */
-
-			FoundConditionals = true;
-
-			if (index + 1 >= Method.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			LookAheadAfterConditional (ref bb, ref index);
-		}
-
-		void HandleAsWeakInstanceOf (ref BasicBlock bb, ref int index, TypeDefinition type)
-		{
-			if (bb.Instructions.Count < 2)
-				throw new NotSupportedException ();
-			if (index + 1 >= Method.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			/*
-			 * `bool MonoLinkerSupport.AsWeakInstance<T> (object obj, out T instance)`
-			 */
-
-			var load = Method.Body.Instructions [index - 2];
-			var output = Method.Body.Instructions [index - 1];
-
-			Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {load} {output}");
-
-			if (!CecilHelper.IsSimpleLoad (load))
-				throw new NotSupportedException ();
-			if (output.OpCode.Code != Code.Ldloca && output.OpCode.Code != Code.Ldloca_S)
-				throw new NotSupportedException ();
-
-			if (bb.Instructions.Count > 3)
-				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
-			var instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [2]);
-			var variable = ((VariableReference)output.Operand).Resolve () ?? throw new NotSupportedException ();
-
-			bb.LinkerConditional = new AsWeakInstanceOfConditional (BlockList, instanceType, variable);
-
-			/*
-			 * Once we get here, the current block only contains the (optional) simple load
-			 * and the conditional call itself.
-			 */
-
-			FoundConditionals = true;
-
-			if (index + 1 >= Method.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			LookAheadAfterConditional (ref bb, ref index);
-		}
-
-		void HandleIsFeatureSupported (ref BasicBlock bb, ref int index)
-		{
-			if (bb.Instructions.Count == 1)
-				throw new NotSupportedException ();
-			if (index + 1 >= Method.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			/*
-			 * `bool MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature feature)`
-			 *
-			 */
-
-			if (bb.Instructions.Count > 2)
-				BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
-
-			var feature = CecilHelper.GetFeatureArgument (bb.FirstInstruction);
-			bb.LinkerConditional = new IsFeatureSupportedConditional (BlockList, feature);
-
-			FoundConditionals = true;
-
-			LookAheadAfterConditional (ref bb, ref index);
 		}
 
 		void HandleMarkFeature (ref BasicBlock bb, ref int index)
@@ -305,47 +194,6 @@ namespace Mono.Linker.Conditionals
 				BlockList.ReplaceInstructionAt (ref bb, bb.Count - 1, Instruction.Create (OpCodes.Nop));
 				index--;
 				return;
-			}
-		}
-
-		void LookAheadAfterConditional (ref BasicBlock bb, ref int index)
-		{
-			if (index + 1 >= Method.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			/*
-			 * Look ahead at the instruction immediately following the call to the
-			 * conditional support method (`IsWeakInstanceOf<T>()` or `IsFeatureSupported()`).
-			 *
-			 * If it's a branch, then we add it to the current block.  Since the conditional
-			 * method leaves a `bool` value on the stack, the following instruction can never
-			 * be an unconditional branch.
-			 *
-			 * At the end of this method, the current basic block will always look like this:
-			 *
-			 *   - (optional) simple load
-			 *   - conditional call
-			 *   - (optional) conditional branch.
-			 *
-			 * We will also close out the current block and start a new one after this.
-			 */
-
-			var next = Method.Body.Instructions [index + 1];
-			var type = CecilHelper.GetBranchType (next);
-
-			switch (type) {
-			case BranchType.None:
-				bb = null;
-				break;
-			case BranchType.False:
-			case BranchType.True:
-			case BranchType.Return:
-				bb.AddInstruction (next);
-				index++;
-				bb = null;
-				break;
-			default:
-				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
 			}
 		}
 

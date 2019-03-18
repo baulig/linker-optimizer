@@ -39,7 +39,7 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public IsWeakInstanceOfConditional (BasicBlockList blocks, TypeDefinition type, bool hasLoad)
+		IsWeakInstanceOfConditional (BasicBlockList blocks, TypeDefinition type, bool hasLoad)
 			: base (blocks)
 		{
 			InstanceType = type;
@@ -91,6 +91,57 @@ namespace Mono.Linker.Conditionals
 				throw new MartinTestException ();
 
 			}
+		}
+
+		public static IsWeakInstanceOfConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index, TypeDefinition type)
+		{
+			if (bb.Instructions.Count == 1)
+				throw new NotSupportedException ();
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			/*
+			 * `bool MonoLinkerSupport.IsWeakInstance<T> (object instance)`
+			 *
+			 * If the function argument is a simple load (like for instance `Ldarg_0`),
+			 * then we can simply remove that load.  Otherwise, we need to insert a
+			 * `Pop` to discard the value on the stack.
+			 *
+			 * In either case, we always start a new basic block for the conditional.
+			 * Its first instruction will either be the simple load or the call itself.
+			 */
+
+			var argument = blocks.Body.Instructions [index - 1];
+
+			blocks.Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {argument}");
+
+			bool hasLoad;
+			TypeDefinition instanceType;
+			if (CecilHelper.IsSimpleLoad (argument)) {
+				if (bb.Instructions.Count > 2)
+					blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [1]);
+				hasLoad = true;
+			} else {
+				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
+				instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [0]);
+				hasLoad = false;
+			}
+
+			var instance = new IsWeakInstanceOfConditional (blocks, instanceType, hasLoad);
+			bb.LinkerConditional = instance;
+
+			/*
+			 * Once we get here, the current block only contains the (optional) simple load
+			 * and the conditional call itself.
+			 */
+
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			LookAheadAfterConditional (blocks, ref bb, ref index);
+
+			return instance;
 		}
 
 		public override string ToString ()

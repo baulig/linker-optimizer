@@ -39,7 +39,7 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public AsWeakInstanceOfConditional (BasicBlockList blocks, TypeDefinition type, VariableDefinition variable)
+		AsWeakInstanceOfConditional (BasicBlockList blocks, TypeDefinition type, VariableDefinition variable)
 			: base (blocks)
 		{
 			InstanceType = type;
@@ -84,6 +84,48 @@ namespace Mono.Linker.Conditionals
 				throw new MartinTestException ();
 
 			}
+		}
+
+		public static AsWeakInstanceOfConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index, TypeDefinition type)
+		{
+			if (bb.Instructions.Count < 2)
+				throw new NotSupportedException ();
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			/*
+			 * `bool MonoLinkerSupport.AsWeakInstance<T> (object obj, out T instance)`
+			 */
+
+			var load = blocks.Body.Instructions [index - 2];
+			var output = blocks.Body.Instructions [index - 1];
+
+			blocks.Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {load} {output}");
+
+			if (!CecilHelper.IsSimpleLoad (load))
+				throw new NotSupportedException ();
+			if (output.OpCode.Code != Code.Ldloca && output.OpCode.Code != Code.Ldloca_S)
+				throw new NotSupportedException ();
+
+			if (bb.Instructions.Count > 3)
+				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+			var instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [2]);
+			var variable = ((VariableReference)output.Operand).Resolve () ?? throw new NotSupportedException ();
+
+			var instance = new AsWeakInstanceOfConditional (blocks, instanceType, variable);
+			bb.LinkerConditional = instance;
+
+			/*
+			 * Once we get here, the current block only contains the (optional) simple load
+			 * and the conditional call itself.
+			 */
+
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			LookAheadAfterConditional (blocks, ref bb, ref index);
+
+			return instance;
 		}
 
 		public override string ToString ()

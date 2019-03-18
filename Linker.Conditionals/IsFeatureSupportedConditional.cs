@@ -35,7 +35,7 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public IsFeatureSupportedConditional (BasicBlockList blocks, int feature)
+		IsFeatureSupportedConditional (BasicBlockList blocks, int feature)
 			: base (blocks)
 		{
 			Feature = feature;
@@ -47,6 +47,30 @@ namespace Mono.Linker.Conditionals
 			Context.LogMessage ($"REWRITE FEATURE CONDITIONAL: {Feature} {evaluated}");
 
 			RewriteConditional (ref block, 0, evaluated);
+		}
+
+		public static IsFeatureSupportedConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index)
+		{
+			if (bb.Instructions.Count == 1)
+				throw new NotSupportedException ();
+			if (index + 1 >= blocks.Body.Instructions.Count)
+				throw new NotSupportedException ();
+
+			/*
+			 * `bool MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature feature)`
+			 *
+			 */
+
+			if (bb.Instructions.Count > 2)
+				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+
+			var feature = CecilHelper.GetFeatureArgument (bb.FirstInstruction);
+			var instance = new IsFeatureSupportedConditional (blocks, feature);
+			bb.LinkerConditional = instance;
+
+			LookAheadAfterConditional (blocks, ref bb, ref index);
+
+			return instance;
 		}
 
 		public override string ToString ()
