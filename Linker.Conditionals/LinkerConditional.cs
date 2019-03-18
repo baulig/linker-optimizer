@@ -31,19 +31,21 @@ namespace Mono.Linker.Conditionals
 {
 	public abstract class LinkerConditional
 	{
-		public BasicBlockList BlockList {
+		public BasicBlockScanner Scanner {
 			get;
 		}
 
-		protected MartinContext Context => BlockList.Context;
+		public BasicBlockList BlockList => Scanner.BlockList;
+
+		protected MartinContext Context => Scanner.Context;
 
 		protected MethodDefinition Method => BlockList.Body.Method;
 
 		protected AssemblyDefinition Assembly => Method.DeclaringType.Module.Assembly;
 
-		protected LinkerConditional (BasicBlockList blocks)
+		protected LinkerConditional (BasicBlockScanner scanner)
 		{
-			BlockList = blocks;
+			Scanner = scanner;
 		}
 
 		public abstract void RewriteConditional (ref BasicBlock block);
@@ -156,36 +158,36 @@ namespace Mono.Linker.Conditionals
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
 		}
 
-		public static bool Scan (BasicBlockList blocks, ref BasicBlock bb, ref int index, Instruction instruction)
+		public static bool Scan (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, Instruction instruction)
 		{
 			var target = (MethodReference)instruction.Operand;
-			blocks.Context.LogMessage ($"    CALL: {target}");
+			scanner.LogDebug (2, $"    CALL: {target}");
 
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {
-				if (genericInstance.ElementMethod == blocks.Context.IsWeakInstanceOfMethod) {
+				if (genericInstance.ElementMethod == scanner.Context.IsWeakInstanceOfMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					IsWeakInstanceOfConditional.Create (blocks, ref bb, ref index, conditionalType);
+					IsWeakInstanceOfConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
-				} else if (genericInstance.ElementMethod == blocks.Context.AsWeakInstanceOfMethod) {
+				} else if (genericInstance.ElementMethod == scanner.Context.AsWeakInstanceOfMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					AsWeakInstanceOfConditional.Create (blocks, ref bb, ref index, conditionalType);
+					AsWeakInstanceOfConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
-				} else if (genericInstance.ElementMethod == blocks.Context.IsTypeAvailableMethod) {
+				} else if (genericInstance.ElementMethod == scanner.Context.IsTypeAvailableMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
-					IsTypeAvailableConditional.Create (blocks, ref bb, ref index, conditionalType);
+					IsTypeAvailableConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
 				}
-			} else if (target == blocks.Context.IsFeatureSupportedMethod) {
-				IsFeatureSupportedConditional.Create (blocks, ref bb, ref index);
+			} else if (target == scanner.Context.IsFeatureSupportedMethod) {
+				IsFeatureSupportedConditional.Create (scanner, ref bb, ref index);
 				return true;
-			} else if (target == blocks.Context.IsTypeNameAvailableMethod) {
-				IsTypeAvailableConditional.Create (blocks, ref bb, ref index);
+			} else if (target == scanner.Context.IsTypeNameAvailableMethod) {
+				IsTypeAvailableConditional.Create (scanner, ref bb, ref index);
 				return true;
 			}
 

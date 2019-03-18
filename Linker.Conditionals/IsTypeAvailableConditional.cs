@@ -39,14 +39,14 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		IsTypeAvailableConditional (BasicBlockList blocks, TypeDefinition type)
-			: base (blocks)
+		IsTypeAvailableConditional (BasicBlockScanner scanner, TypeDefinition type)
+			: base (scanner)
 		{
 			ConditionalType = type;
 		}
 
-		IsTypeAvailableConditional (BasicBlockList blocks, string name)
-			: base (blocks)
+		IsTypeAvailableConditional (BasicBlockScanner scanner, string name)
+			: base (scanner)
 		{
 			ConditionalTypeName = name;
 		}
@@ -74,11 +74,11 @@ namespace Mono.Linker.Conditionals
 			RewriteConditional (ref block, 0, evaluated);
 		}
 
-		public static IsTypeAvailableConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index)
+		public static IsTypeAvailableConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index)
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
-			if (index + 1 >= blocks.Body.Instructions.Count)
+			if (index + 1 >= scanner.Method.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			/*
@@ -87,22 +87,22 @@ namespace Mono.Linker.Conditionals
 			 */
 
 			if (bb.Instructions.Count > 2)
-				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+				scanner.BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 
 			if (bb.FirstInstruction.OpCode.Code != Code.Ldstr)
 				throw new NotSupportedException ($"Invalid argument `{bb.FirstInstruction}` used in `MonoLinkerSupport.IsTypeAvailable(string)` conditional.");
 
-			var instance = new IsTypeAvailableConditional (blocks, (string)bb.FirstInstruction.Operand);
+			var instance = new IsTypeAvailableConditional (scanner, (string)bb.FirstInstruction.Operand);
 			bb.LinkerConditional = instance;
 
-			LookAheadAfterConditional (blocks, ref bb, ref index);
+			LookAheadAfterConditional (scanner.BlockList, ref bb, ref index);
 
 			return instance;
 		}
 
-		public static IsTypeAvailableConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index, TypeDefinition type)
+		public static IsTypeAvailableConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, TypeDefinition type)
 		{
-			if (index + 1 >= blocks.Body.Instructions.Count)
+			if (index + 1 >= scanner.Method.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			/*
@@ -111,12 +111,12 @@ namespace Mono.Linker.Conditionals
 			 */
 
 			if (bb.Instructions.Count > 1)
-				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
+				scanner.BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 1);
 
-			var instance = new IsTypeAvailableConditional (blocks, type);
+			var instance = new IsTypeAvailableConditional (scanner, type);
 			bb.LinkerConditional = instance;
 
-			LookAheadAfterConditional (blocks, ref bb, ref index);
+			LookAheadAfterConditional (scanner.BlockList, ref bb, ref index);
 
 			return instance;
 		}

@@ -32,7 +32,7 @@ namespace Mono.Linker.Conditionals
 {
 	public class BasicBlockList
 	{
-		public MartinContext Context {
+		public BasicBlockScanner Scanner {
 			get;
 		}
 
@@ -40,15 +40,17 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		// public MartinContext Context => BasicBlockScanner.Context;
+
 		readonly Dictionary<Instruction, BasicBlock> _bb_by_instruction;
 		readonly List<BasicBlock> _block_list;
 		int _next_block_id;
 
 		public IReadOnlyList<BasicBlock> Blocks => _block_list;
 
-		public BasicBlockList (MartinContext context, MethodBody body)
+		public BasicBlockList (BasicBlockScanner scanner, MethodBody body)
 		{
-			Context = context;
+			Scanner = scanner;
 			Body = body;
 
 			_bb_by_instruction = new Dictionary<Instruction, BasicBlock> ();
@@ -174,7 +176,7 @@ namespace Mono.Linker.Conditionals
 
 		public void Dump ()
 		{
-			Context.LogMessage ($"BLOCK DUMP ({Body.Method})");
+			Scanner.Context.LogMessage ($"BLOCK DUMP ({Body.Method})");
 			foreach (var block in _block_list) {
 				Dump (block);
 			}
@@ -182,9 +184,9 @@ namespace Mono.Linker.Conditionals
 
 		public void Dump (BasicBlock block)
 		{
-			Context.LogMessage ($"{block}:");
+			Scanner.Context.LogMessage ($"{block}:");
 			foreach (var instruction in block.Instructions) {
-				Context.LogMessage ($"  {CecilHelper.Format (instruction)}");
+				Scanner.Context.LogMessage ($"  {CecilHelper.Format (instruction)}");
 			}
 		}
 

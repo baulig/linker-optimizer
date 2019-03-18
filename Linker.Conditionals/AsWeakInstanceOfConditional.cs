@@ -39,8 +39,8 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		AsWeakInstanceOfConditional (BasicBlockList blocks, TypeDefinition type, VariableDefinition variable)
-			: base (blocks)
+		AsWeakInstanceOfConditional (BasicBlockScanner scanner, TypeDefinition type, VariableDefinition variable)
+			: base (scanner)
 		{
 			InstanceType = type;
 			Variable = variable;
@@ -87,21 +87,21 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		public static AsWeakInstanceOfConditional Create (BasicBlockList blocks, ref BasicBlock bb, ref int index, TypeDefinition type)
+		public static AsWeakInstanceOfConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, TypeDefinition type)
 		{
 			if (bb.Instructions.Count < 2)
 				throw new NotSupportedException ();
-			if (index + 1 >= blocks.Body.Instructions.Count)
+			if (index + 1 >= scanner.Body.Instructions.Count)
 				throw new NotSupportedException ();
 
 			/*
 			 * `bool MonoLinkerSupport.AsWeakInstance<T> (object obj, out T instance)`
 			 */
 
-			var load = blocks.Body.Instructions [index - 2];
-			var output = blocks.Body.Instructions [index - 1];
+			var load = scanner.Body.Instructions [index - 2];
+			var output = scanner.Body.Instructions [index - 1];
 
-			blocks.Context.LogMessage ($"WEAK INSTANCE OF: {bb} {index} {type} - {load} {output}");
+			scanner.LogDebug (1, $"WEAK INSTANCE OF: {bb} {index} {type} - {load} {output}");
 
 			if (!CecilHelper.IsSimpleLoad (load))
 				throw new NotSupportedException ();
@@ -109,11 +109,11 @@ namespace Mono.Linker.Conditionals
 				throw new NotSupportedException ();
 
 			if (bb.Instructions.Count > 3)
-				blocks.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
+				scanner.BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 			var instanceType = CecilHelper.GetWeakInstanceArgument (bb.Instructions [2]);
 			var variable = ((VariableReference)output.Operand).Resolve () ?? throw new NotSupportedException ();
 
-			var instance = new AsWeakInstanceOfConditional (blocks, instanceType, variable);
+			var instance = new AsWeakInstanceOfConditional (scanner, instanceType, variable);
 			bb.LinkerConditional = instance;
 
 			/*
@@ -121,10 +121,7 @@ namespace Mono.Linker.Conditionals
 			 * and the conditional call itself.
 			 */
 
-			if (index + 1 >= blocks.Body.Instructions.Count)
-				throw new NotSupportedException ();
-
-			LookAheadAfterConditional (blocks, ref bb, ref index);
+			LookAheadAfterConditional (scanner.BlockList, ref bb, ref index);
 
 			return instance;
 		}

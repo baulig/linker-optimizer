@@ -41,6 +41,8 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		public MethodBody Body => Method.Body;
+
 		public bool FoundConditionals {
 			get; private set;
 		}
@@ -58,7 +60,7 @@ namespace Mono.Linker.Conditionals
 			Context = context;
 			Method = method;
 
-			BlockList = new BasicBlockList (context, method.Body);
+			BlockList = new BasicBlockList (this, method.Body);
 		}
 
 		public static bool ThrowOnError;
@@ -123,7 +125,7 @@ namespace Mono.Linker.Conditionals
 
 				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {
 					LogDebug (2, $"    CALL: {CecilHelper.Format (instruction)}");
-					if (LinkerConditional.Scan (BlockList, ref bb, ref i, instruction))
+					if (LinkerConditional.Scan (this, ref bb, ref i, instruction))
 						FoundConditionals = true;
 					continue;
 				}
