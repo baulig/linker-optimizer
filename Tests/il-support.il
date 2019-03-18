@@ -49,13 +49,6 @@
 		}
 
 		.method public static hidebysig 
-			default void MarkFeature (valuetype System.Runtime.CompilerServices.MonoLinkerFeature feature)  cil managed noinlining 
-		{
-			.maxstack 8
-			ret 
-		}
-
-		.method public static hidebysig 
 			default bool AsWeakInstanceOf<class T> (object obj, [out] !!T& 'instance')  cil managed noinlining 
 		{
 			.maxstack 8

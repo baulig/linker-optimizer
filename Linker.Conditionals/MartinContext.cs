@@ -100,10 +100,6 @@ namespace Mono.Linker.Conditionals
 			IsTypeAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsTypeAvailable");
 			if (IsTypeAvailableMethod == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsTypeAvailable()`.");
-
-			MarkFeatureMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "MarkFeature");
-			if (MarkFeatureMethod == null)
-				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.MarkFeature()`.");
 		}
 
 		public TypeDefinition MonoLinkerSupportType {
@@ -127,11 +123,6 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public MethodDefinition IsFeatureSupportedMethod {
-			get;
-			private set;
-		}
-
-		public MethodDefinition MarkFeatureMethod {
 			get;
 			private set;
 		}
