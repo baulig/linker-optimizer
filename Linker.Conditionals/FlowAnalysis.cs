@@ -295,6 +295,65 @@ namespace Mono.Linker.Conditionals
 			return removedDeadBlocks;
 		}
 
+		public bool RemoveUnusedVariables ()
+		{
+			var removed = false;
+			var marked = new HashSet<VariableDefinition> ();
+			var variables = Method.Body.Variables;
+
+			Context.LogMessage ($"REMOVE VARIABLES: {Method.Name}");
+
+			foreach (var instruction in Method.Body.Instructions) {
+				Context.LogMessage ($"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
+
+				switch (instruction.OpCode.Code) {
+				case Code.Ldloc_0:
+				case Code.Stloc_0:
+					marked.Add (variables [0]);
+					break;
+				case Code.Ldloc_1:
+				case Code.Stloc_1:
+					marked.Add (variables [1]);
+					break;
+				case Code.Ldloc_2:
+				case Code.Stloc_2:
+					marked.Add (variables [2]);
+					break;
+				case Code.Ldloc_3:
+				case Code.Stloc_3:
+					marked.Add (variables [3]);
+					break;
+				case Code.Ldloc:
+				case Code.Ldloc_S:
+				case Code.Ldloca:
+				case Code.Ldloca_S:
+				case Code.Stloc_S:
+				case Code.Stloc:
+					var variable = ((VariableReference)instruction.Operand).Resolve ();
+					Context.LogMessage ($"    VARIABLE: {variable} {instruction}");
+					if (variable == null)
+						continue;
+					marked.Add (variable);
+					break;
+				}
+			}
+
+			Context.LogMessage ($"REMOVE VARIABLES #1");
+
+			for (int i = 0; i < Method.Body.Variables.Count; i++) {
+				if (marked.Contains (Method.Body.Variables [i]))
+					continue;
+				Context.LogMessage ($"    REMOVE: {Method.Body.Variables[i]}");
+				Method.Body.Variables.RemoveAt (i);
+				removed = true;
+				i--;
+			}
+
+			Context.LogMessage ($"REMOVE VARIABLES #2: {removed}");
+
+			return removed;
+		}
+
 		enum Reachability
 		{
 			Normal,

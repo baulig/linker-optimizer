@@ -8,7 +8,7 @@ namespace Martin.LinkerTest
 		public static void Main ()
 		{
 			RunWeakInstance1 (null);
-			RunWeakInstance2 (new Foo ());
+			RunWeakInstance2 ("I am not Bar!");
 		}
 
 		static void Assert (bool condition, [CallerMemberName] string caller = null)
@@ -33,13 +33,13 @@ namespace Martin.LinkerTest
 
 		public static void RunWeakInstance2 (object instance)
 		{
-			if (MonoLinkerSupport.AsWeakInstanceOf<Foo> (instance, out var foo)) {
+			if (MonoLinkerSupport.AsWeakInstanceOf<Bar> (instance, out var bar)) {
 				Console.Error.WriteLine ("I LIVE ON THE MOON!");
-				foo.Hello ();
+				bar.Hello ();
 				Assert (false);
 			}
 
-			Console.Error.WriteLine ($"DONE: {foo != null}");
+			Console.Error.WriteLine ($"DONE: {bar != null}");
 		}
 	}
 
@@ -48,6 +48,14 @@ namespace Martin.LinkerTest
 		public void Hello ()
 		{
 			Console.WriteLine ("World");
+		}
+	}
+
+	public class Bar
+	{
+		public void Hello ()
+		{
+			Console.WriteLine ("I am not Foo!");
 		}
 	}
 }

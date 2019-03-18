@@ -400,6 +400,7 @@ namespace Mono.Linker.Conditionals
 			flow.Analyze ();
 			flow.RemoveDeadBlocks ();
 			flow.RemoveDeadJumps ();
+			flow.RemoveUnusedVariables ();
 
 			Context.LogMessage ($"ELIMINATING DEAD BLOCKS DONE");
 		}
