@@ -24,7 +24,7 @@ namespace Martin.LinkerTest
 			var supported = MonoLinkerSupport.IsTypeAvailable ("Martin.LinkerTest.Foo");
 			Console.Error.WriteLine ($"SUPPORTED: {supported}");
 			if (supported)
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("Foo should not be available");
 
 			if (MonoLinkerSupport.IsTypeAvailable ("Martin.LinkerTest.Undefined"))
 				throw new InvalidOperationException ("Undefined type!");

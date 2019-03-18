@@ -25,7 +25,7 @@ namespace Martin.LinkerTest
 				supported = false;
 				break;
 			default:
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ();
 			}
 
 			Console.WriteLine ($"DONE: {supported}");

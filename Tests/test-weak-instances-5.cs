@@ -14,9 +14,9 @@ namespace Martin.LinkerTest
 		public static void RunWeakInstance (object instance)
 		{
 			if (MonoLinkerSupport.AsWeakInstanceOf<Foo> (instance, out var foo)) {
-				Console.Error.WriteLine ("I LIVE ON THE MOON!");
+				TestHelpers.Debug ("Conditional should be linked out!");
 				foo.Hello ();
-				TestHelpers.Assert (false);
+				TestHelpers.Assert (false, "Conditional should be linked out");
 			}
 
 			Console.Error.WriteLine ("DONE");

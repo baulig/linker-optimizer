@@ -35,10 +35,9 @@ namespace Martin.LinkerTest
 		public static void RunWeakInstance1 ()
 		{
 			TryCatchMethod ();
-			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-			{
-				Console.Error.WriteLine ("I LIVE ON THE MOON!");
-				TestHelpers.Assert (false);
+			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null)) {
+				TestHelpers.Debug ("Conditional should have been removed.");
+				throw TestHelpers.AssertRemoved ();
 			}
 
 			Console.Error.WriteLine ("DONE");
@@ -46,8 +45,10 @@ namespace Martin.LinkerTest
 
 		public static void RunWeakInstance2 ()
 		{
-			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-				throw new AssertionException ("I LIVE ON THE MOON!");
+			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null)) {
+				TestHelpers.Debug ("Conditional should have been removed.");
+				throw TestHelpers.AssertRemoved ();
+			}
 
 			Console.Error.WriteLine ("DONE");
 		}
@@ -56,7 +57,7 @@ namespace Martin.LinkerTest
 		{
 			Console.Error.WriteLine ("HELLO");
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("Conditional should have been removed.");
 
 			Console.Error.WriteLine ("DONE");
 		}
@@ -101,7 +102,7 @@ namespace Martin.LinkerTest
 			var instance = new InstanceTest ();
 			Console.WriteLine (instance);
 			if (TryCatchMethod ())
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ();
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Field);
 		}
 
@@ -122,7 +123,7 @@ namespace Martin.LinkerTest
 		{
 			var instance = new InstanceTest ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Instance))
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("Conditional should be linked out");
 
 			Console.Error.WriteLine ("DONE");
 		}
@@ -131,7 +132,7 @@ namespace Martin.LinkerTest
 		{
 			try
 			{
-				throw new AssertionException ("I LIVE ON THE MOON");
+				throw new NotSupportedException ();
 			}
 			catch
 			{

@@ -14,13 +14,13 @@ namespace Martin.LinkerTest
 		public static void RunFeature1 ()
 		{
 			if (!MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Martin))
-				TestHelpers.Assert (false);
+				TestHelpers.AssertFail ("Feature `MonoLinkerFeature.Martin` should not be available.");
 		}
 
 		public static void RunFeature2 ()
 		{
 			if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Remoting))
-				TestHelpers.Assert (false);
+				TestHelpers.AssertFail ("Remoting should be disabled.");
 		}
 	}
 }

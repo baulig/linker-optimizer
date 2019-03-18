@@ -39,8 +39,8 @@ namespace Martin.LinkerTest
 			TryCatchMethod ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
 			{
-				Console.Error.WriteLine ("I LIVE ON THE MOON!");
-				TestHelpers.Assert (false);
+				TestHelpers.Debug ("Conditional should be linked out");
+				TestHelpers.AssertFail ("Conditional should be linked out");
 			}
 
 			Console.Error.WriteLine ("DONE");
@@ -49,7 +49,7 @@ namespace Martin.LinkerTest
 		public static void RunWeakInstance2 ()
 		{
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("Conditional should return false.");
 
 			Console.Error.WriteLine ("DONE");
 		}
@@ -58,7 +58,7 @@ namespace Martin.LinkerTest
 		{
 			Console.Error.WriteLine ("HELLO");
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (null))
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("Conditional should return false.");
 
 			Console.Error.WriteLine ("DONE");
 		}
@@ -103,7 +103,7 @@ namespace Martin.LinkerTest
 			var instance = new InstanceTest ();
 			Console.WriteLine (instance);
 			if (TryCatchMethod ())
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ();
 			return MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Field);
 		}
 
@@ -124,7 +124,7 @@ namespace Martin.LinkerTest
 		{
 			var instance = new InstanceTest ();
 			if (MonoLinkerSupport.IsWeakInstanceOf<Foo> (instance.Instance))
-				throw new AssertionException ("I LIVE ON THE MOON!");
+				throw new AssertionException ("Conditional should return false.");
 
 			Console.Error.WriteLine ("DONE");
 		}
@@ -133,7 +133,7 @@ namespace Martin.LinkerTest
 		{
 			try
 			{
-				throw new AssertionException ("I LIVE ON THE MOON");
+				throw new InvalidOperationException ();
 			}
 			catch
 			{
