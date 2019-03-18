@@ -9,10 +9,6 @@ namespace Martin.LinkerTest
 		{
 			RunFeature1 ();
 			RunFeature2 ();
-			RunFeature3 (false);
-			RunFeature3 (true);
-
-			MonoLinkerSupport.MarkFeature (MonoLinkerFeature.Martin);
 		}
 
 		static void Assert (bool condition, [CallerMemberName] string caller = null)
@@ -35,13 +31,5 @@ namespace Martin.LinkerTest
 			if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Remoting))
 				Assert (false);
 		}
-
-		public static void RunFeature3 (bool test)
-		{
-			if (test)
-				return;
-			MonoLinkerSupport.MarkFeature (MonoLinkerFeature.Martin);
-		}
-
 	}
 }

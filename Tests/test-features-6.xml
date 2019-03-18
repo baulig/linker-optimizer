@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
-	<assembly fullname="mscorlib">
-	
-	</assembly>
-
 	<martin>
 		<features>
 			<feature name="martin" />
+			<feature name="globalization" enabled="false" />
 		</features>
 	</martin>
-
 </linker>

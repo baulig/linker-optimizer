@@ -42,6 +42,9 @@ run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 test-%.exe: test-%.cs $(CORLIB_SOURCES)
 	$(TESTS_COMPILER) /optimize /out:$@ $^
 
+xtest-%.exe: xtest-%.cs $(CORLIB_SOURCES)
+	$(TESTS_COMPILER) /optimize /out:$@ $^
+
 iltest-%.exe: iltest-%.il $(IL_CORLIB_SOURCES)
 	$(ILASM) /out:$@ $^
 
@@ -49,7 +52,7 @@ test-%: test-%.exe build
 	@echo RUN TEST $@
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
-	$(LINKER_DEFAULT) --dump-dependencies --martin -a $@
+	$(LINKER_DEFAULT) --dump-dependencies --martin -a $@ $(if $(wildcard $(@F).xml), -i $(@F).xml)
 	gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
 	monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
 	monodis $(LINKER_OUTPUT)/$(@F).exe > $(LINKER_OUTPUT)/$(@F).il

@@ -7,6 +7,15 @@ namespace Martin.LinkerTest
 	{
 		public static void Main ()
 		{
+			RunFeature ();
+		}
+
+		public static void RunFeature ()
+		{
+			if (!MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Martin))
+				throw new InvalidOperationException ("Expected `MonoLinkerFeature.Martin` to be enabled.");
+			if (MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Globalization))
+				throw new InvalidOperationException ("Expected `MonoLinkerFeature.Globalization` to be disabled.");
 		}
 	}
 }
