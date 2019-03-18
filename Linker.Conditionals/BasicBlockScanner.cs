@@ -49,6 +49,10 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		public int DebugLevel {
+			get; set;
+		}
+
 		BasicBlockScanner (MartinContext context, MethodDefinition method)
 		{
 			Context = context;
@@ -69,9 +73,21 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => BlockList.Blocks;
 
+		void LogDebug (int level, string message)
+		{
+			if (level >= DebugLevel)
+				Context.LogMessage (message);
+		}
+
+		void DumpBlocks ()
+		{
+			if (DebugLevel > 0)
+				BlockList.Dump ();
+		}
+
 		bool Scan ()
 		{
-			Context.LogMessage ($"SCAN: {Method}");
+			LogDebug (1, $"SCAN: {Method}");
 
 			BasicBlock bb = null;
 
@@ -85,29 +101,29 @@ namespace Mono.Linker.Conditionals
 
 				if (bb == null) {
 					if (BlockList.TryGetBlock (instruction, out bb)) {
-						Context.LogMessage ($"  KNOWN BB: {bb}");
+						LogDebug (2, $"  KNOWN BB: {bb}");
 					} else {
 						bb = BlockList.NewBlock (instruction);
-						Context.LogMessage ($"  NEW BB: {bb}");
+						LogDebug (2, $"  NEW BB: {bb}");
 					}
 				} else if (BlockList.TryGetBlock (instruction, out var newBB)) {
 					if (bb.BranchType != BranchType.None)
 						throw new MartinTestException ();
-					Context.LogMessage ($"  KNOWN BB: {bb} -> {newBB}");
+					LogDebug (2, $"  KNOWN BB: {bb} -> {newBB}");
 					bb = newBB;
 				} else {
 					bb.AddInstruction (instruction);
 				}
 
 				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {
-					Context.LogMessage ($"    CALL: {CecilHelper.Format (instruction)}");
+					LogDebug (2, $"    CALL: {CecilHelper.Format (instruction)}");
 					if (LinkerConditional.Scan (BlockList, ref bb, ref i, instruction))
 						FoundConditionals = true;
 					continue;
 				}
 
 				var type = CecilHelper.GetBranchType (instruction);
-				Context.LogMessage ($"    INS: {CecilHelper.Format (instruction)} {type}");
+				LogDebug (2, $"    INS: {CecilHelper.Format (instruction)} {type}");
 				switch (type) {
 				case BranchType.None:
 					break;
@@ -128,16 +144,16 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.ComputeOffsets ();
 
-			BlockList.Dump ();
+			DumpBlocks ();
 
 			return true;
 		}
 
 		public void RewriteConditionals ()
 		{
-			Context.LogMessage ($"REWRITE CONDITIONALS");
+			LogDebug (1, $"REWRITE CONDITIONALS");
 
-			BlockList.Dump ();
+			DumpBlocks ();
 
 			var foundConditionals = false;
 
@@ -154,31 +170,31 @@ namespace Mono.Linker.Conditionals
 
 			BlockList.ComputeOffsets ();
 
-			BlockList.Dump ();
+			DumpBlocks ();
 
-			Context.LogMessage ($"DONE REWRITING CONDITIONALS");
+			LogDebug (1, $"DONE REWRITING CONDITIONALS");
 
 			EliminateDeadBlocks ();
 		}
 
 		void RewriteLinkerConditional (BasicBlock block)
 		{
-			Context.LogMessage ($"REWRITE LINKER CONDITIONAL: {block.LinkerConditional}");
+			LogDebug (1, $"REWRITE LINKER CONDITIONAL: {block.LinkerConditional}");
 
-			BlockList.Dump ();
+			DumpBlocks ();
 
 			block.LinkerConditional.RewriteConditional (ref block);
 
 			BlockList.ComputeOffsets ();
 
-			BlockList.Dump ();
+			DumpBlocks ();
 
-			Context.LogMessage ($"DONE REWRITING LINKER CONDITIONAL");
+			LogDebug (1, $"DONE REWRITING LINKER CONDITIONAL");
 		}
 
 		void EliminateDeadBlocks ()
 		{
-			Context.LogMessage ($"ELIMINATING DEAD BLOCKS");
+			LogDebug (1, $"ELIMINATING DEAD BLOCKS");
 
 			var flow = new FlowAnalysis (BlockList);
 			flow.Analyze ();
@@ -186,7 +202,7 @@ namespace Mono.Linker.Conditionals
 			flow.RemoveDeadJumps ();
 			flow.RemoveUnusedVariables ();
 
-			Context.LogMessage ($"ELIMINATING DEAD BLOCKS DONE");
+			LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE");
 		}
 	}
 }

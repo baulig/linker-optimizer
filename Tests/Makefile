@@ -12,10 +12,13 @@ TEST_EXEC = MONO_PATH=$(LINKER_OUTPUT) $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-a
 
 TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(topdir)/class/lib/$(PROFILE_DIRECTORY)/mscorlib.dll
 
-CORLIB_SOURCES = $(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs
 IL_CORLIB_SOURCES = il-support.il
 
 CLEAN_FILES += *.exe *.dll *.pdb
+
+CORLIB_SOURCES := \
+	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerFeature.cs \
+	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs
 
 TEST_HELPER_SOURCES := \
 	AssertionException.cs \

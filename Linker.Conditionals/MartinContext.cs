@@ -143,6 +143,7 @@ namespace Mono.Linker.Conditionals
 
 		public bool IsEnabled (TypeDefinition type)
 		{
+			return true;
 			if (type.DeclaringType != null)
 				return IsEnabled (type.DeclaringType);
 			switch (type.Namespace) {
