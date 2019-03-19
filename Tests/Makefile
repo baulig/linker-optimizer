@@ -40,7 +40,6 @@ TEST_CASES := \
 	test-features-7.cs \
 	test-conditionals-1.cs \
 	test-conditionals-2.cs \
-	test-unicode-1.cs \
 	test-globalization-1.cs
 
 ILTEST_CASES := \
