@@ -268,6 +268,36 @@ namespace Mono.Linker.Conditionals
 			return targets;
 		}
 
+		public static VariableDefinition GetVariable (MethodBody body, Instruction instruction)
+		{
+			switch (instruction.OpCode.Code) {
+			case Code.Ldloc_0:
+			case Code.Stloc_0:
+				return body.Variables [0];
+			case Code.Ldloc_1:
+			case Code.Stloc_1:
+				return body.Variables [1];
+			case Code.Ldloc_2:
+			case Code.Stloc_2:
+				return body.Variables [2];
+			case Code.Ldloc_3:
+			case Code.Stloc_3:
+				return body.Variables [3];
+			case Code.Ldloc:
+			case Code.Ldloc_S:
+			case Code.Ldloca:
+			case Code.Ldloca_S:
+			case Code.Stloc_S:
+			case Code.Stloc:
+				var variable = ((VariableReference)instruction.Operand).Resolve ();
+				if (variable == null)
+					throw new MartinTestException ();
+				return variable;
+			default:
+				return null;
+			}
+		}
+
 		// Unused template listing all possible opcode types.
 		static void AllOpCodeTypes (Code code)
 		{

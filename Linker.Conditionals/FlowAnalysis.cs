@@ -439,53 +439,89 @@ namespace Mono.Linker.Conditionals
 			Scanner.LogDebug (1, $"REMOVE VARIABLES: {Method.Name}");
 
 			var removed = false;
-			var marked = new HashSet<VariableDefinition> ();
-			var variables = Method.Body.Variables;
+			var variables = new Dictionary<VariableDefinition, VariableEntry> ();
 
-			foreach (var instruction in Method.Body.Instructions) {
-				Scanner.LogDebug (2, $"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
+			for (int i = 0; i < Method.Body.Variables.Count; i++) {
+				var variable = new VariableEntry (Method.Body.Variables [i], i);
+				variables.Add (variable.Variable, variable);
+			}
 
-				switch (instruction.OpCode.Code) {
-				case Code.Ldloc_0:
-				case Code.Stloc_0:
-					marked.Add (variables [0]);
-					break;
-				case Code.Ldloc_1:
-				case Code.Stloc_1:
-					marked.Add (variables [1]);
-					break;
-				case Code.Ldloc_2:
-				case Code.Stloc_2:
-					marked.Add (variables [2]);
-					break;
-				case Code.Ldloc_3:
-				case Code.Stloc_3:
-					marked.Add (variables [3]);
-					break;
-				case Code.Ldloc:
-				case Code.Ldloc_S:
-				case Code.Ldloca:
-				case Code.Ldloca_S:
-				case Code.Stloc_S:
-				case Code.Stloc:
-					var variable = ((VariableReference)instruction.Operand).Resolve ();
-					Scanner.LogDebug (2, $"    VARIABLE: {variable} {instruction}");
+			foreach (var block in BlockList.Blocks) {
+				for (int i = 0; i < block.Instructions.Count; i++) {
+					var instruction = block.Instructions [i];
+					Scanner.LogDebug (2, $"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
+
+					var variable = CecilHelper.GetVariable (Method.Body, instruction);
 					if (variable == null)
 						continue;
-					marked.Add (variable);
-					break;
+
+					var entry = variables [variable];
+					if (entry == null)
+						throw new MartinTestException ();
+
+					entry.Used = true;
+					if (entry.Modified)
+						continue;
+
+					switch (instruction.OpCode.Code) {
+					case Code.Ldloc_0:
+					case Code.Ldloc_1:
+					case Code.Ldloc_2:
+					case Code.Ldloc_3:
+					case Code.Ldloc:
+					case Code.Ldloc_S:
+						continue;
+
+					case Code.Ldloca:
+					case Code.Ldloca_S:
+						entry.SetModified ();
+						continue;
+
+					case Code.Stloc:
+					case Code.Stloc_0:
+					case Code.Stloc_1:
+					case Code.Stloc_2:
+					case Code.Stloc_3:
+					case Code.Stloc_S:
+						break;
+
+					default:
+						throw new MartinTestException ();
+					}
+
+					if (i == 0 || entry.IsConstant) {
+						entry.SetModified ();
+						continue;
+					}
+
+					var load = block.Instructions [i - 1];
+					switch (block.Instructions [i-1].OpCode.Code) {
+					case Code.Ldc_I4_0:
+						entry.SetConstant (block, load, 0);
+						break;
+					case Code.Ldc_I4_1:
+						entry.SetConstant (block, load, 1);
+						break;
+					}
 				}
 			}
 
 			Scanner.LogDebug (1, $"REMOVE VARIABLES #1");
 
 			for (int i = Method.Body.Variables.Count - 1; i >= 0; i--) {
-				if (marked.Contains (Method.Body.Variables [i]))
+				var variable = variables [Method.Body.Variables [i]];
+				Scanner.LogDebug (2, $"    VARIABLE #{i}: {variable}");
+				if (!variable.Used) {
+					Scanner.LogDebug (2, $"    --> REMOVE");
+					RemoveVariable (i);
+					Method.Body.Variables.RemoveAt (i);
+					removed = true;
 					continue;
-				Scanner.LogDebug (2, $"    REMOVE: {Method.Body.Variables[i]}");
-				RemoveVariable (i);
-				Method.Body.Variables.RemoveAt (i);
-				removed = true;
+				}
+
+				if (variable.IsConstant) {
+	 				Scanner.LogDebug (2, $"    --> CONSTANT: {variable.Instruction} {variable.Value}");
+				}
 			}
 
 			Scanner.LogDebug (1, $"REMOVE VARIABLES #2: {removed}");
@@ -602,6 +638,71 @@ namespace Mono.Linker.Conditionals
 			public override string ToString ()
 			{
 				return $"[{Reachability}: {Block}]";
+			}
+		}
+
+		class VariableEntry
+		{
+			public VariableDefinition Variable {
+				get;
+			}
+
+			public int Index {
+				get;
+			}
+
+			public bool Used {
+				get; set;
+			}
+
+			public bool Modified {
+				get;
+				private set;
+			}
+
+			public bool IsConstant => Block != null;
+
+			public BasicBlock Block {
+				get;
+				private set;
+			}
+
+			public Instruction Instruction {
+				get;
+				private set;
+			}
+
+			public int Value {
+				get;
+				private set;
+			}
+
+			public VariableEntry (VariableDefinition variable, int index)
+			{
+				Variable = variable;
+				Index = index;
+			}
+
+			public void SetModified ()
+			{
+				Modified = true;
+				Block = null;
+				Instruction = null;
+				Value = 0;
+			}
+
+			public void SetConstant (BasicBlock block, Instruction instruction, int value)
+			{
+				if (Modified)
+					throw new InvalidOperationException ();
+				Block = block;
+				Instruction = instruction;
+				Value = value;
+			}
+
+			public override string ToString ()
+			{
+				return $"[{Variable}: used={Used}, modified={Modified}, constant={IsConstant}]";
 			}
 		}
 	}
