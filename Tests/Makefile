@@ -39,7 +39,9 @@ TEST_CASES := \
 	test-features-6.cs \
 	test-features-7.cs \
 	test-conditionals-1.cs \
-	test-conditionals-2.cs
+	test-conditionals-2.cs \
+	test-unicode-1.cs \
+	test-globalization-1.cs
 
 ILTEST_CASES := \
 	iltest-conditionals-1.il
@@ -48,7 +50,7 @@ compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe)
 
 run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 
-test-%.exe: test-%.cs $(CORLIB_SOURCES) $(TEST_HELPER_SOURCES)
+test-%.exe: test-%.cs $(TEST_HELPER_SOURCES)
 	$(TESTS_COMPILER) /optimize /out:$@ $^
 
 iltest-%.exe: iltest-%.il $(IL_CORLIB_SOURCES)

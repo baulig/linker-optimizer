@@ -140,8 +140,8 @@ namespace Mono.Linker.Conditionals
 			switch (type.Namespace) {
 			case "Martin.LinkerTest":
 				return true;
-			case "Mono.Globalization.Unicode":
-				return true;
+			//case "Mono.Globalization.Unicode":
+			//	return true;
 			default:
 				return type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin");
 			}
@@ -149,6 +149,8 @@ namespace Mono.Linker.Conditionals
 
 		public bool IsEnabled (MethodDefinition method)
 		{
+			if (method.FullName.Contains ("JapaneseCalendar"))
+				return true;
 			return ScanAllAssemblies || EnableDebugging (method.DeclaringType);
 		}
 

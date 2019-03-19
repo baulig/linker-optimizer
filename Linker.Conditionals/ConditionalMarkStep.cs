@@ -118,10 +118,21 @@ namespace Mono.Linker.Conditionals
 			if (Annotations.IsProcessed (type))
 				return null;
 
+			if (type.FullName.Contains ("JapaneseCalendar"))
+				MartinContext.LogMessage (MessageImportance.Normal, $"MARK TYPE: {type}");
+
 			if (ProcessingConditionals && MartinContext.IsConditionalTypeMarked (type))
 				MartinContext.AttemptingToRedefineConditional (type);
 
 			return base.MarkType (reference);
+		}
+
+		protected override void EnqueueMethod (MethodDefinition method)
+		{
+			if (method.FullName.Contains ("JapaneseCalendar"))
+				MartinContext.LogMessage (MessageImportance.Normal, $"ENQUEUE METHOD: {method}");
+
+			base.EnqueueMethod (method);
 		}
 	}
 }
