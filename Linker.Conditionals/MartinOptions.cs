@@ -44,16 +44,29 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
-		public IList<string> DebugTypes => _debug_types;
+		public IList<string> DebugTypes {
+			get;
+		}
 
-		public IList<string> DebugMethods => _debug_methods;
+		public IList<string> DebugMethods {
+			get;
+		}
 
-		readonly List<string> _debug_types = new List<string> ();
-		readonly List<string> _debug_methods = new List<string> ();
+		public IList<string> FailOnTypes {
+			get;
+		}
+
+		public IList<string> FailOnMethods {
+			get;
+		}
 
 		public MartinOptions ()
 		{
 			NoConditionalRedefinition = true;
+			DebugTypes = new List<string> ();
+			DebugMethods = new List<string> ();
+			FailOnTypes = new List<string> ();
+			FailOnMethods = new List<string> ();
 		}
 
 		public bool EnableDebugging (TypeDefinition type)
@@ -66,7 +79,7 @@ namespace Mono.Linker.Conditionals
 			if (type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin"))
 				return true;
 
-			return _debug_types.Any (t => type.FullName.Contains (t));
+			return DebugTypes.Any (t => type.FullName.Contains (t));
 		}
 
 		public bool EnableDebugging (MethodDefinition method)
@@ -78,7 +91,52 @@ namespace Mono.Linker.Conditionals
 			if (method.FullName.Contains ("Martin"))
 				return true;
 
-			return _debug_methods.Any (m => method.FullName.Contains (m));
+			return DebugMethods.Any (m => method.FullName.Contains (m));
+		}
+
+		public bool FailOnType (TypeDefinition type)
+		{
+			if (type.DeclaringType != null)
+				return FailOnType (type.DeclaringType);
+
+			return FailOnTypes.Any (t => type.FullName.Contains (t));
+		}
+
+		public bool FailOnMethod (MethodDefinition method)
+		{
+			if (FailOnType (method.DeclaringType))
+				return true;
+
+			return FailOnMethods.Any (m => method.FullName.Contains (m));
+		}
+
+		public void CheckFailList (MartinContext context, TypeDefinition type)
+		{
+			if (type.DeclaringType != null) {
+				CheckFailList (context, type.DeclaringType);
+				return;
+			}
+
+			var fail = FailOnTypes.FirstOrDefault (t => type.FullName.Contains (t));
+			if (fail == null)
+				return;
+
+			var message = $"Found type `{type.FullName}`, which matches fail-list entry `{fail}.";
+			context.LogMessage (MessageImportance.High, message);
+			throw new NotSupportedException (message);
+		}
+
+		public void CheckFailList (MartinContext context, MethodDefinition method)
+		{
+			CheckFailList (context, method.DeclaringType);
+
+			var fail = FailOnMethods.FirstOrDefault (m => method.FullName.Contains (m));
+			if (fail == null)
+				return;
+
+			var message = $"Found method `{method.FullName}`, which matches fail-list entry `{fail}.";
+			context.LogMessage (MessageImportance.High, message);
+			throw new NotSupportedException (message);
 		}
 	}
 }

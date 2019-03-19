@@ -46,18 +46,38 @@ namespace Mono.Linker
 			if (options != null)
 				OnOptions (_context.MartinContext.Options, options);
 
-			ProcessChildren (root, "debug/debug-method", child => {
-				var name = GetAttribute (child, "name");
-				if (string.IsNullOrEmpty (name))
+			ProcessChildren (root, "debug/break-on", child => {
+				var type_name = GetAttribute (child, "type");
+				var method_name = GetAttribute (child, "method");
+				if (string.IsNullOrEmpty (type_name))
+					type_name = null;
+				if (string.IsNullOrEmpty (method_name))
+					method_name = null;
+				if (type_name == null && method_name == null)
 					throw new MartinTestException ();
-				_context.MartinContext.Options.DebugMethods.Add (name);
+				if (type_name != null && method_name != null)
+					throw new MartinTestException ();
+				if (type_name != null)
+					_context.MartinContext.Options.DebugTypes.Add (type_name);
+				if (method_name != null)
+					_context.MartinContext.Options.DebugTypes.Add (method_name);
 			});
 
-			ProcessChildren (root, "debug/debug-type", child => {
-				var name = GetAttribute (child, "name");
-				if (string.IsNullOrEmpty (name))
+			ProcessChildren (root, "debug/fail-on", child => {
+				var type_name = GetAttribute (child, "type");
+				var method_name = GetAttribute (child, "method");
+				if (string.IsNullOrEmpty (type_name))
+					type_name = null;
+				if (string.IsNullOrEmpty (method_name))
+					method_name = null;
+				if (type_name == null && method_name == null)
 					throw new MartinTestException ();
-				_context.MartinContext.Options.DebugTypes.Add (name);
+				if (type_name != null && method_name != null)
+					throw new MartinTestException ();
+				if (type_name != null)
+					_context.MartinContext.Options.FailOnTypes.Add (type_name);
+				if (method_name != null)
+					_context.MartinContext.Options.FailOnMethods.Add (method_name);
 			});
 
 			ProcessChildren (root, "features/feature", OnFeature);
