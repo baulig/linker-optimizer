@@ -132,6 +132,9 @@ namespace Mono.Linker.Conditionals
 			if (method.FullName.Contains ("JapaneseCalendar") || method.FullName.Contains ("Hebrew"))
 				MartinContext.LogMessage (MessageImportance.Normal, $"ENQUEUE METHOD: {method}");
 
+			if (method.FullName.Contains ("Hebrew") && method.Name == "ToString")
+				MartinContext.LogMessage (MessageImportance.Normal, $"ENQUEUE METHOD: {method}");
+
 			base.EnqueueMethod (method);
 		}
 	}

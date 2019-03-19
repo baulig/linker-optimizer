@@ -392,12 +392,19 @@ namespace Mono.Linker.Conditionals
 
 			for (int i = 0; i < BlockList.Count - 1; i++) {
 				var block = BlockList [i];
-
-				if (block.BranchType != BranchType.False || block.Count != 2)
+				if (block.Count != 2)
 					continue;
 
-				if (block.Instructions[0].OpCode.Code != Code.Ldc_I4_0)
+				if (block.BranchType == BranchType.False) {
+					if (block.Instructions [0].OpCode.Code != Code.Ldc_I4_0)
+						continue;
+				} else if (block.BranchType == BranchType.True) {
+					if (block.Instructions [0].OpCode.Code != Code.Ldc_I4_1)
+						continue;
+				} else {
 					continue;
+				}
+
 				if (block.LastInstruction.OpCode.Code != Code.Brfalse && block.LastInstruction.OpCode.Code != Code.Brfalse_S)
 					throw new MartinTestException ();
 

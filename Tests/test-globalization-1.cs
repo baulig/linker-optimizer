@@ -7,6 +7,15 @@ namespace Martin.LinkerTest
 	{
 		public static void Main ()
 		{
+			var now = DateTime.Now;
+			Console.WriteLine (DateTime.Now);
+			var parsed = DateTime.Parse (now.ToString ());
+			if (now.ToString () != parsed.ToString ())
+				throw new AssertionException ();
+		}
+
+		static void Test ()
+		{
 			if (MonoLinkerSupport.IsTypeAvailable ("Mono.Globalization.Unicode.SimpleCollator"))
 				throw new AssertionException ("Mono.Globalization.Unicode.SimpleCollator");
 			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.JapaneseCalendar"))
@@ -15,12 +24,6 @@ namespace Martin.LinkerTest
 				throw new AssertionException ("System.Globalization.TaiwanCalendar");
 			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.HebrewNumber"))
 				throw new AssertionException ("System.Globalization.HebrewNumber");
-
-			var now = DateTime.Now;
-			Console.WriteLine (DateTime.Now);
-			var parsed = DateTime.Parse (now.ToString ());
-			if (now.ToString () != parsed.ToString ())
-				throw new AssertionException ();
 		}
 	}
 }
