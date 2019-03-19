@@ -151,10 +151,8 @@ namespace Mono.Linker.Conditionals
 
 			MartinContext.Options.CheckFailList (MartinContext, method);
 
-			if (_conditional_methods.Contains (method)) {
-				MartinContext.LogMessage (MessageImportance.Normal, $"Method `{method} already in conditional queue.");
+			if (_conditional_methods.Contains (method))
 				return;
-			}
 
 			base.EnqueueMethod (method);
 		}
