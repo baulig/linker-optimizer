@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<linker>
+	<martin>
+		<options all-modules="true" analyze-all="false" />
+
+		<debug>
+		</debug>
+
+		<features>
+			<feature name="globalization" enabled="false" />
+		</features>
+	</martin>
+</linker>

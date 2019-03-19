@@ -520,7 +520,7 @@ namespace Mono.Linker.Conditionals
 				}
 
 				if (variable.IsConstant) {
-	 				Scanner.LogDebug (2, $"    --> CONSTANT: {variable.Instruction} {variable.Value}");
+	 				Scanner.LogDebug (2, $"    --> CONSTANT ({variable.Value}): {variable.Instruction}");
 				}
 			}
 
