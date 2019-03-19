@@ -71,6 +71,13 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
+		BasicBlock EnsureBlock (Instruction instruction)
+		{
+			if (_bb_by_instruction.TryGetValue (instruction, out var block))
+				return block;
+			return NewBlock (BasicBlockType.Normal, instruction);
+		}
+
 		BasicBlock EnsureBlock (BasicBlockType type, Instruction instruction)
 		{
 			if (_bb_by_instruction.TryGetValue (instruction, out var block)) {
@@ -143,7 +150,7 @@ namespace Mono.Linker.Conditionals
 
 		public void ResolveJumpTargets ()
 		{
-			Dump ();
+			Scanner.DumpBlocks ();
 
 			foreach (var handler in Body.ExceptionHandlers) {
 				if (handler.TryStart != null)
@@ -160,11 +167,11 @@ namespace Mono.Linker.Conditionals
 				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
-					EnsureBlock (BasicBlockType.Normal, (Instruction)instruction.Operand);
+					EnsureBlock ((Instruction)instruction.Operand);
 					break;
 				case OperandType.InlineSwitch:
 					foreach (var label in (Instruction [])instruction.Operand)
-						EnsureBlock (BasicBlockType.Normal, label);
+						EnsureBlock (label);
 					break;
 				}
 			}

@@ -453,7 +453,7 @@ namespace Mono.Linker.Conditionals
 
 		void RemoveVariable (int index)
 		{
-			BlockList.Dump ();
+			Scanner.DumpBlocks ();
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				var block = BlockList [i];

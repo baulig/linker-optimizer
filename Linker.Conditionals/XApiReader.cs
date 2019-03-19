@@ -41,12 +41,7 @@ namespace Mono.Linker
 			if (root == null)
 				return;
 
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"GOT XML!");
-
 			ProcessChildren (root, "features/feature", OnFeature);
-
-
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"XML COMPLETE!");
 		}
 
 		void OnFeature (XPathNavigator nav)
@@ -57,7 +52,7 @@ namespace Mono.Linker
 			if (string.IsNullOrEmpty (value) || !bool.TryParse (value, out var enabled))
 				enabled = true;
 
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"FEATURE: {name} {enabled}");
+			_context.MartinContext.LogMessage (MessageImportance.Low, $"FEATURE FROM XML: {name} {enabled}");
 			_context.MartinContext.SetFeatureEnabled (name, enabled);
 		}
 	}

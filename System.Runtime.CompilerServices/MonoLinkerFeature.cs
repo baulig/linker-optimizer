@@ -1,6 +1,7 @@
+#if INSIDE_CORLIB
 namespace System.Runtime.CompilerServices
 {
-	enum MonoLinkerFeature
+	public enum MonoLinkerFeature
 	{
 		ReflectionEmit,
 		Remoting,
@@ -8,3 +9,4 @@ namespace System.Runtime.CompilerServices
 		Martin
 	}
 }
+#endif

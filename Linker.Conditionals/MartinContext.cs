@@ -51,7 +51,7 @@ namespace Mono.Linker.Conditionals
 		{
 			Context = context;
 			NoConditionalRedefinition = true;
-			ScanAllAssemblies = false;
+			ScanAllAssemblies = true;
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
@@ -140,6 +140,8 @@ namespace Mono.Linker.Conditionals
 			switch (type.Namespace) {
 			case "Martin.LinkerTest":
 				return true;
+			case "Mono.Globalization.Unicode":
+				return true;
 			default:
 				return type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin");
 			}
@@ -152,6 +154,8 @@ namespace Mono.Linker.Conditionals
 
 		internal int GetDebugLevel (MethodDefinition method)
 		{
+			if (method.Name == "GetCollator" || method.Name == "Main")
+				return 5;
 			return EnableDebugging (method.DeclaringType) ? 5 : 0;
 		}
 

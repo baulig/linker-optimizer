@@ -160,29 +160,30 @@ namespace Mono.Linker.Conditionals
 
 		public static bool Scan (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, Instruction instruction)
 		{
-			var target = (MethodReference)instruction.Operand;
+			var target = ((MethodReference)instruction.Operand).Resolve ();
 			scanner.LogDebug (2, $"    CALL: {target}");
 
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {
-				if (genericInstance.ElementMethod == scanner.Context.IsWeakInstanceOfMethod) {
+				if (target == scanner.Context.IsWeakInstanceOfMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
 					IsWeakInstanceOfConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
-				} else if (genericInstance.ElementMethod == scanner.Context.AsWeakInstanceOfMethod) {
+				} else if (target == scanner.Context.AsWeakInstanceOfMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
 					AsWeakInstanceOfConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
-				} else if (genericInstance.ElementMethod == scanner.Context.IsTypeAvailableMethod) {
+				} else if (target == scanner.Context.IsTypeAvailableMethod) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
 					IsTypeAvailableConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
 				}
+				return false;
 			} else if (target == scanner.Context.IsFeatureSupportedMethod) {
 				IsFeatureSupportedConditional.Create (scanner, ref bb, ref index);
 				return true;
