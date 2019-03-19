@@ -116,6 +116,7 @@
     <Compile Include="Linker.Conditionals\XApiReader.cs" />
     <Compile Include="Linker.Conditionals\MonoLinkerFeature.cs" />
     <Compile Include="Linker.Conditionals\BasicBlockType.cs" />
+    <Compile Include="Linker.Conditionals\MartinOptions.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

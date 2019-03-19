@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Xml.XPath;
+using Mono.Linker.Conditionals;
 
 namespace Mono.Linker
 {
@@ -41,7 +42,41 @@ namespace Mono.Linker
 			if (root == null)
 				return;
 
+			var options = root.SelectSingleNode ("options");
+			if (options != null)
+				OnOptions (_context.MartinContext.Options, options);
+
+			ProcessChildren (root, "debug/debug-method", child => {
+				var name = GetAttribute (child, "name");
+				if (string.IsNullOrEmpty (name))
+					throw new MartinTestException ();
+				_context.MartinContext.Options.DebugMethods.Add (name);
+			});
+
+			ProcessChildren (root, "debug/debug-type", child => {
+				var name = GetAttribute (child, "name");
+				if (string.IsNullOrEmpty (name))
+					throw new MartinTestException ();
+				_context.MartinContext.Options.DebugTypes.Add (name);
+			});
+
 			ProcessChildren (root, "features/feature", OnFeature);
+		}
+
+		void OnOptions (MartinOptions options, XPathNavigator nav)
+		{
+			var all_modules = nav.GetAttribute ("all-modules", string.Empty);
+			Console.Error.WriteLine (all_modules);
+			if (!string.IsNullOrEmpty (all_modules))
+				options.ScanAllModules = bool.Parse (all_modules);
+
+			var analyze_all = nav.GetAttribute ("analyze-all", string.Empty);
+			if (!string.IsNullOrEmpty (analyze_all))
+				options.AnalyzeAll = bool.Parse (analyze_all);
+
+			var no_conditional_redefinition = nav.GetAttribute ("no_conditional_redefinition", string.Empty);
+			if (!string.IsNullOrEmpty (no_conditional_redefinition))
+				options.NoConditionalRedefinition = bool.Parse (no_conditional_redefinition);
 		}
 
 		void OnFeature (XPathNavigator nav)

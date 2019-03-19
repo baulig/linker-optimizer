@@ -37,12 +37,8 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public bool NoConditionalRedefinition {
-			get; set;
-		}
-
-		public bool ScanAllAssemblies {
-			get; set;
+		public MartinOptions Options {
+			get;
 		}
 
 		public AnnotationStore Annotations => Context.Annotations;
@@ -50,8 +46,7 @@ namespace Mono.Linker.Conditionals
 		MartinContext (LinkContext context)
 		{
 			Context = context;
-			NoConditionalRedefinition = true;
-			ScanAllAssemblies = true;
+			Options = new MartinOptions ();
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
@@ -133,32 +128,14 @@ namespace Mono.Linker.Conditionals
 			private set;
 		}
 
-		internal bool EnableDebugging (TypeDefinition type)
-		{
-			if (type.DeclaringType != null)
-				return EnableDebugging (type.DeclaringType);
-			switch (type.Namespace) {
-			case "Martin.LinkerTest":
-				return true;
-			//case "Mono.Globalization.Unicode":
-			//	return true;
-			default:
-				return type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin");
-			}
-		}
-
 		public bool IsEnabled (MethodDefinition method)
 		{
-			if (method.FullName.Contains ("JapaneseCalendar"))
-				return true;
-			return ScanAllAssemblies || EnableDebugging (method.DeclaringType);
+			return Options.ScanAllModules || Options.EnableDebugging (method.DeclaringType);
 		}
 
 		internal int GetDebugLevel (MethodDefinition method)
 		{
-			if (method.Name == "GetCollator" || method.Name == "Main")
-				return 5;
-			return EnableDebugging (method.DeclaringType) ? 5 : 0;
+			return Options.EnableDebugging (method.DeclaringType) ? 5 : 0;
 		}
 
 		readonly Dictionary<MonoLinkerFeature, bool> enabled_features = new Dictionary<MonoLinkerFeature, bool> ();
@@ -221,7 +198,7 @@ namespace Mono.Linker.Conditionals
 		{
 			var message = $"Attempting to mark type `{type}` after it's already been used in a conditional!";
 			LogMessage (MessageImportance.High, message);
-			if (NoConditionalRedefinition)
+			if (Options.NoConditionalRedefinition)
 				throw new NotSupportedException (message);
 		}
 
