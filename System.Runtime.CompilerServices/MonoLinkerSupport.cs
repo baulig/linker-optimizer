@@ -1,4 +1,3 @@
-#if INSIDE_CORLIB
 namespace System.Runtime.CompilerServices
 {
 	public static class MonoLinkerSupport
@@ -24,4 +23,3 @@ namespace System.Runtime.CompilerServices
 		public static bool IsFeatureSupported (MonoLinkerFeature feature) => true;
 	}
 }
-#endif

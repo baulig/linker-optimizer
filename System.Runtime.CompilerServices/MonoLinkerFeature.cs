@@ -1,4 +1,3 @@
-#if INSIDE_CORLIB
 namespace System.Runtime.CompilerServices
 {
 	public enum MonoLinkerFeature
@@ -9,4 +8,3 @@ namespace System.Runtime.CompilerServices
 		Martin
 	}
 }
-#endif
