@@ -102,7 +102,7 @@ namespace Mono.Linker.Conditionals
 
 			BasicBlock bb = null;
 
-			BlockList.ResolveJumpTargets ();
+			BlockList.Initialize ();
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
 				var instruction = Method.Body.Instructions [i];
@@ -200,23 +200,28 @@ namespace Mono.Linker.Conditionals
 			LogDebug (1, $"DONE REWRITING LINKER CONDITIONAL");
 		}
 
-		bool EliminateDeadBlocks ()
+		void EliminateDeadBlocks ()
 		{
 			LogDebug (1, $"ELIMINATING DEAD BLOCKS");
 
-			bool removed;
+			bool removed = true;
+			bool first = true;
 
-			do {
+			while (removed) {
+				if (first)
+					first = false;
+				else
+					Scan ();
+
 				var flow = new FlowAnalysis (this);
 				flow.Analyze ();
 				removed = flow.RemoveDeadBlocks ();
-				flow.RemoveDeadJumps ();
+				removed |= flow.RemoveDeadJumps ();
+				removed |= flow.RemoveConstantJumps ();
 				flow.RemoveUnusedVariables ();
 
 				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
-			} while (removed);
-
-			return removed;
+			}
 		}
 	}
 }

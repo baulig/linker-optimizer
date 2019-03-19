@@ -386,6 +386,41 @@ namespace Mono.Linker.Conditionals
 			return removedDeadBlocks;
 		}
 
+		public bool RemoveConstantJumps ()
+		{
+			var removedConstantJumps = false;
+
+			for (int i = 0; i < BlockList.Count - 1; i++) {
+				var block = BlockList [i];
+
+				if (block.BranchType != BranchType.False || block.Count != 2)
+					continue;
+
+				if (block.Instructions[0].OpCode.Code != Code.Ldc_I4_0)
+					continue;
+				if (block.LastInstruction.OpCode.Code != Code.Brfalse && block.LastInstruction.OpCode.Code != Code.Brfalse_S)
+					throw new MartinTestException ();
+
+				var target = (Instruction)block.LastInstruction.Operand;
+
+				Scanner.LogDebug (2, $"ELIMINATE CONSTANT JUMP: {block.LastInstruction} {target}");
+
+				BlockList.RemoveInstructionAt (block, 1);
+				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Br, target));
+
+				removedConstantJumps = true;
+
+			}
+
+			if (removedConstantJumps) {
+				BlockList.ComputeOffsets ();
+
+				Scanner.DumpBlocks ();
+			}
+
+			return removedConstantJumps;
+		}
+
 		public bool RemoveUnusedVariables ()
 		{
 			Scanner.LogDebug (1, $"REMOVE VARIABLES: {Method.Name}");

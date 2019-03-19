@@ -96,7 +96,7 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Remove (block.Instructions [0]);
 		}
 
-		public void ReplaceBlock (ref BasicBlock block, IList<Instruction> instructions)
+		void ReplaceBlock (ref BasicBlock block, IList<Instruction> instructions)
 		{
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
@@ -148,9 +148,11 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		public void ResolveJumpTargets ()
+		public void Initialize ()
 		{
-			Scanner.DumpBlocks ();
+			_bb_by_instruction.Clear ();
+			_block_list.Clear ();
+			_next_block_id = 0;
 
 			foreach (var handler in Body.ExceptionHandlers) {
 				if (handler.TryStart != null)
