@@ -118,7 +118,7 @@ namespace Mono.Linker.Conditionals
 			if (Annotations.IsProcessed (type))
 				return null;
 
-			if (type.FullName.Contains ("JapaneseCalendar"))
+			if (type.FullName.Contains ("JapaneseCalendar") || type.FullName.Contains ("Hebrew"))
 				MartinContext.LogMessage (MessageImportance.Normal, $"MARK TYPE: {type}");
 
 			if (ProcessingConditionals && MartinContext.IsConditionalTypeMarked (type))
@@ -129,7 +129,7 @@ namespace Mono.Linker.Conditionals
 
 		protected override void EnqueueMethod (MethodDefinition method)
 		{
-			if (method.FullName.Contains ("JapaneseCalendar"))
+			if (method.FullName.Contains ("JapaneseCalendar") || method.FullName.Contains ("Hebrew"))
 				MartinContext.LogMessage (MessageImportance.Normal, $"ENQUEUE METHOD: {method}");
 
 			base.EnqueueMethod (method);

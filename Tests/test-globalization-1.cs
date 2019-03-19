@@ -11,6 +11,10 @@ namespace Martin.LinkerTest
 				throw new AssertionException ("Mono.Globalization.Unicode.SimpleCollator");
 			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.JapaneseCalendar"))
 				throw new AssertionException ("System.Globalization.JapaneseCalendar");
+			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.TaiwanCalendar"))
+				throw new AssertionException ("System.Globalization.TaiwanCalendar");
+			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.HebrewNumber"))
+				throw new AssertionException ("System.Globalization.HebrewNumber");
 
 			var now = DateTime.Now;
 			Console.WriteLine (DateTime.Now);
