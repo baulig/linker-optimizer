@@ -69,10 +69,27 @@ namespace Mono.Linker.Conditionals
 			FailOnMethods = new List<string> ();
 		}
 
+		bool DontDebugThis (TypeDefinition type)
+		{
+			if (type.DeclaringType != null)
+				return DontDebugThis (type.DeclaringType);
+
+			switch (type.FullName) {
+			case "Martin.LinkerTest.TestHelpers":
+			case "Martin.LinkerTest.AssertionException":
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		public bool EnableDebugging (TypeDefinition type)
 		{
 			if (type.DeclaringType != null)
 				return EnableDebugging (type.DeclaringType);
+
+			if (DontDebugThis (type))
+				return false;
 
 			if (type.Namespace == "Martin.LinkerTest")
 				return true;
@@ -84,6 +101,8 @@ namespace Mono.Linker.Conditionals
 
 		public bool EnableDebugging (MethodDefinition method)
 		{
+			if (DontDebugThis (method.DeclaringType))
+				return false;
 			if (EnableDebugging (method.DeclaringType))
 				return true;
 			if (method.Name == "Main")
@@ -110,10 +129,10 @@ namespace Mono.Linker.Conditionals
 			return FailOnMethods.Any (m => method.FullName.Contains (m));
 		}
 
-		public void CheckFailList (MartinContext context, TypeDefinition type)
+		public void CheckFailList (MartinContext context, TypeDefinition type, string original = null)
 		{
 			if (type.DeclaringType != null) {
-				CheckFailList (context, type.DeclaringType);
+				CheckFailList (context, type.DeclaringType, original ?? type.FullName);
 				return;
 			}
 
@@ -121,21 +140,28 @@ namespace Mono.Linker.Conditionals
 			if (fail == null)
 				return;
 
-			var message = $"Found type `{type.FullName}`, which matches fail-list entry `{fail}.";
+			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
+			var message = $"Found type `{type.FullName}`{original_message}, which matches fail-list entry `{fail}.";
+			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message);
+			context.Context.Tracer.Dump ();
+			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			throw new NotSupportedException (message);
 		}
 
 		public void CheckFailList (MartinContext context, MethodDefinition method)
 		{
-			CheckFailList (context, method.DeclaringType);
+			CheckFailList (context, method.DeclaringType, method.FullName);
 
 			var fail = FailOnMethods.FirstOrDefault (m => method.FullName.Contains (m));
 			if (fail == null)
 				return;
 
 			var message = $"Found method `{method.FullName}`, which matches fail-list entry `{fail}.";
+			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message);
+			context.Context.Tracer.Dump ();
+			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			throw new NotSupportedException (message);
 		}
 	}

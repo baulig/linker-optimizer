@@ -60,7 +60,7 @@ namespace Mono.Linker
 				if (type_name != null)
 					_context.MartinContext.Options.DebugTypes.Add (type_name);
 				if (method_name != null)
-					_context.MartinContext.Options.DebugTypes.Add (method_name);
+					_context.MartinContext.Options.DebugMethods.Add (method_name);
 			});
 
 			ProcessChildren (root, "debug/fail-on", child => {

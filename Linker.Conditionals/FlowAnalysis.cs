@@ -118,6 +118,9 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"ANALYZE: {Method.Name}");
 
+			if (Scanner.DebugLevel > 0)
+				Scanner.Context.Debug ();
+
 			var reachability = Reachability.Normal;
 			Origin current = null;
 
@@ -183,6 +186,9 @@ namespace Mono.Linker.Conditionals
 			Scanner.DumpBlocks ();
 
 			Scanner.LogDebug (1, $"FLOW ANALYSIS COMPLETE");
+
+			if (Scanner.DebugLevel > 0)
+				Scanner.Context.Debug ();
 
 			return;
 		}

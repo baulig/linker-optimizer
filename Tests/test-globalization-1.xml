@@ -3,6 +3,12 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" />
 
+		<debug>
+			<fail-on type="HebrewNumber" />
+			<fail-on method="HebrewFormatDigits" />
+			<break-on method="DateTimeFormat::FormatCustomized" />
+		</debug>
+
 		<features>
 			<feature name="globalization" enabled="false" />
 		</features>

@@ -59,10 +59,19 @@ namespace Mono.Linker.Conditionals
 
 			while (_conditional_methods.Count > 0) {
 				var conditional = _conditional_methods.Dequeue ();
-				MartinContext.LogMessage (MessageImportance.Normal, $"  CONDITIONAL METHOD: {conditional}");
+
+				Tracer.Push (conditional);
+
 				var scanner = _block_scanner_by_method [conditional];
+				if (scanner.DebugLevel > 0) {
+					MartinContext.LogMessage (MessageImportance.Normal, $"CONDITIONAL METHOD: {conditional}");
+					MartinContext.Debug ();
+				}
+
 				scanner.RewriteConditionals ();
 				base.MarkMethodBody (conditional.Body);
+
+				Tracer.Pop ();
 			}
 		}
 
@@ -74,8 +83,10 @@ namespace Mono.Linker.Conditionals
 			}
 
 			var debug = MartinContext.GetDebugLevel (body.Method);
-			if (debug > 0)
+			if (debug > 0) {
 				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY: {body.Method}");
+				MartinContext.Debug ();
+			}
 
 			var scanner = BasicBlockScanner.Scan (MartinContext, body.Method);
 			if (scanner == null) {
@@ -89,7 +100,7 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
-			if(debug > 0)
+			if (debug > 0)
 				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY - CONDITIONAL: {body.Method}");
 
 			_conditional_methods.Enqueue (body.Method);
@@ -118,8 +129,10 @@ namespace Mono.Linker.Conditionals
 			if (Annotations.IsProcessed (type))
 				return null;
 
-			if (MartinContext.Options.EnableDebugging (type))
+			if (MartinContext.Options.EnableDebugging (type)) {
 				MartinContext.LogMessage (MessageImportance.Normal, $"MARK TYPE: {type}");
+				MartinContext.Debug ();
+			}
 
 			MartinContext.Options.CheckFailList (MartinContext, type);
 
@@ -131,10 +144,17 @@ namespace Mono.Linker.Conditionals
 
 		protected override void EnqueueMethod (MethodDefinition method)
 		{
-			if (MartinContext.Options.EnableDebugging (method))
+			if (MartinContext.Options.EnableDebugging (method)) {
 				MartinContext.LogMessage (MessageImportance.Normal, $"ENQUEUE METHOD: {method}");
+				MartinContext.Debug ();
+			}
 
 			MartinContext.Options.CheckFailList (MartinContext, method);
+
+			if (_conditional_methods.Contains (method)) {
+				MartinContext.LogMessage (MessageImportance.Normal, $"Method `{method} already in conditional queue.");
+				return;
+			}
 
 			base.EnqueueMethod (method);
 		}
