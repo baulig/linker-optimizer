@@ -78,6 +78,17 @@ namespace Mono.Linker.Conditionals
 			return Reachability.Normal;
 		}
 
+		Reachability Or (Reachability first, Reachability second)
+		{
+			if (first == Reachability.Exception || second == Reachability.Exception)
+				throw new MartinTestException ();
+			if (first == Reachability.Normal || second == Reachability.Normal)
+				return Reachability.Normal;
+			if (first == Reachability.Conditional || second == Reachability.Conditional)
+				return Reachability.Conditional;
+			return Reachability.Unknown;
+		}
+
 		void MarkBlock (BasicBlock current, Reachability reachability, Instruction target)
 		{
 			var block = BlockList.GetBlock (target);
@@ -114,18 +125,18 @@ namespace Mono.Linker.Conditionals
 			Origin current = null;
 
 			foreach (var block in BlockList.Blocks) {
-				Scanner.LogDebug (2, $"ANALYZE #1: {block} {reachability}");
-
-				if (block.Reachability == Reachability.Unknown)
-					block.Reachability = reachability;
-
 				if (current != null) {
 					block.FlowOrigins.Add (current);
 					current = null;
 				}
 
-				Scanner.LogDebug (2, $"ANALYZE #2: {block} {reachability}");
-				Scanner.DumpBlock (2, block);
+				if (block.Reachability != Reachability.Exception) {
+					foreach (var origin in block.FlowOrigins)
+						reachability = Or (reachability, origin.Reachability);
+					block.Reachability = reachability;
+				}
+
+				DumpBlock (block);
 
 				switch (block.BranchType) {
 				case BranchType.None:
@@ -135,7 +146,7 @@ namespace Mono.Linker.Conditionals
 				case BranchType.False:
 				case BranchType.True:
 					UpdateStatus (ref reachability, Reachability.Conditional);
-					MarkBlock (block, reachability, (Instruction)block.LastInstruction.Operand);
+					MarkBlock (block, Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
 					current = new Origin (block, Reachability.Conditional);
 					break;
 				case BranchType.Exit:
@@ -157,20 +168,16 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlockList ();
 
-			Scanner.LogDebug (1, "ANALYZE #3");
-
 			if (Scanner.DebugLevel > 0)
 				Scanner.Context.Debug ();
 
 			while (ResolveOrigins ()) {
-				Scanner.LogDebug (1, $"ANALYZE #3 -> AGAIN");
+				Scanner.LogDebug (1, $"ANALYZE -> AGAIN");
 			}
-
-			Scanner.LogDebug (1, $"ANALYZE #4");
 
 			DumpBlockList ();
 
-			Scanner.DumpBlocks ();
+ 			Scanner.DumpBlocks ();
 
 			Scanner.LogDebug (1, $"FLOW ANALYSIS COMPLETE");
 
@@ -184,9 +191,19 @@ namespace Mono.Linker.Conditionals
 		{
 			Scanner.LogDebug (2, $"BLOCK LIST: {Method.Name}");
 			for (int i = 0; i < BlockList.Count; i++) {
-				Scanner.LogDebug (2, $"  #{i}: {BlockList [i]}: {BlockList [i].Reachability}");
+				Scanner.LogDebug (2, $"  #{i} ({BlockList[i].Reachability}): {BlockList [i]}");
 				foreach (var origin in BlockList [i].FlowOrigins)
-					Scanner.LogDebug (2, $"        {origin}");
+					Scanner.LogDebug (2, $"    {origin}");
+			}
+		}
+
+		void DumpBlock (BasicBlock block)
+		{
+			Scanner.LogDebug (2, $"#{block.Index} ({block.Reachability}): {block}");
+			foreach (var origin in block.FlowOrigins)
+				Scanner.LogDebug (2, $"    ORIGIN: {origin}");
+			foreach (var instruction in block.Instructions) {
+				Scanner.LogDebug (2, $"    {CecilHelper.Format (instruction)}");
 			}
 		}
 
@@ -285,7 +302,7 @@ namespace Mono.Linker.Conditionals
 
 			public override string ToString ()
 			{
-				return $"[{Block}: {Reachability}]";
+				return $"[{Reachability}: {Block}]";
 			}
 		}
 	}
