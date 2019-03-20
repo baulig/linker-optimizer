@@ -29,7 +29,7 @@
 			br end
 
 		unreachable:
-			call void class Martin.LinkerTest.TestHelpers::AssertRemoved ()
+			call [mscorlib]System.Exception class Martin.LinkerTest.TestHelpers::AssertRemoved ()
 		
 		loop:
 			ldloc.0

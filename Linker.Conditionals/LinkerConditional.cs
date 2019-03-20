@@ -160,7 +160,10 @@ namespace Mono.Linker.Conditionals
 
 		public static bool Scan (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, Instruction instruction)
 		{
-			var target = ((MethodReference)instruction.Operand).Resolve ();
+			var reference = (MethodReference)instruction.Operand;
+			var target = reference.Resolve ();
+			if (target == null)
+				throw new ResolutionException (reference);
 			scanner.LogDebug (2, $"    CALL: {target}");
 
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {
