@@ -267,6 +267,31 @@ namespace Mono.Linker.Conditionals
 			instruction.Offset = -1;
 		}
 
+		public void RemoveInstructionAt (ref BasicBlock block, int position)
+		{
+			if (block.Count < 2)
+				throw new InvalidOperationException ("Basic block must have at least one instruction in it.");
+
+			var instruction = block.Instructions [position];
+			instruction.Offset = -1;
+
+			Body.Instructions.Remove (instruction);
+
+			if (position > 0) {
+				block.RemoveInstructionAt (position);
+				return;
+			}
+
+			/*
+			 * Our logic assumes that the first instruction in a basic block will never change
+			 * (because basic blocks are referenced by their first instruction).
+			 */
+
+			var instructions = block.Instructions.ToList ();
+			instructions.RemoveAt (0);
+			ReplaceBlock (ref block, instructions);
+		}
+
 		public void InsertInstructionAt (ref BasicBlock block, int position, Instruction instruction)
 		{
 			if (position < 0 || position > block.Count)

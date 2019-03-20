@@ -218,7 +218,7 @@ namespace Mono.Linker.Conditionals
 				removed = flow.RemoveDeadBlocks ();
 				removed |= flow.RemoveDeadJumps ();
 				removed |= flow.RemoveConstantJumps ();
-				flow.RemoveUnusedVariables ();
+				removed |= flow.RemoveUnusedVariables ();
 
 				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
 			}

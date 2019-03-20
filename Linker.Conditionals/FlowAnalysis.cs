@@ -396,16 +396,19 @@ namespace Mono.Linker.Conditionals
 		{
 			var removedConstantJumps = false;
 
+			if (Scanner.DebugLevel > 0)
+				Scanner.Context.Debug ();
+
 			for (int i = 0; i < BlockList.Count - 1; i++) {
 				var block = BlockList [i];
-				if (block.Count != 2)
+				if (block.Count < 2)
 					continue;
 
 				if (block.BranchType == BranchType.False) {
-					if (block.Instructions [0].OpCode.Code != Code.Ldc_I4_0)
+					if (block.Instructions [block.Count - 2].OpCode.Code != Code.Ldc_I4_0)
 						continue;
 				} else if (block.BranchType == BranchType.True) {
-					if (block.Instructions [0].OpCode.Code != Code.Ldc_I4_1)
+					if (block.Instructions [block.Count - 2].OpCode.Code != Code.Ldc_I4_1)
 						continue;
 				} else {
 					continue;
@@ -418,8 +421,8 @@ namespace Mono.Linker.Conditionals
 
 				Scanner.LogDebug (2, $"ELIMINATE CONSTANT JUMP: {block.LastInstruction} {target}");
 
-				BlockList.RemoveInstructionAt (block, 1);
-				BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Br, target));
+				BlockList.RemoveInstructionAt (block, block.Count - 1);
+				BlockList.ReplaceInstructionAt (ref block, block.Count - 1, Instruction.Create (OpCodes.Br, target));
 
 				removedConstantJumps = true;
 
@@ -447,9 +450,11 @@ namespace Mono.Linker.Conditionals
 			}
 
 			foreach (var block in BlockList.Blocks) {
+				Scanner.LogDebug (2, $"REMOVE VARIABLES #1: {block}");
+
 				for (int i = 0; i < block.Instructions.Count; i++) {
 					var instruction = block.Instructions [i];
-					Scanner.LogDebug (2, $"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
+					Scanner.LogDebug (2, $"    {CecilHelper.Format (instruction)}");
 
 					var variable = CecilHelper.GetVariable (Method.Body, instruction);
 					if (variable == null)
@@ -513,7 +518,7 @@ namespace Mono.Linker.Conditionals
 				Scanner.LogDebug (2, $"    VARIABLE #{i}: {variable}");
 				if (!variable.Used) {
 					Scanner.LogDebug (2, $"    --> REMOVE");
-					RemoveVariable (i);
+					RemoveVariable (variable);
 					Method.Body.Variables.RemoveAt (i);
 					removed = true;
 					continue;
@@ -521,6 +526,15 @@ namespace Mono.Linker.Conditionals
 
 				if (variable.IsConstant) {
 	 				Scanner.LogDebug (2, $"    --> CONSTANT ({variable.Value}): {variable.Instruction}");
+					Scanner.DumpBlock (2, variable.Block);
+					var position = variable.Block.IndexOf (variable.Instruction);
+					var block = variable.Block;
+					BlockList.RemoveInstructionAt (ref block, position + 1);
+					BlockList.RemoveInstructionAt (ref block, position);
+					RemoveVariable (variable);
+					Method.Body.Variables.RemoveAt (i);
+					removed = true;
+					continue;
 				}
 			}
 
@@ -535,7 +549,7 @@ namespace Mono.Linker.Conditionals
 			return removed;
 		}
 
-		void RemoveVariable (int index)
+		void RemoveVariable (VariableEntry variable)
 		{
 			Scanner.DumpBlocks ();
 
@@ -543,34 +557,37 @@ namespace Mono.Linker.Conditionals
 				var block = BlockList [i];
 				for (int j = 0; j < block.Instructions.Count; j++) {
 					var instruction = block.Instructions [j];
-					Scanner.LogDebug (2, $"    INSTRUCTION: {instruction.OpCode.OperandType} {CecilHelper.Format (instruction)}");
+					Scanner.LogDebug (2, $"    INSTRUCTION: {CecilHelper.Format (instruction)}");
 
 					switch (instruction.OpCode.Code) {
 					case Code.Ldloc_0:
+						if (variable.Index == 0 && variable.IsConstant)
+							BlockList.ReplaceInstructionAt (ref block, j, CecilHelper.CreateConstantLoad (variable.Value));
+						break;
 					case Code.Stloc_0:
 						break;
 					case Code.Ldloc_1:
-						if (index < 1)
+						if (variable.Index < 1)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_0));
 						break;
 					case Code.Stloc_1:
-						if (index < 1)
+						if (variable.Index < 1)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Stloc_0));
 						break;
 					case Code.Ldloc_2:
-						if (index < 2)
+						if (variable.Index < 2)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_1));
 						break;
 					case Code.Stloc_2:
-						if (index < 2)
+						if (variable.Index < 2)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Stloc_1));
 						break;
 					case Code.Ldloc_3:
-						if (index < 3)
+						if (variable.Index < 3)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_2));
 						break;
 					case Code.Stloc_3:
-						if (index < 3)
+						if (variable.Index < 3)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Stloc_2));
 						break;
 					}
