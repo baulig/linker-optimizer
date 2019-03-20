@@ -12,13 +12,15 @@ TEST_EXEC = MONO_PATH=$(LINKER_OUTPUT) $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-a
 
 TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(topdir)/class/lib/$(PROFILE_DIRECTORY)/mscorlib.dll
 
-IL_CORLIB_SOURCES = il-support.il
-
 CLEAN_FILES += *.exe *.dll *.pdb
 
 CORLIB_SOURCES := \
 	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerFeature.cs \
 	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs
+
+IL_HELPER_SOURCES := \
+	il-support.il \
+	test-helpers.il
 
 TEST_HELPER_SOURCES := \
 	AssertionException.cs \
@@ -60,7 +62,7 @@ run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 test-%.exe: test-%.cs $(TEST_HELPER_SOURCES)
 	$(TESTS_COMPILER) /optimize /out:$@ $^
 
-iltest-%.exe: iltest-%.il $(IL_CORLIB_SOURCES)
+iltest-%.exe: iltest-%.il $(IL_HELPER_SOURCES)
 	$(ILASM) /out:$@ $^
 
 test-%: test-%.exe build
