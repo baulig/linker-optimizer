@@ -65,20 +65,6 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
-		BasicBlock NewBlock (BasicBlockType type, Instruction instruction)
-		{
-			var block = new BasicBlock (++_next_block_id, type, instruction);
-			_bb_by_instruction.Add (instruction, block);
-			_block_list.Add (block);
-			return block;
-		}
-
-		public void RemoveBlock (BasicBlock block)
-		{
-			_block_list.Remove (block);
-			_bb_by_instruction.Remove (block.Instructions [0]);
-		}
-
 		void ReplaceBlock (ref BasicBlock block, IList<Instruction> instructions)
 		{
 			if (instructions.Count < 1)
@@ -164,8 +150,11 @@ namespace Mono.Linker.Conditionals
 
 			void EnsureBlock (BasicBlockType type, Instruction instruction, ExceptionHandler handler = null)
 			{
-				if (!_bb_by_instruction.TryGetValue (instruction, out var block))
-					block = NewBlock (type, instruction);
+				if (!_bb_by_instruction.TryGetValue (instruction, out var block)) {
+					block = new BasicBlock (++_next_block_id, type, instruction);
+					_bb_by_instruction.Add (instruction, block);
+					_block_list.Add (block);
+				}
 				if (handler != null) {
 					if (block.Type == BasicBlockType.Normal)
 						block.Type = type;
