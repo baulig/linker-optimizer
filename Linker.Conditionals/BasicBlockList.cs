@@ -42,7 +42,6 @@ namespace Mono.Linker.Conditionals
 
 		readonly Dictionary<Instruction, BasicBlock> _bb_by_instruction;
 		readonly List<BasicBlock> _block_list;
-		readonly List<JumpOrigin> _jump_origins;
 		int _next_block_id;
 
 		public IReadOnlyList<BasicBlock> Blocks => _block_list;
@@ -54,7 +53,6 @@ namespace Mono.Linker.Conditionals
 
 			_bb_by_instruction = new Dictionary<Instruction, BasicBlock> ();
 			_block_list = new List<BasicBlock> ();
-			_jump_origins = new List<JumpOrigin> ();
 		}
 
 		public BasicBlock NewBlock (Instruction instruction)
@@ -121,7 +119,6 @@ namespace Mono.Linker.Conditionals
 		{
 			_bb_by_instruction.Clear ();
 			_block_list.Clear ();
-			_jump_origins.Clear ();
 			_next_block_id = 0;
 
 			foreach (var handler in Body.ExceptionHandlers) {
@@ -172,11 +169,6 @@ namespace Mono.Linker.Conditionals
 				_block_list.Add (block);
 			}
 			block.AddJumpOrigin (new JumpOrigin (block, origin));
-		}
-
-		internal IReadOnlyCollection<JumpOrigin> GetJumpOrigins (BasicBlock block)
-		{
-			return _jump_origins.Where (j => j.Target == block).ToList ();
 		}
 
 		Exception CannotRemoveTarget => throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");
