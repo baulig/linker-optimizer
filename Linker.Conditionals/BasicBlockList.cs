@@ -97,7 +97,7 @@ namespace Mono.Linker.Conditionals
 			AdjustJumpTargets (oldInstruction, instructions [0]);
 		}
 
-		public void AdjustJumpTargets (Instruction oldTarget, Instruction newTarget)
+		void AdjustJumpTargets (Instruction oldTarget, Instruction newTarget)
 		{
 			foreach (var instruction in Body.Instructions) {
 				if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {

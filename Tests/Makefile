@@ -41,13 +41,15 @@ TEST_CASES := \
 	test-conditionals-1.cs \
 	test-conditionals-2.cs \
 	test-conditionals-3.cs \
-	test-conditionals-4.cs \
+	test-conditionals-4.cs
+
+BROKEN_TESTS := \
 	test-globalization-1.cs
 
 ILTEST_CASES := \
 	iltest-conditionals-1.il
 
-compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe)
+compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(BROKEN_TESTS:.cs=.exe)
 
 run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 

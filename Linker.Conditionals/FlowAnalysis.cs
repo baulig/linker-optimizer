@@ -371,8 +371,6 @@ namespace Mono.Linker.Conditionals
 
 				Scanner.LogDebug (2, $"ELIMINATE DEAD JUMP: {lastInstruction}");
 
-				BlockList.AdjustJumpTargets (lastInstruction, nextInstruction);
-
 				removedDeadBlocks = true;
 
 				if (BlockList [i].Count == 1) {
@@ -507,6 +505,9 @@ namespace Mono.Linker.Conditionals
 					case Code.Ldc_I4_1:
 						entry.SetConstant (block, load, 1);
 						break;
+					default:
+						entry.SetModified ();
+						break;
 					}
 				}
 			}
@@ -557,7 +558,7 @@ namespace Mono.Linker.Conditionals
 				var block = BlockList [i];
 				for (int j = 0; j < block.Instructions.Count; j++) {
 					var instruction = block.Instructions [j];
-					Scanner.LogDebug (2, $"    INSTRUCTION: {CecilHelper.Format (instruction)}");
+					Scanner.LogDebug (2, $"    {CecilHelper.Format (instruction)}");
 
 					switch (instruction.OpCode.Code) {
 					case Code.Ldloc_0:
@@ -569,6 +570,8 @@ namespace Mono.Linker.Conditionals
 					case Code.Ldloc_1:
 						if (variable.Index < 1)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_0));
+						else if (variable.Index == 1)
+							BlockList.ReplaceInstructionAt (ref block, j, CecilHelper.CreateConstantLoad (variable.Value));
 						break;
 					case Code.Stloc_1:
 						if (variable.Index < 1)
@@ -577,6 +580,8 @@ namespace Mono.Linker.Conditionals
 					case Code.Ldloc_2:
 						if (variable.Index < 2)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_1));
+						else if (variable.Index == 2)
+							BlockList.ReplaceInstructionAt (ref block, j, CecilHelper.CreateConstantLoad (variable.Value));
 						break;
 					case Code.Stloc_2:
 						if (variable.Index < 2)
@@ -585,6 +590,8 @@ namespace Mono.Linker.Conditionals
 					case Code.Ldloc_3:
 						if (variable.Index < 3)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Ldloc_2));
+						else if (variable.Index == 3)
+							BlockList.ReplaceInstructionAt (ref block, j, CecilHelper.CreateConstantLoad (variable.Value));
 						break;
 					case Code.Stloc_3:
 						if (variable.Index < 3)
