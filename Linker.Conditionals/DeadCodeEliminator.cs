@@ -45,6 +45,153 @@ namespace Mono.Linker.Conditionals
 			Scanner = scanner;
 		}
 
+		public bool RemoveDeadBlocks ()
+		{
+			var removedDeadBlocks = false;
+			for (int i = 0; i < BlockList.Count; i++) {
+				if (BlockList [i].Reachability == Reachability.Unreachable)
+					throw new MartinTestException ();
+				if (BlockList [i].Reachability != Reachability.Dead)
+					continue;
+
+				Scanner.LogDebug (2, $"  DEAD BLOCK: {BlockList [i]}");
+
+				removedDeadBlocks = true;
+				DeleteBlock (ref i);
+			}
+
+			if (removedDeadBlocks) {
+				BlockList.ComputeOffsets ();
+
+				Scanner.DumpBlocks ();
+			}
+
+			return removedDeadBlocks;
+		}
+
+		bool DeleteBlock (ref int position)
+		{
+			var block = BlockList [position];
+
+			if (block.Type == BasicBlockType.Normal) {
+				BlockList.DeleteBlock (ref block);
+				return false;
+			}
+
+			if (block.Type != BasicBlockType.Try)
+				throw new InvalidOperationException ();
+
+			var index = BlockList.IndexOf (block);
+			int end_index = index + 1;
+
+			while (block.ExceptionHandlers.Count > 0) {
+				var handler = block.ExceptionHandlers [0];
+				var handler_index = BlockList.IndexOf (BlockList.GetBlock (handler.HandlerEnd));
+				if (handler_index > end_index)
+					end_index = handler_index;
+
+				block.ExceptionHandlers.RemoveAt (0);
+				BlockList.Body.ExceptionHandlers.Remove (handler);
+			}
+
+			Scanner.LogDebug (2, $"  DEAD EXCEPTION BLOCK: {block} {end_index}");
+
+			while (end_index > index) {
+				var current = BlockList [index];
+				if (current.Reachability != Reachability.Dead)
+					throw new MartinTestException ();
+
+				Scanner.LogDebug (2, $"      DELETE: {current}");
+
+				BlockList.DeleteBlock (ref current);
+				end_index--;
+			}
+
+			position = -1;
+			return true;
+		}
+
+		public bool RemoveDeadJumps ()
+		{
+			var removedDeadBlocks = false;
+
+			for (int i = 0; i < BlockList.Count - 1; i++) {
+				if (BlockList [i].BranchType != BranchType.Jump)
+					continue;
+
+				var lastInstruction = BlockList [i].LastInstruction;
+				var nextInstruction = BlockList [i + 1].FirstInstruction;
+				if (lastInstruction.OpCode.Code != Code.Br && lastInstruction.OpCode.Code != Code.Br_S)
+					continue;
+				if ((Instruction)lastInstruction.Operand != nextInstruction)
+					continue;
+
+				Scanner.LogDebug (2, $"ELIMINATE DEAD JUMP: {lastInstruction}");
+
+				removedDeadBlocks = true;
+
+				if (BlockList [i].Count == 1) {
+					var block = BlockList [i--];
+					BlockList.DeleteBlock (ref block);
+				} else {
+					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
+				}
+			}
+
+			if (removedDeadBlocks) {
+				BlockList.ComputeOffsets ();
+
+				Scanner.DumpBlocks ();
+			}
+
+			return removedDeadBlocks;
+		}
+
+		public bool RemoveConstantJumps ()
+		{
+			var removedConstantJumps = false;
+
+			if (Scanner.DebugLevel > 0)
+				Scanner.Context.Debug ();
+
+			for (int i = 0; i < BlockList.Count - 1; i++) {
+				var block = BlockList [i];
+				if (block.Count < 2)
+					continue;
+
+				if (block.BranchType == BranchType.False) {
+					if (block.Instructions [block.Count - 2].OpCode.Code != Code.Ldc_I4_0)
+						continue;
+				} else if (block.BranchType == BranchType.True) {
+					if (block.Instructions [block.Count - 2].OpCode.Code != Code.Ldc_I4_1)
+						continue;
+				} else {
+					continue;
+				}
+
+				if (block.LastInstruction.OpCode.Code != Code.Brfalse && block.LastInstruction.OpCode.Code != Code.Brfalse_S)
+					throw new MartinTestException ();
+
+				var target = (Instruction)block.LastInstruction.Operand;
+
+				Scanner.LogDebug (2, $"ELIMINATE CONSTANT JUMP: {block.LastInstruction} {target}");
+
+				BlockList.RemoveInstructionAt (block, block.Count - 1);
+				BlockList.ReplaceInstructionAt (ref block, block.Count - 1, Instruction.Create (OpCodes.Br, target));
+
+				removedConstantJumps = true;
+
+			}
+
+			if (removedConstantJumps) {
+				BlockList.ComputeOffsets ();
+
+				Scanner.DumpBlocks ();
+			}
+
+			return removedConstantJumps;
+		}
+
 		public bool RemoveUnusedVariables ()
 		{
 			Scanner.LogDebug (1, $"REMOVE VARIABLES: {Method.Name}");

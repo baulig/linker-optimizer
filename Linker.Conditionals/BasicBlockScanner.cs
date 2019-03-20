@@ -215,11 +215,11 @@ namespace Mono.Linker.Conditionals
 
 				var flow = new FlowAnalysis (this);
 				flow.Analyze ();
-				removed = flow.RemoveDeadBlocks ();
-				removed |= flow.RemoveDeadJumps ();
-				removed |= flow.RemoveConstantJumps ();
 
 				var eliminator = new DeadCodeEliminator (this);
+				removed = eliminator.RemoveDeadBlocks ();
+				removed |= eliminator.RemoveDeadJumps ();
+				removed |= eliminator.RemoveConstantJumps ();
 				removed |= eliminator.RemoveUnusedVariables ();
 
 				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
