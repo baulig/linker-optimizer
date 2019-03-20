@@ -86,11 +86,16 @@ namespace Mono.Linker.Conditionals
 			var block = BlockList.GetBlock (target);
 			if (block == entry.Block)
 				return;
-			if (_entry_by_block.TryGetValue (block, out var targetEntry))
-				targetEntry.Block.FlowOrigins.Add (new Origin (entry.Block, reachability));
-			else {
-				targetEntry = new BlockEntry (block, reachability);
-				targetEntry.Block.FlowOrigins.Add (new Origin (entry.Block, reachability));
+			block.FlowOrigins.Add (new Origin (entry.Block, reachability));
+			if (block.Reachability == Reachability.Unknown)
+				block.Reachability = reachability;
+
+			if (_entry_by_block.TryGetValue (block, out var targetEntry)) {
+				// targetEntry.Block.FlowOrigins.Add (new Origin (entry.Block, reachability));
+			} else {
+				targetEntry = new BlockEntry (block);
+				// block.Reachability = reachability;
+				// targetEntry.Block.FlowOrigins.Add (new Origin (entry.Block, reachability));
 				_entry_by_block.Add (block, targetEntry);
 				_block_list.Add (targetEntry);
 			}
@@ -99,7 +104,9 @@ namespace Mono.Linker.Conditionals
 		void MarkExceptionHandler (Instruction instruction)
 		{
 			var block = BlockList.GetBlock (instruction);
-			var entry = new BlockEntry (block, Reachability.Exception);
+			block.Reachability = Reachability.Exception;
+
+			var entry = new BlockEntry (block);
 			_entry_by_block.Add (block, entry);
 			_block_list.Add (entry);
 		}
@@ -109,12 +116,12 @@ namespace Mono.Linker.Conditionals
 			_entry_by_block = new Dictionary<BasicBlock, BlockEntry> ();
 			_block_list = new List<BlockEntry> ();
 
+			BlockList.ClearFlowInformation ();
+
 			foreach (var handler in Method.Body.ExceptionHandlers) {
 				if (handler.HandlerStart != null)
 					MarkExceptionHandler (handler.HandlerStart);
 			}
-
-			BlockList.ClearFlowInformation ();
 
 			Scanner.DumpBlocks ();
 
@@ -129,18 +136,21 @@ namespace Mono.Linker.Conditionals
 			foreach (var block in BlockList.Blocks) {
 				Scanner.LogDebug (2, $"ANALYZE #1: {block} {reachability}");
 
+				if (block.Reachability == Reachability.Unknown)
+					block.Reachability = reachability;
+
 				if (!_entry_by_block.TryGetValue (block, out var entry)) {
-					entry = new BlockEntry (block, reachability);
+					entry = new BlockEntry (block);
 					_entry_by_block.Add (block, entry);
 					_block_list.Add (entry);
 				}
 
 				if (current != null) {
-					entry.Block.FlowOrigins.Add (current);
+					block.FlowOrigins.Add (current);
 					current = null;
 				}
 
-				Scanner.LogDebug (2, $"ANALYZE #2: {entry} {reachability}");
+				Scanner.LogDebug (2, $"ANALYZE #2: {block} {reachability}");
 				Scanner.DumpBlock (2, block);
 
 				switch (block.BranchType) {
@@ -172,6 +182,15 @@ namespace Mono.Linker.Conditionals
 			}
 
 			_block_list.Sort ((first, second) => first.Block.Index.CompareTo (second.Block.Index));
+
+			_block_list.Clear ();
+			_entry_by_block.Clear ();
+
+			foreach (var block in BlockList.Blocks) {
+				var entry = new BlockEntry (block);
+				_block_list.Add (entry);
+				_entry_by_block.Add (block, entry);
+			}
 
 			DumpBlockList ();
 
@@ -466,10 +485,9 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
-			public BlockEntry (BasicBlock block, Reachability reachability)
+			public BlockEntry (BasicBlock block)
 			{
 				Block = block;
-				Block.Reachability = reachability;
 			}
 
 			public override string ToString ()
