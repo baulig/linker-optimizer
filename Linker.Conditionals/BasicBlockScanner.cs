@@ -156,7 +156,7 @@ namespace Mono.Linker.Conditionals
 				case BranchType.False:
 				case BranchType.True:
 				case BranchType.Jump:
-					BlockList.EnsureBlock (BasicBlockType.Normal, instruction, (Instruction)instruction.Operand);
+					BlockList.EnsureBlock (bb, instruction, (Instruction)instruction.Operand);
 					bb = null;
 					break;
 
@@ -168,7 +168,7 @@ namespace Mono.Linker.Conditionals
 
 				case BranchType.Switch:
 					foreach (var label in (Instruction [])bb.LastInstruction.Operand)
-						BlockList.EnsureBlock (BasicBlockType.Normal, instruction, label);
+						BlockList.EnsureBlock (bb, instruction, label);
 					bb = null;
 					break;
 
@@ -260,6 +260,7 @@ namespace Mono.Linker.Conditionals
 
 				var flow = new FlowAnalysis (this);
 				flow.Analyze ();
+				return;
 
 				removed = false;
 				var eliminator = new DeadCodeEliminator (this);

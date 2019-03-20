@@ -136,23 +136,30 @@ namespace Mono.Linker.Conditionals
 				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
-					EnsureBlock (BasicBlockType.Normal, instruction, (Instruction)instruction.Operand);
+					EnsureBlock ((Instruction)instruction.Operand);
 					break;
 				case OperandType.InlineSwitch:
 					foreach (var label in (Instruction [])instruction.Operand)
-						EnsureBlock (BasicBlockType.Normal, instruction, label);
+						EnsureBlock (label);
 					break;
 				}
 			}
 		}
 
+		BasicBlock EnsureBlock (Instruction target)
+		{
+			if (_bb_by_instruction.TryGetValue (target, out var block))
+				return block;
+			block = new BasicBlock (++_next_block_id, BasicBlockType.Normal, target);
+			_bb_by_instruction.Add (target, block);
+			_block_list.Add (block);
+			return block;
+		}
+
+
 		void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
 		{
-			if (!_bb_by_instruction.TryGetValue (target, out var block)) {
-				block = new BasicBlock (++_next_block_id, type, target);
-				_bb_by_instruction.Add (target, block);
-				_block_list.Add (block);
-			}
+			var block = EnsureBlock (target);
 			if (block.Type == BasicBlockType.Normal)
 				block.Type = type;
 			else if (block.Type != type)
@@ -161,14 +168,10 @@ namespace Mono.Linker.Conditionals
 			block.AddJumpOrigin (new JumpOrigin (block, handler));
 		}
 
-		internal void EnsureBlock (BasicBlockType type, Instruction origin, Instruction target)
+		internal void EnsureBlock (BasicBlock current, Instruction origin, Instruction target)
 		{
-			if (!_bb_by_instruction.TryGetValue (target, out var block)) {
-				block = new BasicBlock (++_next_block_id, type, target);
-				_bb_by_instruction.Add (target, block);
-				_block_list.Add (block);
-			}
-			block.AddJumpOrigin (new JumpOrigin (block, origin));
+			var block = EnsureBlock (target);
+			block.AddJumpOrigin (new JumpOrigin (block, current, origin));
 		}
 
 		Exception CannotRemoveTarget => throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");

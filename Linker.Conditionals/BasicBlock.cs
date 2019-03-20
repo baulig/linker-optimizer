@@ -53,6 +53,10 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public bool IsDead {
+			get; set;
+		}
+
 		public int Count => _instructions.Count;
 
 		public IReadOnlyList<Instruction> Instructions => _instructions;
@@ -106,6 +110,7 @@ namespace Mono.Linker.Conditionals
 		{
 			_flow_origins.Clear ();
 			Reachability = Reachability.Unknown;
+			IsDead = false;
 		}
 
 		public void AddInstruction (Instruction instruction)
@@ -182,7 +187,7 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[BB {Index} ({Type},{BranchType}): {FirstInstruction.OpCode.Code}]";
+			return $"[BB {Index} ({Type},{BranchType}{(IsDead ? ",Dead" : "")}): {FirstInstruction.OpCode.Code}]";
 		}
 	}
 }

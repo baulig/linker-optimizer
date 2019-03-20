@@ -35,6 +35,10 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		public BasicBlock OriginBlock {
+			get;
+		}
+
 		public Instruction Origin {
 			get;
 		}
@@ -43,10 +47,11 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public JumpOrigin (BasicBlock target, Instruction origin)
+		public JumpOrigin (BasicBlock target, BasicBlock current, Instruction origin)
 		{
 			Target = target;
 			Origin = origin;
+			OriginBlock = current;
 		}
 
 		public JumpOrigin (BasicBlock target, ExceptionHandler handler)
@@ -78,7 +83,7 @@ namespace Mono.Linker.Conditionals
 		{
 			if (Exception != null)
 				return $"[{GetType ().Name}: {Target} {Exception}]";
-			return $"[{GetType ().Name}: {Target} - {CecilHelper.Format (Origin)}]";
+			return $"[{GetType ().Name}: {Target} <== {OriginBlock} - {CecilHelper.Format (Origin)}]";
 		}
 	}
 }

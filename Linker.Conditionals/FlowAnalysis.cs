@@ -127,6 +127,9 @@ namespace Mono.Linker.Conditionals
 
 		public void Analyze ()
 		{
+			NewAnalyze ();
+			return;
+
 			BlockList.ClearFlowInformation ();
 
 			foreach (var handler in Method.Body.ExceptionHandlers) {
@@ -204,7 +207,7 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlockList ();
 
- 			Scanner.DumpBlocks ();
+			Scanner.DumpBlocks ();
 
 			Scanner.LogDebug (1, $"FLOW ANALYSIS COMPLETE");
 
@@ -341,7 +344,7 @@ namespace Mono.Linker.Conditionals
 			Scanner.LogDebug (2, $"    MARK DEAD TRY: {index} {end_index}");
 
 			for (int i = index; i < end_index; i++) {
-				Scanner.LogDebug (2, $"    MARK DEAD TRY #1: {i} {BlockList[i]}");
+				Scanner.LogDebug (2, $"    MARK DEAD TRY #1: {i} {BlockList [i]}");
 				BlockList [i].Reachability = Reachability.Dead;
 				BlockList [i].FlowOrigins.Clear ();
 			}
@@ -367,6 +370,92 @@ namespace Mono.Linker.Conditionals
 			{
 				return $"[{Reachability}: {Block}]";
 			}
+		}
+
+		public void NewAnalyze ()
+		{
+			Scanner.DumpBlocks ();
+
+			Scanner.LogDebug (1, $"ANALYZE: {Method.Name}");
+
+			if (Scanner.DebugLevel > 0)
+				Scanner.Context.Debug ();
+
+			var marked = new HashSet<BasicBlock> ();
+			var reachable = true;
+
+			var unresolved = new List<JumpOrigin> ();
+
+			for (int i = 0; i < BlockList.Count; i++) {
+				var block = BlockList [i];
+				Scanner.LogDebug (2, $"#{i}: {(reachable ? "reachable " : "")}{(marked.Contains (block) ? "marked " : "")}{block}");
+				Scanner.DumpBlock (2, BlockList [i]);
+
+				foreach (var origin in block.JumpOrigins) {
+					if (origin.Exception != null) {
+						Scanner.LogDebug (2, $"  EXCEPTION ORIGIN: {origin}");
+						continue;
+					}
+					if (marked.Contains (origin.OriginBlock)) {
+						Scanner.LogDebug (2, $"  MARKED ORIGIN: {origin}");
+						reachable = true;
+					} else {
+						unresolved.Add (origin);
+					}
+				}
+
+				if (reachable)
+					marked.Add (block);
+
+				for (int j = 0; j < unresolved.Count; j++) {
+					if (unresolved [j].OriginBlock != block)
+						continue;
+					if (reachable || marked.Contains (block))
+						marked.Add (unresolved [j].Target);
+					unresolved.RemoveAt (j);
+					j--;
+				}
+
+				switch (block.BranchType) {
+				case BranchType.None:
+				case BranchType.Conditional:
+				case BranchType.False:
+				case BranchType.True:
+				case BranchType.Switch:
+					break;
+				case BranchType.Exit:
+				case BranchType.Return:
+				case BranchType.Jump:
+					reachable = false;
+					break;
+				}
+			}
+
+			Scanner.LogDebug (1, $"ANALYZE #1: {Method.Name}");
+
+			if (unresolved.Count != 0)
+				throw new MartinTestException ();
+
+			foreach (var origin in unresolved)
+				Scanner.LogDebug (2, $"UNRESOLVED: {origin}");
+
+			for (int i = 0; i < BlockList.Count; i++) {
+				if (!marked.Contains (BlockList [i]))
+					BlockList [i].IsDead = true;
+			}
+
+			Scanner.LogDebug (1, $"ANALYZE #2: {Method.Name}");
+
+			for (int i = 0; i < BlockList.Count; i++) {
+				var block = BlockList [i];
+				Scanner.LogDebug (2, $"#{i}: {(reachable ? "reachable " : "")}{(marked.Contains (block) ? "marked " : "")}{block}");
+				Scanner.DumpBlock (2, BlockList [i]);
+			}
+
+			Scanner.LogDebug (1, $"ANALYZE #3: {Method.Name}");
+
+			if (Scanner.DebugLevel > 0)
+				Scanner.Context.Debug ();
 		}
 	}
 }
