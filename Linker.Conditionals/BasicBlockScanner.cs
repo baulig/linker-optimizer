@@ -84,6 +84,16 @@ namespace Mono.Linker.Conditionals
 				Context.LogMessage (MessageImportance.Low, message);
 		}
 
+		internal void LogDebug<T> (int level, string indent, string message, ICollection<T> collection)
+		{
+			if (DebugLevel < level || collection.Count == 0)
+				return;
+			if (!string.IsNullOrEmpty (message))
+				Context.LogMessage (MessageImportance.Low, message);
+			foreach (var item in collection)
+				Context.LogMessage (MessageImportance.Low, indent + item);
+		}
+
 		internal void DumpBlocks (int level = 1)
 		{
 			if (DebugLevel >= level)
@@ -109,6 +119,7 @@ namespace Mono.Linker.Conditionals
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
 				var instruction = Method.Body.Instructions [i];
+				bool block_start;
 
 				if (bb == null) {
 					if (BlockList.TryGetBlock (instruction, out bb)) {
@@ -117,13 +128,21 @@ namespace Mono.Linker.Conditionals
 						bb = BlockList.NewBlock (instruction);
 						LogDebug (2, $"  NEW BB: {bb}");
 					}
+					block_start = true;
 				} else if (BlockList.TryGetBlock (instruction, out var newBB)) {
 					if (bb.BranchType != BranchType.None)
 						throw new MartinTestException ();
 					LogDebug (2, $"  KNOWN BB: {bb} -> {newBB}");
+					block_start = true;
 					bb = newBB;
 				} else {
 					bb.AddInstruction (instruction);
+					block_start = true;
+				}
+
+				if (block_start) {
+					var origins = BlockList.GetJumpOrigins (bb);
+					LogDebug (2, "    ", null, origins);
 				}
 
 				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {

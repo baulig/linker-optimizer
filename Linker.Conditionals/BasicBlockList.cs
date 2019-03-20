@@ -126,45 +126,57 @@ namespace Mono.Linker.Conditionals
 
 			foreach (var handler in Body.ExceptionHandlers) {
 				if (handler.TryStart != null)
-					EnsureBlock (BasicBlockType.Try, handler.TryStart, handler);
+					EnsureExceptionBlock (BasicBlockType.Try, handler.TryStart, handler);
 				if (handler.HandlerStart != null)
-					EnsureBlock (BasicBlockType.Catch, handler.HandlerStart, handler);
+					EnsureExceptionBlock (BasicBlockType.Catch, handler.HandlerStart, handler);
 				if (handler.HandlerEnd != null)
-					EnsureBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
+					EnsureExceptionBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
 				if (handler.FilterStart != null)
-					EnsureBlock (BasicBlockType.Filter, handler.FilterStart, handler);
+					EnsureExceptionBlock (BasicBlockType.Filter, handler.FilterStart, handler);
 			}
 
 			foreach (var instruction in Body.Instructions) {
 				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
-					EnsureBlock (BasicBlockType.Normal, (Instruction)instruction.Operand);
+					EnsureBlock (BasicBlockType.Normal, instruction, (Instruction)instruction.Operand);
 					break;
 				case OperandType.InlineSwitch:
 					foreach (var label in (Instruction [])instruction.Operand)
-						EnsureBlock (BasicBlockType.Normal, label);
+						EnsureBlock (BasicBlockType.Normal, instruction, label);
 					break;
 				}
 			}
 
-			void EnsureBlock (BasicBlockType type, Instruction instruction, ExceptionHandler handler = null)
+			void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
 			{
-				if (!_bb_by_instruction.TryGetValue (instruction, out var block)) {
-					block = new BasicBlock (++_next_block_id, type, instruction);
-					_bb_by_instruction.Add (instruction, block);
+				if (!_bb_by_instruction.TryGetValue (target, out var block)) {
+					block = new BasicBlock (++_next_block_id, type, target);
+					_bb_by_instruction.Add (target, block);
 					_block_list.Add (block);
 				}
-				if (handler != null) {
-					if (block.Type == BasicBlockType.Normal)
-						block.Type = type;
-					else if (block.Type != type)
-						throw new MartinTestException ();
-					block.ExceptionHandlers.Add (handler);
-				}
-				var origin = new JumpOrigin (block, instruction, handler);
-				_jump_origins.Add (origin);
+				if (block.Type == BasicBlockType.Normal)
+					block.Type = type;
+				else if (block.Type != type)
+					throw new MartinTestException ();
+				block.ExceptionHandlers.Add (handler);
+				_jump_origins.Add (new JumpOrigin (block, handler));
 			}
+
+			void EnsureBlock (BasicBlockType type, Instruction origin, Instruction target)
+			{
+				if (!_bb_by_instruction.TryGetValue (target, out var block)) {
+					block = new BasicBlock (++_next_block_id, type, target);
+					_bb_by_instruction.Add (target, block);
+					_block_list.Add (block);
+				}
+				_jump_origins.Add (new JumpOrigin (block, origin));
+			}
+		}
+
+		internal ICollection<JumpOrigin> GetJumpOrigins (BasicBlock block)
+		{
+			return _jump_origins.Where (j => j.Target == block).ToList ();
 		}
 
 		Exception CannotRemoveTarget => throw new NotSupportedException ("Attempted to remove a basic block that's being jumped to.");

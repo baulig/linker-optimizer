@@ -43,16 +43,23 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public JumpOrigin (BasicBlock target, Instruction origin, ExceptionHandler handler = null)
+		public JumpOrigin (BasicBlock target, Instruction origin)
 		{
 			Target = target;
 			Origin = origin;
+		}
+
+		public JumpOrigin (BasicBlock target, ExceptionHandler handler)
+		{
+			Target = target;
 			Exception = handler;
 		}
 
 		public override string ToString ()
 		{
-			return $"[{GetType ().Name}: {Target} {CecilHelper.Format (Origin)} {Exception}]";
+			if (Exception != null)
+				return $"[{GetType ().Name}: {Target} {Exception}]";
+			return $"[{GetType ().Name}: {Target} {CecilHelper.Format (Origin)}]";
 		}
 	}
 }
