@@ -84,14 +84,21 @@ namespace Mono.Linker.Conditionals
 				Context.LogMessage (MessageImportance.Low, message);
 		}
 
-		internal void LogDebug<T> (int level, string indent, string message, ICollection<T> collection)
+		internal void LogDebug (int level, string indent, string message, IReadOnlyCollection<Instruction> collection)
+		{
+			LogDebug (level, indent, message, collection, i => CecilHelper.Format (i));
+		}
+
+		internal void LogDebug<T> (int level, string indent, string message, IReadOnlyCollection<T> collection, Func<T, string> formatter = null)
 		{
 			if (DebugLevel < level || collection.Count == 0)
 				return;
 			if (!string.IsNullOrEmpty (message))
 				Context.LogMessage (MessageImportance.Low, message);
-			foreach (var item in collection)
-				Context.LogMessage (MessageImportance.Low, indent + item);
+			foreach (var item in collection) {
+				var formatted = formatter != null ? formatter (item) : item.ToString ();
+				Context.LogMessage (MessageImportance.Low, indent + formatted);
+			}
 		}
 
 		internal void DumpBlocks (int level = 1)
@@ -142,6 +149,7 @@ namespace Mono.Linker.Conditionals
 
 				if (block_start) {
 					var origins = BlockList.GetJumpOrigins (bb);
+					bb.JumpOrigins.AddRange (origins);
 					LogDebug (2, "    ", null, origins);
 				}
 

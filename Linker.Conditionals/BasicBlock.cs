@@ -64,9 +64,12 @@ namespace Mono.Linker.Conditionals
 
 		internal IList<FlowAnalysis.Origin> FlowOrigins => _flow_origins;
 
+		internal List<JumpOrigin> JumpOrigins => _jump_origins;
+
 		readonly List<Instruction> _instructions = new List<Instruction> ();
 		readonly List<ExceptionHandler> _exception_handlers = new List<ExceptionHandler> ();
 		readonly List<FlowAnalysis.Origin> _flow_origins = new List<FlowAnalysis.Origin> ();
+		readonly List<JumpOrigin> _jump_origins = new List<JumpOrigin> ();
 
 		public BasicBlock (int index, Instruction instruction)
 		{

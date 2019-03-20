@@ -174,7 +174,7 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		internal ICollection<JumpOrigin> GetJumpOrigins (BasicBlock block)
+		internal IReadOnlyCollection<JumpOrigin> GetJumpOrigins (BasicBlock block)
 		{
 			return _jump_origins.Where (j => j.Target == block).ToList ();
 		}
@@ -249,6 +249,8 @@ namespace Mono.Linker.Conditionals
 		public void Dump (BasicBlock block)
 		{
 			Scanner.Context.LogMessage (MessageImportance.Low, $"{block}:");
+			Scanner.LogDebug (0, "  ", null, block.JumpOrigins);
+			Scanner.LogDebug (0, "  ", null, block.Instructions);
 			foreach (var instruction in block.Instructions) {
 				Scanner.Context.LogMessage (MessageImportance.Low, $"  {CecilHelper.Format (instruction)}");
 			}
