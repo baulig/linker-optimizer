@@ -388,8 +388,11 @@ namespace Mono.Linker.Conditionals
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				var block = BlockList [i];
-				Scanner.LogDebug (2, $"#{i}: {(reachable ? "reachable " : "")}{(marked.Contains (block) ? "marked " : "")}{block}");
-				Scanner.DumpBlock (2, BlockList [i]);
+				Scanner.LogDebug (2, $"#{i} ({(reachable ? "Reachable" : "Unreachable")}{(marked.Contains (block) ? ",Marked" : "")}): {block}");
+				if (Scanner.DebugLevel > 2) {
+					Scanner.LogDebug (2, "  ", null, block.JumpOrigins);
+					Scanner.LogDebug (2, "  ", null, block.Instructions);
+				}
 
 				foreach (var origin in block.JumpOrigins) {
 					if (origin.Exception != null) {
@@ -407,15 +410,29 @@ namespace Mono.Linker.Conditionals
 
 				if (reachable)
 					marked.Add (block);
+				else
+					reachable |= marked.Contains (block);
 
+				bool restart = false;
 				for (int j = 0; j < unresolved.Count; j++) {
 					if (unresolved [j].OriginBlock != block)
 						continue;
-					if (reachable || marked.Contains (block))
-						marked.Add (unresolved [j].Target);
-					unresolved.RemoveAt (j);
-					j--;
+					Scanner.LogDebug (2, $"  CHECK UNRESOLVED ({reachable}): {unresolved [j]}");
+					if (!reachable)
+						continue;
+					var target = unresolved [j].Target;
+					Scanner.LogDebug (2, $"  -> RESOLVE AND MARK: {target}");
+					marked.Add (target);
+					unresolved.RemoveAt (j--);
+
+					if (i > target.Index) {
+						i = target.Index - 1;
+						restart = true;
+					}
 				}
+
+				if (restart)
+					continue;
 
 				switch (block.BranchType) {
 				case BranchType.None:
@@ -434,23 +451,46 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"ANALYZE #1: {Method.Name}");
 
-			foreach (var origin in unresolved)
-				Scanner.LogDebug (2, $"UNRESOLVED: {origin}");
+			if (Scanner.DebugLevel > 2) {
+				for (int i = 0; i < BlockList.Count; i++) {
+					var block = BlockList [i];
+					Scanner.LogDebug (2, $"#{i}{(marked.Contains (block) ? " (Marked)" : "")}: {block}");
+					Scanner.LogDebug (2, "  ", null, block.JumpOrigins);
+					Scanner.LogDebug (2, "  ", null, block.Instructions);
+				}
+			}
+
+#if FIXME
+			for (int j = 0; j < unresolved.Count; j++) {
+				reachable = marked.Contains (unresolved [j].OriginBlock);
+				Scanner.LogDebug (2, $"CHECK UNRESOLVED ({j},{reachable}): {unresolved [j]}");
+				if (reachable) {
+					Scanner.LogDebug (2, $"  -> RESOLVE AND MARK: {unresolved [j].Target}");
+					marked.Add (unresolved [j].Target);
+					unresolved.RemoveAt (j);
+					j--;
+					j = -1;
+				}
+			}
+#endif
+
+			Scanner.LogDebug (1, $"ANALYZE #2: {Method.Name} {unresolved.Count}");
 
 			if (unresolved.Count != 0)
-				return; //  throw new MartinTestException ();
+				throw new MartinTestException ();
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				if (!marked.Contains (BlockList [i]))
 					BlockList [i].IsDead = true;
 			}
 
-			Scanner.LogDebug (1, $"ANALYZE #2: {Method.Name}");
-
-			for (int i = 0; i < BlockList.Count; i++) {
-				var block = BlockList [i];
-				Scanner.LogDebug (2, $"#{i}: {(reachable ? "reachable " : "")}{(marked.Contains (block) ? "marked " : "")}{block}");
-				Scanner.DumpBlock (2, BlockList [i]);
+			if (Scanner.DebugLevel > 2) {
+				for (int i = 0; i < BlockList.Count; i++) {
+					var block = BlockList [i];
+					Scanner.LogDebug (2, $"#{i}{(marked.Contains (block) ? " (Marked)" : "")}: {block}");
+					Scanner.LogDebug (2, "  ", null, block.JumpOrigins);
+					Scanner.LogDebug (2, "  ", null, block.Instructions);
+				}
 			}
 
 			Scanner.LogDebug (1, $"ANALYZE #3: {Method.Name}");
