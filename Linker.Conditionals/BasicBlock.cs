@@ -48,6 +48,10 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		internal Reachability Reachability {
+			get; set;
+		}
+
 		public int Count => _instructions.Count;
 
 		public IReadOnlyList<Instruction> Instructions => _instructions;

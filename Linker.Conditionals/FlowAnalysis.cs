@@ -214,34 +214,34 @@ namespace Mono.Linker.Conditionals
 				for (int j = 0; j < entry.Origins.Count; j++) {
 					var origin = entry.Origins [j];
 					var originEntry = _entry_by_block [origin.Block];
-					var effectiveOrigin = And (originEntry.Reachability, origin.Reachability);
+					var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
 					Scanner.LogDebug (3, $"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
-					if (originEntry.Reachability == Reachability.Dead) {
+					if (origin.Block.Reachability == Reachability.Dead) {
 						entry.Origins.RemoveAt (j--);
 						continue;
 					}
 
 					foundOrigin = true;
-					switch (entry.Reachability) {
+					switch (entry.Block.Reachability) {
 					case Reachability.Dead:
 						throw new MartinTestException ();
 					case Reachability.Unreachable:
-						if (entry.Reachability != effectiveOrigin)
+						if (entry.Block.Reachability != effectiveOrigin)
 							Scanner.LogDebug (3, $"        -> EFFECTIVE ORIGIN {effectiveOrigin}");
-						entry.Reachability = effectiveOrigin;
+						entry.Block.Reachability = effectiveOrigin;
 						break;
 					case Reachability.Conditional:
 						if (effectiveOrigin == Reachability.Normal) {
 							Scanner.LogDebug (3, $"        -> NORMAL");
-							entry.Reachability = Reachability.Normal;
+							entry.Block.Reachability = Reachability.Normal;
 						}
 						break;
 					}
 				}
 
-				if (entry.Reachability == Reachability.Unreachable) {
+				if (entry.Block.Reachability == Reachability.Unreachable) {
 					if (foundOrigin || entry.Origins.Count == 0) {
-						entry.Reachability = Reachability.Dead;
+						entry.Block.Reachability = Reachability.Dead;
 						Scanner.LogDebug (3, $"        -> MARKING DEAD");
 						MarkDead (entry);
 					} else
@@ -254,7 +254,7 @@ namespace Mono.Linker.Conditionals
 
 		void MarkDead (BlockEntry entry)
 		{
-			entry.Reachability = Reachability.Dead;
+			entry.Block.Reachability = Reachability.Dead;
 			if (entry.Block.Type == BasicBlockType.Normal)
 				return;
 
@@ -278,7 +278,7 @@ namespace Mono.Linker.Conditionals
 			for (int i = index; i < end_index; i++) {
 				var delete = _entry_by_block [BlockList [i]];
 				Scanner.LogDebug (2, $"    MARK DEAD TRY #1: {i} {BlockList[i]}: {delete}");
-				delete.Reachability = Reachability.Dead;
+				BlockList [i].Reachability = Reachability.Dead;
 			}
 		}
 
@@ -286,9 +286,9 @@ namespace Mono.Linker.Conditionals
 		{
 			var removedDeadBlocks = false;
 			for (int i = 0; i < _block_list.Count; i++) {
-				if (_block_list [i].Reachability == Reachability.Unreachable)
+				if (_block_list [i].Block.Reachability == Reachability.Unreachable)
 					throw new MartinTestException ();
-				if (_block_list [i].Reachability != Reachability.Dead)
+				if (_block_list [i].Block.Reachability != Reachability.Dead)
 					continue;
 
 				Scanner.LogDebug (2, $"  DEAD BLOCK: {_block_list [i]}");
@@ -338,7 +338,7 @@ namespace Mono.Linker.Conditionals
 			while (end_index > index) {
 				var current = BlockList [index];
 				var entry = _entry_by_block [BlockList [index]];
-				if (entry.Reachability != Reachability.Dead)
+				if (current.Reachability != Reachability.Dead)
 					throw new MartinTestException ();
 
 				Scanner.LogDebug (2, $"      DELETE: {current} {entry}");
@@ -436,15 +436,6 @@ namespace Mono.Linker.Conditionals
 		}
 
 
-		enum Reachability
-		{
-			Normal,
-			Unreachable,
-			Conditional,
-			Exception,
-			Dead
-		}
-
 		class Origin
 		{
 			public BasicBlock Block {
@@ -473,10 +464,6 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
-			public Reachability Reachability {
-				get; set;
-			}
-
 			public List<Origin> Origins {
 				get;
 			}
@@ -489,13 +476,13 @@ namespace Mono.Linker.Conditionals
 			public BlockEntry (BasicBlock block, Reachability reachability)
 			{
 				Block = block;
-				Reachability = reachability;
+				Block.Reachability = reachability;
 				Origins = new List<Origin> ();
 			}
 
 			public override string ToString ()
 			{
-				return $"[{Reachability}: {Block}]";
+				return $"[BlockEntry: {Block.Reachability}: {Block}]";
 			}
 		}
 	}
