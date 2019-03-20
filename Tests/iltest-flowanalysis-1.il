@@ -23,6 +23,10 @@
 			newarr [mscorlib]System.String
 			call bool class Martin.LinkerTest.TestConditionals::FlowAnalysis2 (string[])
 			pop
+
+			call bool class Martin.LinkerTest.TestConditionals::FlowAnalysis3 ()
+			pop
+
 			ret
 		}
 
@@ -109,6 +113,27 @@
 			blt.s label1
 
 			ldc.i4.0
+			ret
+		}
+
+		.method private static hidebysig default bool FlowAnalysis3 () cil managed
+		{
+			.maxstack 1
+			.locals init (
+				bool	V_0)
+
+			.try {
+				newobj instance void class [mscorlib]System.NotSupportedException::'.ctor' ()
+				throw
+			} catch class [mscorlib]System.Object {
+				pop
+				ldc.i4.0
+				stloc.0
+				leave.s end
+			}
+
+		end:
+			ldloc.0
 			ret
 		}
 	}
