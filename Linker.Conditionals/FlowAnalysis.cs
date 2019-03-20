@@ -87,10 +87,10 @@ namespace Mono.Linker.Conditionals
 			if (block == entry.Block)
 				return;
 			if (_entry_by_block.TryGetValue (block, out var targetEntry))
-				targetEntry.AddOrigin (entry.Block, reachability);
+				targetEntry.Block.FlowOrigins.Add (new Origin (entry.Block, reachability));
 			else {
 				targetEntry = new BlockEntry (block, reachability);
-				targetEntry.AddOrigin (entry.Block, reachability);
+				targetEntry.Block.FlowOrigins.Add (new Origin (entry.Block, reachability));
 				_entry_by_block.Add (block, targetEntry);
 				_block_list.Add (targetEntry);
 			}
@@ -114,6 +114,8 @@ namespace Mono.Linker.Conditionals
 					MarkExceptionHandler (handler.HandlerStart);
 			}
 
+			BlockList.ClearFlowInformation ();
+
 			Scanner.DumpBlocks ();
 
 			Scanner.LogDebug (1, $"ANALYZE: {Method.Name}");
@@ -134,7 +136,7 @@ namespace Mono.Linker.Conditionals
 				}
 
 				if (current != null) {
-					entry.Origins.Add (current);
+					entry.Block.FlowOrigins.Add (current);
 					current = null;
 				}
 
@@ -198,7 +200,7 @@ namespace Mono.Linker.Conditionals
 			Scanner.LogDebug (2, $"BLOCK LIST: {Method.Name}");
 			for (int i = 0; i < _block_list.Count; i++) {
 				Scanner.LogDebug (2, $"  #{i}: {_block_list [i]}");
-				foreach (var origin in _block_list [i].Origins)
+				foreach (var origin in _block_list [i].Block.FlowOrigins)
 					Scanner.LogDebug (2, $"        {origin}");
 			}
 		}
@@ -211,13 +213,13 @@ namespace Mono.Linker.Conditionals
 				Scanner.LogDebug (3, $"    {i} {entry}");
 				bool foundOrigin = false;
 
-				for (int j = 0; j < entry.Origins.Count; j++) {
-					var origin = entry.Origins [j];
+				for (int j = 0; j < entry.Block.FlowOrigins.Count; j++) {
+					var origin = entry.Block.FlowOrigins [j];
 					var originEntry = _entry_by_block [origin.Block];
 					var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
 					Scanner.LogDebug (3, $"        ORIGIN: {origin} - {originEntry} - {effectiveOrigin}");
 					if (origin.Block.Reachability == Reachability.Dead) {
-						entry.Origins.RemoveAt (j--);
+						entry.Block.FlowOrigins.RemoveAt (j--);
 						continue;
 					}
 
@@ -240,7 +242,7 @@ namespace Mono.Linker.Conditionals
 				}
 
 				if (entry.Block.Reachability == Reachability.Unreachable) {
-					if (foundOrigin || entry.Origins.Count == 0) {
+					if (foundOrigin || entry.Block.FlowOrigins.Count == 0) {
 						entry.Block.Reachability = Reachability.Dead;
 						Scanner.LogDebug (3, $"        -> MARKING DEAD");
 						MarkDead (entry);
@@ -436,7 +438,7 @@ namespace Mono.Linker.Conditionals
 		}
 
 
-		class Origin
+		internal class Origin
 		{
 			public BasicBlock Block {
 				get;
@@ -464,20 +466,10 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
-			public List<Origin> Origins {
-				get;
-			}
-
-			public void AddOrigin (BasicBlock block, Reachability reachability)
-			{
-				Origins.Add (new Origin (block, reachability));
-			}
-
 			public BlockEntry (BasicBlock block, Reachability reachability)
 			{
 				Block = block;
 				Block.Reachability = reachability;
-				Origins = new List<Origin> ();
 			}
 
 			public override string ToString ()

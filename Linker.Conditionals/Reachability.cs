@@ -28,6 +28,7 @@ namespace Mono.Linker.Conditionals
 {
 	enum Reachability
 	{
+		Unknown,
 		Normal,
 		Unreachable,
 		Conditional,

@@ -62,8 +62,11 @@ namespace Mono.Linker.Conditionals
 
 		public Instruction LastInstruction => _instructions [_instructions.Count - 1];
 
+		internal IList<FlowAnalysis.Origin> FlowOrigins => _flow_origins;
+
 		readonly List<Instruction> _instructions = new List<Instruction> ();
 		readonly List<ExceptionHandler> _exception_handlers = new List<ExceptionHandler> ();
+		readonly List<FlowAnalysis.Origin> _flow_origins = new List<FlowAnalysis.Origin> ();
 
 		public BasicBlock (int index, Instruction instruction)
 		{
@@ -93,6 +96,12 @@ namespace Mono.Linker.Conditionals
 		void Update ()
 		{
 			BranchType = CecilHelper.GetBranchType (LastInstruction);
+		}
+
+		internal void ClearFlowInformation ()
+		{
+			_flow_origins.Clear ();
+			Reachability = Reachability.Unknown;
 		}
 
 		public void AddInstruction (Instruction instruction)
