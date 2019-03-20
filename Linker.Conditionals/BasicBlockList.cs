@@ -42,6 +42,7 @@ namespace Mono.Linker.Conditionals
 
 		readonly Dictionary<Instruction, BasicBlock> _bb_by_instruction;
 		readonly List<BasicBlock> _block_list;
+		readonly List<JumpOrigin> _jump_origins;
 		int _next_block_id;
 
 		public IReadOnlyList<BasicBlock> Blocks => _block_list;
@@ -53,6 +54,7 @@ namespace Mono.Linker.Conditionals
 
 			_bb_by_instruction = new Dictionary<Instruction, BasicBlock> ();
 			_block_list = new List<BasicBlock> ();
+			_jump_origins = new List<JumpOrigin> ();
 		}
 
 		public BasicBlock NewBlock (Instruction instruction)
@@ -69,25 +71,6 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Add (instruction, block);
 			_block_list.Add (block);
 			return block;
-		}
-
-		BasicBlock EnsureBlock (Instruction instruction)
-		{
-			if (_bb_by_instruction.TryGetValue (instruction, out var block))
-				return block;
-			return NewBlock (BasicBlockType.Normal, instruction);
-		}
-
-		BasicBlock EnsureBlock (BasicBlockType type, Instruction instruction)
-		{
-			if (_bb_by_instruction.TryGetValue (instruction, out var block)) {
-				if (block.Type == BasicBlockType.Normal)
-					block.Type = type;
-				else if (block.Type != type)
-					throw new MartinTestException ();
-				return block;
-			}
-			return NewBlock (type, instruction);
 		}
 
 		public void RemoveBlock (BasicBlock block)
@@ -152,30 +135,46 @@ namespace Mono.Linker.Conditionals
 		{
 			_bb_by_instruction.Clear ();
 			_block_list.Clear ();
+			_jump_origins.Clear ();
 			_next_block_id = 0;
 
 			foreach (var handler in Body.ExceptionHandlers) {
 				if (handler.TryStart != null)
-					EnsureBlock (BasicBlockType.Try, handler.TryStart).ExceptionHandlers.Add (handler);
+					EnsureBlock (BasicBlockType.Try, handler.TryStart, handler);
 				if (handler.HandlerStart != null)
-					EnsureBlock (BasicBlockType.Catch, handler.HandlerStart).ExceptionHandlers.Add (handler);
+					EnsureBlock (BasicBlockType.Catch, handler.HandlerStart, handler);
 				if (handler.HandlerEnd != null)
-					EnsureBlock (BasicBlockType.Normal, handler.HandlerEnd).ExceptionHandlers.Add (handler);
+					EnsureBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
 				if (handler.FilterStart != null)
-					EnsureBlock (BasicBlockType.Filter, handler.FilterStart).ExceptionHandlers.Add (handler);
+					EnsureBlock (BasicBlockType.Filter, handler.FilterStart, handler);
 			}
 
 			foreach (var instruction in Body.Instructions) {
 				switch (instruction.OpCode.OperandType) {
 				case OperandType.InlineBrTarget:
 				case OperandType.ShortInlineBrTarget:
-					EnsureBlock ((Instruction)instruction.Operand);
+					EnsureBlock (BasicBlockType.Normal, (Instruction)instruction.Operand);
 					break;
 				case OperandType.InlineSwitch:
 					foreach (var label in (Instruction [])instruction.Operand)
-						EnsureBlock (label);
+						EnsureBlock (BasicBlockType.Normal, label);
 					break;
 				}
+			}
+
+			void EnsureBlock (BasicBlockType type, Instruction instruction, ExceptionHandler handler = null)
+			{
+				if (!_bb_by_instruction.TryGetValue (instruction, out var block))
+					block = NewBlock (type, instruction);
+				if (handler != null) {
+					if (block.Type == BasicBlockType.Normal)
+						block.Type = type;
+					else if (block.Type != type)
+						throw new MartinTestException ();
+					block.ExceptionHandlers.Add (handler);
+				}
+				var origin = new JumpOrigin (block, instruction, handler);
+				_jump_origins.Add (origin);
 			}
 		}
 
