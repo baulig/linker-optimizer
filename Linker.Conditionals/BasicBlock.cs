@@ -170,7 +170,7 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[BB {Index} ({Type},{BranchType}): {FirstInstruction.OpCode.Code}]";
+			return $"[BB {Index} ({Type},{BranchType},{Reachability}): {FirstInstruction.OpCode.Code}]";
 		}
 	}
 }

@@ -181,7 +181,7 @@ namespace Mono.Linker.Conditionals
 		{
 			Scanner.LogDebug (2, $"BLOCK LIST: {Method.Name}");
 			for (int i = 0; i < BlockList.Count; i++) {
-				Scanner.LogDebug (2, $"  #{i}: {BlockList [i]}");
+				Scanner.LogDebug (2, $"  #{i}: {BlockList [i]}: {BlockList [i].Reachability}");
 				foreach (var origin in BlockList [i].FlowOrigins)
 					Scanner.LogDebug (2, $"        {origin}");
 			}

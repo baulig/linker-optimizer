@@ -18,7 +18,7 @@ namespace Martin.LinkerTest
 			var test = new TestUnicode ();
 			var collator = test.GetCollator ();
 			if (collator != null)
-				TestHelpers.AssertFail ("GetCollator() should have returned null.");
+				throw new AssertionException ("GetCollator() should have returned null.");
 
 			if (MonoLinkerSupport.IsTypeAvailable<SimpleCollator> ())
 				throw new AssertionException ("SimpleCollator should have been removed.");

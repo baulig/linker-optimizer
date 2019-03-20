@@ -47,14 +47,25 @@ namespace Mono.Linker.Conditionals
 
 		public bool RemoveDeadBlocks ()
 		{
+			if (Scanner.DebugLevel > 0) {
+				Scanner.DumpBlocks (1);
+				Scanner.Context.Debug ();
+			}
+
 			var removedDeadBlocks = false;
 			for (int i = 0; i < BlockList.Count; i++) {
+				if (BlockList [i].Reachability == Reachability.Unknown)
+					throw new MartinTestException ();
 				if (BlockList [i].Reachability == Reachability.Unreachable)
 					throw new MartinTestException ();
 				if (BlockList [i].Reachability != Reachability.Dead)
 					continue;
 
 				Scanner.LogDebug (2, $"  DEAD BLOCK: {BlockList [i]}");
+				Scanner.DumpBlock (2, BlockList [i]);
+
+				if (Scanner.DebugLevel > 0)
+					Scanner.Context.Debug ();
 
 				removedDeadBlocks = true;
 				DeleteBlock (ref i);
@@ -75,6 +86,7 @@ namespace Mono.Linker.Conditionals
 
 			if (block.Type == BasicBlockType.Normal) {
 				BlockList.DeleteBlock (ref block);
+				position--;
 				return false;
 			}
 
