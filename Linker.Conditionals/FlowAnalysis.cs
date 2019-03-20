@@ -400,6 +400,7 @@ namespace Mono.Linker.Conditionals
 						Scanner.LogDebug (2, $"  MARKED ORIGIN: {origin}");
 						reachable = true;
 					} else {
+						Scanner.LogDebug (2, $"  UNRESOLVED ORIGIN: {origin}");
 						unresolved.Add (origin);
 					}
 				}
@@ -433,11 +434,11 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"ANALYZE #1: {Method.Name}");
 
-			if (unresolved.Count != 0)
-				throw new MartinTestException ();
-
 			foreach (var origin in unresolved)
 				Scanner.LogDebug (2, $"UNRESOLVED: {origin}");
+
+			if (unresolved.Count != 0)
+				return; //  throw new MartinTestException ();
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				if (!marked.Contains (BlockList [i]))
