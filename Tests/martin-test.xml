@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="true" analyze-all="true" />
+		<options all-modules="false" analyze-all="false" />
 
 		<debug>
+			<!--
 			<fail-on type="HebrewNumber" />
 			<break-on method="DateTimeFormat::FormatCustomized" />
 			<break-on method="GetCollator" />
+			-->
 		</debug>
 
 		<features>
+			<!--
 			<feature name="globalization" enabled="false" />
+			-->
 		</features>
 	</martin>
 </linker>

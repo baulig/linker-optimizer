@@ -134,8 +134,8 @@ namespace Mono.Linker.Conditionals
 				case BranchType.Conditional:
 				case BranchType.False:
 				case BranchType.True:
-					MarkBlock (block, Reachability.Conditional, (Instruction)block.LastInstruction.Operand);
 					UpdateStatus (ref reachability, Reachability.Conditional);
+					MarkBlock (block, reachability, (Instruction)block.LastInstruction.Operand);
 					current = new Origin (block, Reachability.Conditional);
 					break;
 				case BranchType.Exit:

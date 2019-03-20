@@ -291,7 +291,10 @@ namespace Mono.Linker.Conditionals
 					var position = variable.Block.IndexOf (variable.Instruction);
 					var block = variable.Block;
 					BlockList.RemoveInstructionAt (ref block, position + 1);
-					BlockList.RemoveInstructionAt (ref block, position);
+					if (block.Count == 1)
+						BlockList.DeleteBlock (ref block);
+					else
+						BlockList.RemoveInstructionAt (ref block, position);
 					RemoveVariable (variable);
 					Method.Body.Variables.RemoveAt (i);
 					removed = true;
@@ -356,6 +359,12 @@ namespace Mono.Linker.Conditionals
 					case Code.Stloc_3:
 						if (variable.Index < 3)
 							BlockList.ReplaceInstructionAt (ref block, j, Instruction.Create (OpCodes.Stloc_2));
+						break;
+					case Code.Ldloc:
+					case Code.Ldloc_S:
+						var argument = CecilHelper.GetVariable (Method.Body, instruction);
+						if (argument == variable.Variable)
+							BlockList.ReplaceInstructionAt (ref block, j, CecilHelper.CreateConstantLoad (variable.Value));
 						break;
 					}
 				}
