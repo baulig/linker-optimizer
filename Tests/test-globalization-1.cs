@@ -7,11 +7,15 @@ namespace Martin.LinkerTest
 	{
 		public static void Main ()
 		{
+			Console.WriteLine ("Hello!");
+
 			var now = DateTime.Now;
 			Console.WriteLine (DateTime.Now);
 			var parsed = DateTime.Parse (now.ToString ());
 			if (now.ToString () != parsed.ToString ())
 				throw new AssertionException ();
+
+			Test ();
 		}
 
 		static void Test ()

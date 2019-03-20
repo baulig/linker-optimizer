@@ -102,6 +102,9 @@ namespace Mono.Linker.Conditionals
 
 			BasicBlock bb = null;
 
+			if (DebugLevel > 0)
+				Context.Debug ();
+
 			BlockList.Initialize ();
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
@@ -142,6 +145,7 @@ namespace Mono.Linker.Conditionals
 				case BranchType.Switch:
 				case BranchType.Exit:
 				case BranchType.Return:
+				case BranchType.EndFinally:
 					bb = null;
 					break;
 
@@ -154,10 +158,23 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
-			if (FoundConditionals) {
+			if (FoundConditionals || DebugLevel > 3) {
 				EliminateDeadBlocks ();
 				DumpBlocks ();
+				return true;
 			}
+
+			if (!Context.Options.AnalyzeAll || Body.HasExceptionHandlers)
+				return true;
+			if (Method.DeclaringType.Namespace != "System.Globalization")
+				return true;
+			if (DebugLevel == 0)
+				return true;
+
+			DebugLevel = 3;
+
+			EliminateDeadBlocks (false);
+			DumpBlocks ();
 
 			return true;
 		}
@@ -205,14 +222,14 @@ namespace Mono.Linker.Conditionals
 			LogDebug (1, $"DONE REWRITING LINKER CONDITIONAL");
 		}
 
-		void EliminateDeadBlocks ()
+		void EliminateDeadBlocks (bool full = true)
 		{
 			LogDebug (1, $"ELIMINATING DEAD BLOCKS");
 
-			bool removed = true;
+			bool removed;
 			bool first = true;
 
-			while (removed) {
+			do {
 				if (first)
 					first = false;
 				else
@@ -221,14 +238,17 @@ namespace Mono.Linker.Conditionals
 				var flow = new FlowAnalysis (this);
 				flow.Analyze ();
 
+				removed = false;
 				var eliminator = new DeadCodeEliminator (this);
-				removed = eliminator.RemoveDeadBlocks ();
-				removed |= eliminator.RemoveDeadJumps ();
-				removed |= eliminator.RemoveConstantJumps ();
-				removed |= eliminator.RemoveUnusedVariables ();
+				removed |= eliminator.RemoveDeadBlocks ();
+				if (full) {
+					removed |= eliminator.RemoveDeadJumps ();
+					removed |= eliminator.RemoveConstantJumps ();
+				}
+				// removed |= eliminator.RemoveUnusedVariables ();
 
 				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
-			}
+			} while (full && removed);
 		}
 	}
 }

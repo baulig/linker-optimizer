@@ -34,6 +34,7 @@ namespace Mono.Linker.Conditionals
 		False,
 		True,
 		Switch,
-		Conditional
+		Conditional,
+		EndFinally
 	}
 }

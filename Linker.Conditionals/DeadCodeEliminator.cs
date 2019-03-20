@@ -75,6 +75,8 @@ namespace Mono.Linker.Conditionals
 		{
 			var block = BlockList [position];
 
+			Scanner.LogDebug (1, $"REMOVE BLOCKS - REMOVE - REMOVE: {Method.Name} {block}");
+
 			if (block.Type == BasicBlockType.Normal) {
 				BlockList.DeleteBlock (ref block);
 				position--;
@@ -279,6 +281,7 @@ namespace Mono.Linker.Conditionals
 				Scanner.LogDebug (2, $"    VARIABLE #{i}: {variable}");
 				if (!variable.Used) {
 					Scanner.LogDebug (2, $"    --> REMOVE");
+					Scanner.LogDebug (1, $"REMOVE VARIABLES - REMOVE: {Method.Name}");
 					RemoveVariable (variable);
 					Method.Body.Variables.RemoveAt (i);
 					removed = true;
@@ -287,6 +290,7 @@ namespace Mono.Linker.Conditionals
 
 				if (variable.IsConstant) {
 					Scanner.LogDebug (2, $"    --> CONSTANT ({variable.Value}): {variable.Instruction}");
+					Scanner.LogDebug (1, $"REMOVE VARIABLES - CONSTANT: {Method.Name}");
 					Scanner.DumpBlock (2, variable.Block);
 					var position = variable.Block.IndexOf (variable.Instruction);
 					var block = variable.Block;

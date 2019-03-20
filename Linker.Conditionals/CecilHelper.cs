@@ -230,6 +230,9 @@ namespace Mono.Linker.Conditionals
 			case Code.Leave:
 			case Code.Leave_S:
 				return BranchType.Jump;
+			case Code.Endfilter:
+			case Code.Endfinally:
+				return BranchType.EndFinally;
 			default:
 				return BranchType.None;
 			}
