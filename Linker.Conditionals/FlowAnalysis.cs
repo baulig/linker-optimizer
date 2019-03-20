@@ -73,8 +73,8 @@ namespace Mono.Linker.Conditionals
 				return Reachability.Unreachable;
 			if (first == Reachability.Conditional || second == Reachability.Conditional)
 				return Reachability.Conditional;
-			if (first == Reachability.Exception || second == Reachability.Exception)
-				throw new MartinTestException ();
+			//if (first == Reachability.Exception || second == Reachability.Exception)
+			//	throw new MartinTestException ();
 			return Reachability.Normal;
 		}
 
@@ -99,10 +99,30 @@ namespace Mono.Linker.Conditionals
 				block.Reachability = reachability;
 		}
 
-		void MarkExceptionHandler (Instruction instruction)
+		void MarkExceptionHandler (ExceptionHandler handler)
 		{
-			var block = BlockList.GetBlock (instruction);
-			block.Reachability = Reachability.Exception;
+			BasicBlock try_block, handler_block;
+			switch (handler.HandlerType) {
+			case ExceptionHandlerType.Catch:
+				if (handler.TryStart == null || handler.HandlerStart == null)
+					throw new MartinTestException ();
+				try_block = BlockList.GetBlock (handler.TryStart);
+				handler_block = BlockList.GetBlock (handler.HandlerStart);
+				handler_block.Reachability = Reachability.Catch;
+				handler_block.FlowOrigins.Add (new Origin (try_block, Reachability.Exception));
+				break;
+			case ExceptionHandlerType.Finally:
+				if (handler.TryStart == null || handler.HandlerStart == null)
+					throw new MartinTestException ();
+				try_block = BlockList.GetBlock (handler.TryStart);
+				handler_block = BlockList.GetBlock (handler.HandlerStart);
+				handler_block.Reachability = Reachability.Finally;
+				handler_block.FlowOrigins.Add (new Origin (try_block, Reachability.Exception));
+				break;
+			default:
+				throw new MartinTestException ($"Unknown exception handler type: {handler}");
+			}
+
 		}
 
 		public void Analyze ()
@@ -110,8 +130,7 @@ namespace Mono.Linker.Conditionals
 			BlockList.ClearFlowInformation ();
 
 			foreach (var handler in Method.Body.ExceptionHandlers) {
-				if (handler.HandlerStart != null)
-					MarkExceptionHandler (handler.HandlerStart);
+				MarkExceptionHandler (handler);
 			}
 
 			Scanner.DumpBlocks ();
@@ -130,16 +149,14 @@ namespace Mono.Linker.Conditionals
 					current = null;
 				}
 
-				if (block.Reachability != Reachability.Exception) {
-					foreach (var origin in block.FlowOrigins) {
-						if (origin.Block == block || origin.Block.Reachability == Reachability.Exception)
-							continue;
-						var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
-						reachability = Or (reachability, effectiveOrigin);
-					}
-					block.Reachability = reachability;
+				foreach (var origin in block.FlowOrigins) {
+					if (origin.Block == block || origin.Block.Reachability == Reachability.Exception)
+						continue;
+					var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
+					reachability = Or (reachability, effectiveOrigin);
 				}
 
+				block.Reachability = reachability;
 				if (block.Reachability == Reachability.Unknown)
 					throw new MartinTestException ();
 

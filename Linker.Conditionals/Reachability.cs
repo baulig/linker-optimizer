@@ -32,6 +32,8 @@ namespace Mono.Linker.Conditionals
 		Normal,
 		Unreachable,
 		Conditional,
+		Catch,
+		Finally,
 		Exception,
 		Dead
 	}

@@ -47,7 +47,8 @@ TEST_CASES := \
 	test-flow-analysis-2.cs
 
 BROKEN_TESTS := \
-	test-globalization-1.cs
+	test-globalization-1.cs \
+	test-flow-analysis-3
 
 ILTEST_CASES := \
 	iltest-conditionals-1.il
