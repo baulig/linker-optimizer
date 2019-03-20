@@ -184,11 +184,24 @@ namespace Mono.Linker.Conditionals
 					return true;
 				}
 				return false;
-			} else if (target == scanner.Context.IsFeatureSupportedMethod) {
+			}
+
+			if (target == scanner.Context.IsFeatureSupportedMethod) {
 				IsFeatureSupportedConditional.Create (scanner, ref bb, ref index);
 				return true;
-			} else if (target == scanner.Context.IsTypeNameAvailableMethod) {
+			}
+
+			if (target == scanner.Context.IsTypeNameAvailableMethod) {
 				IsTypeAvailableConditional.Create (scanner, ref bb, ref index);
+				return true;
+			}
+
+
+			if (scanner.Context.TryGetConstantMethod (target, out var constant)) {
+				scanner.LogDebug (0, $"CONSTANT CALL: {target} {constant}");
+				scanner.Context.Debug ();
+				var load = CecilHelper.CreateConstantLoad (constant ? 1 : 0);
+				scanner.BlockList.ReplaceInstructionAt (ref bb, index, load);
 				return true;
 			}
 
@@ -235,6 +248,5 @@ namespace Mono.Linker.Conditionals
 				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
 			}
 		}
-
 	}
 }

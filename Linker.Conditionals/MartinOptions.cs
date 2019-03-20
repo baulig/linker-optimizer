@@ -40,6 +40,10 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public bool Preprocess {
+			get; set;
+		}
+
 		public bool NoConditionalRedefinition {
 			get; set;
 		}

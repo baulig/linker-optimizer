@@ -56,21 +56,21 @@ namespace Mono.Linker.Conditionals
 			private set;
 		}
 
-		BasicBlockScanner (MartinContext context, MethodDefinition method)
+		BasicBlockScanner (MartinContext context, MethodDefinition method, int? debug = null)
 		{
 			Context = context;
 			Method = method;
 
 			BlockList = new BasicBlockList (this, method.Body);
 
-			DebugLevel = context.GetDebugLevel (method);
+			DebugLevel = debug ?? context.GetDebugLevel (method);
 		}
 
 		public static bool ThrowOnError;
 
-		public static BasicBlockScanner Scan (MartinContext context, MethodDefinition method)
+		public static BasicBlockScanner Scan (MartinContext context, MethodDefinition method, int? debug = null)
 		{
-			var scanner = new BasicBlockScanner (context, method);
+			var scanner = new BasicBlockScanner (context, method, debug);
 			if (!scanner.Scan ())
 				return null;
 			return scanner;
@@ -153,6 +153,11 @@ namespace Mono.Linker.Conditionals
 			BlockList.ComputeOffsets ();
 
 			DumpBlocks ();
+
+			if (FoundConditionals) {
+				EliminateDeadBlocks ();
+				DumpBlocks ();
+			}
 
 			return true;
 		}

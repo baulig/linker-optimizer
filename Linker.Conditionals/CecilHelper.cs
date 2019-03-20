@@ -324,6 +324,24 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		public static bool IsConstantLoad (MethodBody body, out bool value)
+		{
+			value = false;
+			if (body.Instructions.Count != 2)
+				return false;
+			if (body.Instructions [1].OpCode.Code != Code.Ret)
+				return false;
+			switch (body.Instructions [0].OpCode.Code) {
+			case Code.Ldc_I4_0:
+				return true;
+			case Code.Ldc_I4_1:
+				value = true;
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		// Unused template listing all possible opcode types.
 		static void AllOpCodeTypes (Code code)
 		{

@@ -120,6 +120,7 @@
     <Compile Include="Linker.Conditionals\JumpOrigin.cs" />
     <Compile Include="Linker.Conditionals\DeadCodeEliminator.cs" />
     <Compile Include="Linker.Conditionals\Reachability.cs" />
+    <Compile Include="Linker.Conditionals\PreprocessStep.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

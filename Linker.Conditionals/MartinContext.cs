@@ -61,6 +61,7 @@ namespace Mono.Linker.Conditionals
 			context.MartinContext = new MartinContext (context);
 
 			context.Pipeline.AddStepAfter (typeof (TypeMapStep), new InitializeStep ());
+			context.Pipeline.AddStepAfter (typeof (InitializeStep), new PreprocessStep ());
 			context.Pipeline.AddStepBefore (typeof (MarkStep), new MartinTestStep ());
 			context.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep ());
 		}
@@ -143,6 +144,7 @@ namespace Mono.Linker.Conditionals
 
 		readonly Dictionary<MonoLinkerFeature, bool> enabled_features = new Dictionary<MonoLinkerFeature, bool> ();
 		readonly HashSet<TypeDefinition> conditional_types = new HashSet<TypeDefinition> ();
+		readonly Dictionary<MethodDefinition, bool> constant_properties = new Dictionary<MethodDefinition, bool> ();
 
 		static MonoLinkerFeature FeatureByName (string name)
 		{
@@ -203,6 +205,16 @@ namespace Mono.Linker.Conditionals
 			LogMessage (MessageImportance.High, message);
 			if (Options.NoConditionalRedefinition)
 				throw new NotSupportedException (message);
+		}
+
+		internal void MarkAsConstantProperty (PropertyDefinition property, bool value)
+		{
+			constant_properties.Add (property.GetMethod, value);
+		}
+
+		internal bool TryGetConstantMethod (MethodDefinition method, out bool value)
+		{
+			return constant_properties.TryGetValue (method, out value);
 		}
 
 		class InitializeStep : BaseStep

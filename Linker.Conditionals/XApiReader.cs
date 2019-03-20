@@ -94,6 +94,10 @@ namespace Mono.Linker
 			if (!string.IsNullOrEmpty (analyze_all))
 				options.AnalyzeAll = bool.Parse (analyze_all);
 
+			var preprocess = nav.GetAttribute ("preprocess", string.Empty);
+			if (!string.IsNullOrEmpty (preprocess))
+				options.Preprocess = bool.Parse (preprocess);
+
 			var no_conditional_redefinition = nav.GetAttribute ("no_conditional_redefinition", string.Empty);
 			if (!string.IsNullOrEmpty (no_conditional_redefinition))
 				options.NoConditionalRedefinition = bool.Parse (no_conditional_redefinition);
