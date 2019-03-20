@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Mono.Cecil.Cil;
 
@@ -64,7 +65,7 @@ namespace Mono.Linker.Conditionals
 
 		internal IList<FlowAnalysis.Origin> FlowOrigins => _flow_origins;
 
-		internal List<JumpOrigin> JumpOrigins => _jump_origins;
+		internal IReadOnlyList<JumpOrigin> JumpOrigins => _jump_origins;
 
 		readonly List<Instruction> _instructions = new List<Instruction> ();
 		readonly List<ExceptionHandler> _exception_handlers = new List<ExceptionHandler> ();
@@ -169,6 +170,14 @@ namespace Mono.Linker.Conditionals
 		public Instruction [] GetInstructions (int offset)
 		{
 			return GetInstructions (offset, Instructions.Count - offset);
+		}
+
+		internal bool AddJumpOrigin (JumpOrigin origin)
+		{
+			if (_jump_origins.Contains (origin))
+				return false;
+			_jump_origins.Add (origin);
+			return true;
 		}
 
 		public override string ToString ()

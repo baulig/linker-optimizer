@@ -126,53 +126,49 @@ namespace Mono.Linker.Conditionals
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
 				var instruction = Method.Body.Instructions [i];
-				bool block_start;
 
-				if (bb == null) {
-					if (BlockList.TryGetBlock (instruction, out bb)) {
-						LogDebug (2, $"  KNOWN BB: {bb}");
-					} else {
-						bb = BlockList.NewBlock (instruction);
-						LogDebug (2, $"  NEW BB: {bb}");
-					}
-					block_start = true;
-				} else if (BlockList.TryGetBlock (instruction, out var newBB)) {
-					if (bb.BranchType != BranchType.None)
+				if (BlockList.TryGetBlock (instruction, out var newBB)) {
+					if (bb != null && bb.BranchType != BranchType.None)
 						throw new MartinTestException ();
-					LogDebug (2, $"  KNOWN BB: {bb} -> {newBB}");
-					block_start = true;
+					LogDebug (2, $"  KNOWN BB: {newBB}");
 					bb = newBB;
+				} else if (bb == null) {
+					bb = BlockList.NewBlock (instruction);
+					LogDebug (2, $"  NEW BB: {bb}");
 				} else {
 					bb.AddInstruction (instruction);
-					block_start = true;
 				}
 
-				if (block_start) {
-					var origins = BlockList.GetJumpOrigins (bb);
-					bb.JumpOrigins.AddRange (origins);
-					LogDebug (2, "    ", null, origins);
-				}
+				var type = CecilHelper.GetBranchType (instruction);
+				LogDebug (2, $"    {CecilHelper.Format (instruction)} {type}");
 
 				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {
-					LogDebug (2, $"    CALL: {CecilHelper.Format (instruction)}");
 					if (LinkerConditional.Scan (this, ref bb, ref i, instruction))
 						FoundConditionals = true;
 					continue;
 				}
 
-				var type = CecilHelper.GetBranchType (instruction);
-				LogDebug (2, $"    INS: {CecilHelper.Format (instruction)} {type}");
 				switch (type) {
 				case BranchType.None:
 					break;
+
 				case BranchType.Conditional:
 				case BranchType.False:
 				case BranchType.True:
 				case BranchType.Jump:
-				case BranchType.Switch:
+					BlockList.EnsureBlock (BasicBlockType.Normal, instruction, (Instruction)instruction.Operand);
+					bb = null;
+					break;
+
 				case BranchType.Exit:
 				case BranchType.Return:
 				case BranchType.EndFinally:
+					bb = null;
+					break;
+
+				case BranchType.Switch:
+					foreach (var label in (Instruction [])bb.LastInstruction.Operand)
+						BlockList.EnsureBlock (BasicBlockType.Normal, instruction, label);
 					bb = null;
 					break;
 

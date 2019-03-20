@@ -55,11 +55,30 @@ namespace Mono.Linker.Conditionals
 			Exception = handler;
 		}
 
+		public override int GetHashCode ()
+		{
+			return base.GetHashCode ();
+		}
+
+		public override bool Equals (object obj)
+		{
+			var other = obj as JumpOrigin;
+			if (other == null)
+				return false;
+			if (Target != other.Target)
+				return false;
+			if (Exception != null)
+				return other.Exception == Exception;
+			if (other.Exception != null)
+				return false;
+			return Origin == other.Origin;
+		}
+
 		public override string ToString ()
 		{
 			if (Exception != null)
 				return $"[{GetType ().Name}: {Target} {Exception}]";
-			return $"[{GetType ().Name}: {Target} {CecilHelper.Format (Origin)}]";
+			return $"[{GetType ().Name}: {Target} - {CecilHelper.Format (Origin)}]";
 		}
 	}
 }

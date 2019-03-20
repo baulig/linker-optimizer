@@ -147,31 +147,31 @@ namespace Mono.Linker.Conditionals
 					break;
 				}
 			}
+		}
 
-			void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
-			{
-				if (!_bb_by_instruction.TryGetValue (target, out var block)) {
-					block = new BasicBlock (++_next_block_id, type, target);
-					_bb_by_instruction.Add (target, block);
-					_block_list.Add (block);
-				}
-				if (block.Type == BasicBlockType.Normal)
-					block.Type = type;
-				else if (block.Type != type)
-					throw new MartinTestException ();
-				block.ExceptionHandlers.Add (handler);
-				_jump_origins.Add (new JumpOrigin (block, handler));
+		void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
+		{
+			if (!_bb_by_instruction.TryGetValue (target, out var block)) {
+				block = new BasicBlock (++_next_block_id, type, target);
+				_bb_by_instruction.Add (target, block);
+				_block_list.Add (block);
 			}
+			if (block.Type == BasicBlockType.Normal)
+				block.Type = type;
+			else if (block.Type != type)
+				throw new MartinTestException ();
+			block.ExceptionHandlers.Add (handler);
+			block.AddJumpOrigin (new JumpOrigin (block, handler));
+		}
 
-			void EnsureBlock (BasicBlockType type, Instruction origin, Instruction target)
-			{
-				if (!_bb_by_instruction.TryGetValue (target, out var block)) {
-					block = new BasicBlock (++_next_block_id, type, target);
-					_bb_by_instruction.Add (target, block);
-					_block_list.Add (block);
-				}
-				_jump_origins.Add (new JumpOrigin (block, origin));
+		internal void EnsureBlock (BasicBlockType type, Instruction origin, Instruction target)
+		{
+			if (!_bb_by_instruction.TryGetValue (target, out var block)) {
+				block = new BasicBlock (++_next_block_id, type, target);
+				_bb_by_instruction.Add (target, block);
+				_block_list.Add (block);
 			}
+			block.AddJumpOrigin (new JumpOrigin (block, origin));
 		}
 
 		internal IReadOnlyCollection<JumpOrigin> GetJumpOrigins (BasicBlock block)
@@ -251,9 +251,6 @@ namespace Mono.Linker.Conditionals
 			Scanner.Context.LogMessage (MessageImportance.Low, $"{block}:");
 			Scanner.LogDebug (0, "  ", null, block.JumpOrigins);
 			Scanner.LogDebug (0, "  ", null, block.Instructions);
-			foreach (var instruction in block.Instructions) {
-				Scanner.Context.LogMessage (MessageImportance.Low, $"  {CecilHelper.Format (instruction)}");
-			}
 		}
 
 		public void RemoveInstruction (BasicBlock block, Instruction instruction)
