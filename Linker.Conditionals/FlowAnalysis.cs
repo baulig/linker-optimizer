@@ -195,8 +195,11 @@ namespace Mono.Linker.Conditionals
 			if (Scanner.DebugLevel > 0)
 				Scanner.Context.Debug ();
 
+			int recurse = 0;
 			while (ResolveOrigins ()) {
 				Scanner.LogDebug (1, $"ANALYZE -> AGAIN");
+				if (++recurse > 50)
+					throw new MartinTestException ($"Infinite recursion in {Method}");
 			}
 
 			DumpBlockList ();
@@ -241,6 +244,12 @@ namespace Mono.Linker.Conditionals
 				var block = BlockList [i];
 				DumpBlock (block);
 
+				if (block.Reachability == Reachability.Dead) {
+					complete.Add (block);
+					block.FlowOrigins.Clear ();
+					continue;
+				}
+
 				bool found_unresolved = false;
 
 				for (int j = 0; j < block.FlowOrigins.Count; j++) {
@@ -282,7 +291,7 @@ namespace Mono.Linker.Conditionals
 					var effectiveTarget = Or (block.Reachability, origin.Value.Reachability);
 					Scanner.LogDebug (3, $"    FOUND UNRESOLVED: {origin} -> {effectiveTarget}");
 					origin.Value.Reachability = effectiveTarget;
-					if (!found_unresolved || effectiveTarget == Reachability.Normal)
+					if (!found_unresolved || effectiveTarget == Reachability.Normal || effectiveTarget == Reachability.Conditional)
 						origin.Value.FlowOrigins.Remove (origin.Key);
 					found_unreachable = true;
 					continue;
@@ -309,6 +318,8 @@ namespace Mono.Linker.Conditionals
 		void MarkDead (BasicBlock block)
 		{
 			block.Reachability = Reachability.Dead;
+			block.FlowOrigins.Clear ();
+
 			if (block.Type == BasicBlockType.Normal)
 				return;
 
@@ -332,6 +343,7 @@ namespace Mono.Linker.Conditionals
 			for (int i = index; i < end_index; i++) {
 				Scanner.LogDebug (2, $"    MARK DEAD TRY #1: {i} {BlockList[i]}");
 				BlockList [i].Reachability = Reachability.Dead;
+				BlockList [i].FlowOrigins.Clear ();
 			}
 		}
 

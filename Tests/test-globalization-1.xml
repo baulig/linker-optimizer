@@ -6,6 +6,9 @@
 		<debug>
 			<!-- <fail-on type="HebrewNumber" /> -->
 
+			<break-on method="System.DateTimeParse::TryParse" />
+			<break-on method="DateTimeParse::MatchHebrewDigits" />
+			<break-on method="DateTimeFormatInfo::TryParseHebrewNumber" />
 			<!--
 			<break-on method="MatchHebrewDigits" />
 			<break-on method="DateTimeFormat::FormatCustomized" />
@@ -21,7 +24,7 @@
 			<break-on method="ArrayElementsHaveSpace" />
 			-->
 
-			<break-on method="ArrayElementsHaveSpace" />
+<!--			<break-on method="ArrayElementsHaveSpace" /> -->
 
 		</debug>
 
