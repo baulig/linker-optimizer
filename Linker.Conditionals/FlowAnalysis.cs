@@ -159,6 +159,9 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, "ANALYZE #3");
 
+			if (Scanner.DebugLevel > 0)
+				Scanner.Context.Debug ();
+
 			while (ResolveOrigins ()) {
 				Scanner.LogDebug (1, $"ANALYZE #3 -> AGAIN");
 			}
@@ -192,13 +195,13 @@ namespace Mono.Linker.Conditionals
 			bool foundUnreachable = false;
 			for (int i = 0; i < BlockList.Count; i++) {
 				var block = BlockList [i];
-				Scanner.LogDebug (3, $"    {i} {block}");
+				Scanner.LogDebug (3, $"    {i} {block} {block.Reachability}");
 				bool foundOrigin = false;
 
 				for (int j = 0; j < block.FlowOrigins.Count; j++) {
 					var origin = block.FlowOrigins [j];
 					var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
-					Scanner.LogDebug (3, $"        ORIGIN: {origin} - {origin.Block} - {effectiveOrigin}");
+					Scanner.LogDebug (3, $"        ORIGIN: {origin} - {effectiveOrigin}");
 					if (origin.Block.Reachability == Reachability.Dead) {
 						block.FlowOrigins.RemoveAt (j--);
 						continue;
