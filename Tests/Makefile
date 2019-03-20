@@ -41,7 +41,8 @@ TEST_CASES := \
 	test-conditionals-1.cs \
 	test-conditionals-2.cs \
 	test-conditionals-3.cs \
-	test-conditionals-4.cs
+	test-conditionals-4.cs \
+	test-globalization-1.cs
 
 BROKEN_TESTS := \
 	test-globalization-1.cs
