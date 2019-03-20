@@ -5,6 +5,7 @@
 
 		<debug>
 			<fail-on type="HebrewNumber" />
+			<break-on method="MatchHebrewDigits" />
 			<break-on method="DateTimeFormat::FormatCustomized" />
 		</debug>
 

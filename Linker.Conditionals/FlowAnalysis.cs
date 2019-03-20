@@ -86,7 +86,7 @@ namespace Mono.Linker.Conditionals
 				return Reachability.Normal;
 			if (first == Reachability.Conditional || second == Reachability.Conditional)
 				return Reachability.Conditional;
-			return Reachability.Unknown;
+			return Reachability.Unreachable;
 		}
 
 		void MarkBlock (BasicBlock current, Reachability reachability, Instruction target)
@@ -130,10 +130,30 @@ namespace Mono.Linker.Conditionals
 					current = null;
 				}
 
+				var oldr = reachability;
+				var oldb = block.Reachability;
+
 				if (block.Reachability != Reachability.Exception) {
-					foreach (var origin in block.FlowOrigins)
-						reachability = Or (reachability, origin.Reachability);
+					foreach (var origin in block.FlowOrigins) {
+						if (origin.Block == block)
+							continue;
+						var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
+						reachability = Or (reachability, effectiveOrigin);
+					}
 					block.Reachability = reachability;
+				}
+
+				if (block.Reachability == Reachability.Unknown) {
+					reachability = oldr;
+					block.Reachability = oldb;
+					foreach (var origin in block.FlowOrigins) {
+						if (origin.Block == block)
+							continue;
+						var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
+						reachability = Or (reachability, effectiveOrigin);
+					}
+					block.Reachability = reachability;
+					throw new MartinTestException ();
 				}
 
 				DumpBlock (block);
