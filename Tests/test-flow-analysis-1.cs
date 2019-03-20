@@ -9,6 +9,7 @@ namespace Martin.LinkerTest
 		public static void Main ()
 		{
 			new Foo ();
+			bar = new Bar ();
 			SerializeExceptionData (null);
 		}
 

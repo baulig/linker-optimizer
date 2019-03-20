@@ -132,7 +132,7 @@ namespace Mono.Linker.Conditionals
 
 				if (block.Reachability != Reachability.Exception) {
 					foreach (var origin in block.FlowOrigins) {
-						if (origin.Block == block)
+						if (origin.Block == block || origin.Block.Reachability == Reachability.Exception)
 							continue;
 						var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
 						reachability = Or (reachability, effectiveOrigin);
@@ -236,20 +236,24 @@ namespace Mono.Linker.Conditionals
 						continue;
 					}
 
-					var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
-					Scanner.LogDebug (3, $"    COMPLETE ORIGIN: {origin} - {effectiveOrigin}");
+					Reachability effective;
+					if (origin.Block.Reachability == Reachability.Exception)
+						effective = Reachability.Normal;
+					else
+						effective = And (origin.Block.Reachability, origin.Reachability);
+					Scanner.LogDebug (3, $"    COMPLETE ORIGIN: {origin} - {effective}");
 					block.FlowOrigins.RemoveAt (j--);
 
 					switch (block.Reachability) {
 					case Reachability.Dead:
 						break;
 					case Reachability.Unreachable:
-						if (block.Reachability != effectiveOrigin)
-							Scanner.LogDebug (3, $"    -> EFFECTIVE ORIGIN {effectiveOrigin}");
-						block.Reachability = effectiveOrigin;
+						if (block.Reachability != effective)
+							Scanner.LogDebug (3, $"    -> EFFECTIVE ORIGIN {effective}");
+						block.Reachability = effective;
 						break;
 					case Reachability.Conditional:
-						if (effectiveOrigin == Reachability.Normal) {
+						if (effective == Reachability.Normal) {
 							Scanner.LogDebug (3, $"    -> NORMAL");
 							block.Reachability = Reachability.Normal;
 						}

@@ -11,6 +11,8 @@ namespace Martin.LinkerTest
 			var array = new[] { "Hello", "Hello World", "World" };
 			var space = ArrayElementsHaveSpace (array);
 			Console.Error.WriteLine (space);
+
+			TryCatchMethod ();
 		}
 
 		static bool ArrayElementsHaveSpace (string[] array)
@@ -26,6 +28,18 @@ namespace Martin.LinkerTest
 			}
 
 			return false;
+		}
+
+		public static bool TryCatchMethod ()
+		{
+			try
+			{
+				throw new NotSupportedException ();
+			}
+			catch
+			{
+				return false;
+			}
 		}
 	}
 }
