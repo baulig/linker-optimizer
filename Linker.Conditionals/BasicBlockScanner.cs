@@ -260,7 +260,6 @@ namespace Mono.Linker.Conditionals
 
 				var flow = new FlowAnalysis (this);
 				flow.Analyze ();
-				return;
 
 				removed = false;
 				var eliminator = new DeadCodeEliminator (this);
@@ -269,7 +268,7 @@ namespace Mono.Linker.Conditionals
 					removed |= eliminator.RemoveDeadJumps ();
 					removed |= eliminator.RemoveConstantJumps ();
 				}
-				removed |= eliminator.RemoveUnusedVariables ();
+				// removed |= eliminator.RemoveUnusedVariables ();
 
 				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
 			} while (full && removed);

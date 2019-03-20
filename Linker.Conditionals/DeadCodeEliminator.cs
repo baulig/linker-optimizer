@@ -49,12 +49,16 @@ namespace Mono.Linker.Conditionals
 		{
 			var removedDeadBlocks = false;
 			for (int i = 0; i < BlockList.Count; i++) {
+				if (!BlockList [i].IsDead)
+					continue;
+#if FIXME
 				if (BlockList [i].Reachability == Reachability.Unknown)
 					throw new MartinTestException ();
 				if (BlockList [i].Reachability == Reachability.Unreachable)
 					throw new MartinTestException ();
 				if (BlockList [i].Reachability != Reachability.Dead)
 					continue;
+#endif
 
 				Scanner.LogDebug (2, $"  DEAD BLOCK: {BlockList [i]}");
 
