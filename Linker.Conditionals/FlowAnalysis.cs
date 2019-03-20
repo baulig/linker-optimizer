@@ -196,11 +196,9 @@ namespace Mono.Linker.Conditionals
 
 		void DumpBlockList ()
 		{
-			Scanner.LogDebug (2, $"BLOCK LIST: {Method.Name}");
+			Scanner.LogDebug (2, $"ANALYZE - BLOCK LIST: {Method.Name}");
 			for (int i = 0; i < BlockList.Count; i++) {
-				Scanner.LogDebug (2, $"  #{i} ({BlockList[i].Reachability}): {BlockList [i]}");
-				foreach (var origin in BlockList [i].FlowOrigins)
-					Scanner.LogDebug (2, $"    {origin}");
+				DumpBlock (BlockList [i]);
 			}
 		}
 
@@ -216,50 +214,75 @@ namespace Mono.Linker.Conditionals
 
 		bool ResolveOrigins ()
 		{
-			bool foundUnreachable = false;
+			Scanner.LogDebug (2, "ANALYZE - RESOLVE ORIGINS");
+			bool found_unreachable = false;
+
+			var complete = new HashSet<BasicBlock> ();
+			var unresolved = new List<KeyValuePair<Origin, BasicBlock>> ();
+
 			for (int i = 0; i < BlockList.Count; i++) {
 				var block = BlockList [i];
-				Scanner.LogDebug (3, $"    {i} {block} {block.Reachability}");
-				bool foundOrigin = false;
+				DumpBlock (block);
+
+				bool found_unresolved = false;
 
 				for (int j = 0; j < block.FlowOrigins.Count; j++) {
 					var origin = block.FlowOrigins [j];
-					var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
-					Scanner.LogDebug (3, $"        ORIGIN: {origin} - {effectiveOrigin}");
-					if (origin.Block.Reachability == Reachability.Dead) {
-						block.FlowOrigins.RemoveAt (j--);
+
+					if (!complete.Contains (origin.Block)) {
+						Scanner.LogDebug (3, $"    UNRESOLVED ORIGIN: {origin}");
+						unresolved.Add (new KeyValuePair<Origin, BasicBlock> (origin, block));
+						found_unresolved = true;
 						continue;
 					}
 
-					foundOrigin = true;
+					var effectiveOrigin = And (origin.Block.Reachability, origin.Reachability);
+					Scanner.LogDebug (3, $"    COMPLETE ORIGIN: {origin} - {effectiveOrigin}");
+					block.FlowOrigins.RemoveAt (j--);
+
 					switch (block.Reachability) {
 					case Reachability.Dead:
-						throw new MartinTestException ();
+						break;
 					case Reachability.Unreachable:
 						if (block.Reachability != effectiveOrigin)
-							Scanner.LogDebug (3, $"        -> EFFECTIVE ORIGIN {effectiveOrigin}");
+							Scanner.LogDebug (3, $"    -> EFFECTIVE ORIGIN {effectiveOrigin}");
 						block.Reachability = effectiveOrigin;
 						break;
 					case Reachability.Conditional:
 						if (effectiveOrigin == Reachability.Normal) {
-							Scanner.LogDebug (3, $"        -> NORMAL");
+							Scanner.LogDebug (3, $"    -> NORMAL");
 							block.Reachability = Reachability.Normal;
 						}
 						break;
 					}
 				}
 
+				foreach (var origin in unresolved.Where (u => u.Key.Block == block)) {
+					var effectiveTarget = Or (block.Reachability, origin.Value.Reachability);
+					Scanner.LogDebug (3, $"    FOUND UNRESOLVED: {origin} -> {effectiveTarget}");
+					origin.Value.Reachability = effectiveTarget;
+					if (!found_unresolved || effectiveTarget == Reachability.Normal)
+						origin.Value.FlowOrigins.Remove (origin.Key);
+					found_unreachable = true;
+					continue;
+				}
+
+				if (found_unresolved) {
+					Scanner.LogDebug (3, $"    HAS UNRESOLVED ORIGINS");
+					continue;
+				}
+
+				complete.Add (block);
+				Scanner.LogDebug (3, $"    COMPLETE!");
+
 				if (block.Reachability == Reachability.Unreachable) {
-					if (foundOrigin || block.FlowOrigins.Count == 0) {
-						block.Reachability = Reachability.Dead;
-						Scanner.LogDebug (3, $"        -> MARKING DEAD");
-						MarkDead (block);
-					} else
-						foundUnreachable = true;
+					block.Reachability = Reachability.Dead;
+					Scanner.LogDebug (3, $"    -> MARKING DEAD");
+					MarkDead (block);
 				}
 			}
 
-			return foundUnreachable;
+			return found_unreachable;
 		}
 
 		void MarkDead (BasicBlock block)
