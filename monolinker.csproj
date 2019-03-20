@@ -118,6 +118,7 @@
     <Compile Include="Linker.Conditionals\BasicBlockType.cs" />
     <Compile Include="Linker.Conditionals\MartinOptions.cs" />
     <Compile Include="Linker.Conditionals\JumpOrigin.cs" />
+    <Compile Include="Linker.Conditionals\DeadCodeEliminator.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
