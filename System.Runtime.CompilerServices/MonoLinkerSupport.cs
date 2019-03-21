@@ -1,6 +1,9 @@
 namespace System.Runtime.CompilerServices
 {
-	public static class MonoLinkerSupport
+#if !INSIDE_CORLIB
+	public
+#endif
+	static class MonoLinkerSupport
 	{
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static bool IsWeakInstanceOf<T> (object obj) => obj is T;

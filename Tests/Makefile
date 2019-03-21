@@ -19,6 +19,8 @@ CORLIB_SOURCES := \
 	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs
 
 TEST_HELPER_SOURCES := \
+	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerFeature.cs \
+	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs \
 	AssertionException.cs \
 	TestHelpers.cs
 

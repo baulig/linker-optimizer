@@ -1,6 +1,9 @@
 namespace System.Runtime.CompilerServices
 {
-	public enum MonoLinkerFeature
+#if !INSIDE_CORLIB
+	public
+#endif
+	enum MonoLinkerFeature
 	{
 		ReflectionEmit,
 		Remoting,

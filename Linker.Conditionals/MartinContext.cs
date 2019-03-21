@@ -70,33 +70,43 @@ namespace Mono.Linker.Conditionals
 		const string IsTypeAvailableName = "System.Boolean " + LinkerSupportType + "::IsTypeAvailable()";
 		const string IsTypeNameAvailableName = "System.Boolean " + LinkerSupportType + "::IsTypeAvailable(System.String)";
 
+		TypeDefinition _corlib_support_type;
+		TypeDefinition _test_helper_support_type;
+
 		void Initialize ()
 		{
 			LogMessage (MessageImportance.High, "Initializing Martin's Playground");
 
-			MonoLinkerSupportType = Context.GetType (LinkerSupportType);
-			if (MonoLinkerSupportType == null)
-				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}`.");
+			foreach (var asm in Context.GetAssemblies ()) {
+				switch (asm.Name.Name) {
+				case "mscorlib":
+					_corlib_support_type = asm.MainModule.GetType (LinkerSupportType);
+					break;
+				case "TestHelpers":
+					_test_helper_support_type = asm.MainModule.GetType (LinkerSupportType);
+					break;
+				}
+			}
 
-			IsWeakInstanceOfMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsWeakInstanceOf");
-			if (IsWeakInstanceOfMethod == null)
-				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsWeakInstanceOf<T>()`.");
+			if (_corlib_support_type == null)
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}` in corlib.");
 
-			AsWeakInstanceOfMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "AsWeakInstanceOf");
-			if (AsWeakInstanceOfMethod == null)
-				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.AsWeakInstanceOf<T>()`.");
+			IsWeakInstanceOfMethod = ResolveSupportMethod ("IsWeakInstanceOf");
+			AsWeakInstanceOfMethod = ResolveSupportMethod ("AsWeakInstanceOf");
 
-			IsFeatureSupportedMethod = MonoLinkerSupportType.Methods.First (m => m.Name == "IsFeatureSupported");
-			if (IsFeatureSupportedMethod == null)
-				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsFeatureSupported()`.");
+			IsFeatureSupportedMethod = ResolveSupportMethod ("IsFeatureSupported");
+			IsTypeAvailableMethod = ResolveSupportMethod (IsTypeAvailableName, true);
+			IsTypeNameAvailableMethod = ResolveSupportMethod (IsTypeNameAvailableName, true);
+		}
 
-			IsTypeAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.FullName == IsTypeAvailableName);
-			if (IsTypeAvailableMethod == null)
-				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsTypeAvailable()`.");
+		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)
+		{
+			var corlib = _corlib_support_type.Methods.First (m => full ? m.FullName == name : m.Name == name);
+			if (corlib == null)
+				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.{name}`.");
 
-			IsTypeNameAvailableMethod = MonoLinkerSupportType.Methods.First (m => m.FullName == IsTypeNameAvailableName);
-			if (IsTypeNameAvailableMethod == null)
-				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.IsTypeAvailable(string)`.");
+			var helper = _test_helper_support_type.Methods.First (m => full ? m.FullName == name : m.Name == name);
+			return new SupportMethodRegistration (corlib, helper);
 		}
 
 		public TypeDefinition MonoLinkerSupportType {
@@ -104,27 +114,27 @@ namespace Mono.Linker.Conditionals
 			private set;
 		}
 
-		public MethodDefinition IsWeakInstanceOfMethod {
+		public SupportMethodRegistration IsWeakInstanceOfMethod {
 			get;
 			private set;
 		}
 
-		public MethodDefinition IsTypeAvailableMethod {
+		public SupportMethodRegistration IsTypeAvailableMethod {
 			get;
 			private set;
 		}
 
-		public MethodDefinition IsTypeNameAvailableMethod {
+		public SupportMethodRegistration IsTypeNameAvailableMethod {
 			get;
 			private set;
 		}
 
-		public MethodDefinition AsWeakInstanceOfMethod {
+		public SupportMethodRegistration AsWeakInstanceOfMethod {
 			get;
 			private set;
 		}
 
-		public MethodDefinition IsFeatureSupportedMethod {
+		public SupportMethodRegistration IsFeatureSupportedMethod {
 			get;
 			private set;
 		}
