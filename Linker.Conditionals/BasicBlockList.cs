@@ -76,11 +76,15 @@ namespace Mono.Linker.Conditionals
 
 			_bb_by_instruction.Remove (oldInstruction);
 
+			CheckRemoveJumpOrigin (oldBlock.LastInstruction);
+
 			block = new BasicBlock (++_next_block_id, instructions);
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
 
 			AdjustJumpTargets (oldBlock, block);
+
+			CheckAddJumpOrigin (block, block.LastInstruction);
 		}
 
 		void AdjustJumpTargets (BasicBlock oldBlock, BasicBlock newBlock)
@@ -110,7 +114,7 @@ namespace Mono.Linker.Conditionals
 					if (origin.Exception != null)
 						throw new MartinTestException ();
 					if (origin.Origin == oldInstruction)
-						throw CannotRemoveTarget;
+						throw new MartinTestException ();
 					if (origin.OriginBlock == oldBlock) {
 						origin.OriginBlock = newBlock ?? throw CannotRemoveTarget;
 						continue;
