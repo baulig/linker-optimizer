@@ -6,11 +6,16 @@ namespace Martin.LinkerTest
 {
 	static class TestFlowAnalysis
 	{
+		static object locker = new object ();
+		static Foo instance;
+
 		public static void Main ()
 		{
 			var array = new[] { "Hello", "Hello World", "World" };
 			var space = ArrayElementsHaveSpace (array);
 			Console.Error.WriteLine (space);
+			TryCatchMethod ();
+			TestFinally ();
 		}
 
 		static bool ArrayElementsHaveSpace (string[] array)
@@ -38,6 +43,28 @@ namespace Martin.LinkerTest
 			{
 				return false;
 			}
+		}
+
+		public static Foo TestFinally ()
+		{
+			if (instance != null)
+				return instance;
+
+			lock (locker) {
+				Console.WriteLine ($"IN LOCK");
+				instance = new Foo ();
+			}
+
+			instance.Hello ();
+			return instance;
+		}
+	}
+
+	class Foo
+	{
+		public void Hello ()
+		{
+			Console.WriteLine ("World");
 		}
 	}
 }

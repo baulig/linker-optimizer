@@ -98,7 +98,10 @@ namespace Mono.Linker.Conditionals
 				 * Replace with direct jump.  Not that ReplaceWithInstruction() will take
 				 * care of popping extra values off the stack if needed.
 				 */
-				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
+				var target = (Instruction)block.LastInstruction.Operand;
+				var targetBlock = BlockList.GetBlock (target);
+				var branch = Instruction.Create (OpCodes.Br, target);
+				targetBlock.AddJumpOrigin (new JumpOrigin (targetBlock, block, branch));
 				ReplaceWithInstruction (ref block, stackDepth, branch);
 			} else if (stackDepth > 0) {
 				/*
@@ -243,6 +246,7 @@ namespace Mono.Linker.Conditionals
 			case BranchType.False:
 			case BranchType.True:
 			case BranchType.Return:
+				blocks.EnsureBlock (bb, next, (Instruction)next.Operand);
 				bb.AddInstruction (next);
 				index++;
 				bb = null;

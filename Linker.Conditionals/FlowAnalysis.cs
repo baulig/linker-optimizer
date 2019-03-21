@@ -395,11 +395,18 @@ namespace Mono.Linker.Conditionals
 				}
 
 				foreach (var origin in block.JumpOrigins) {
+					BasicBlock origin_block;
 					if (origin.Exception != null) {
 						Scanner.LogDebug (2, $"  EXCEPTION ORIGIN: {origin}");
-						continue;
+						if (block.FirstInstruction != origin.Exception.HandlerStart)
+							continue;
+						origin_block = BlockList.GetBlock (origin.Exception.TryStart);
+						Scanner.LogDebug (2, $"  -> HANDLER START: {marked.Contains (origin_block)} {origin_block}");
+					} else {
+						origin_block = origin.OriginBlock;
 					}
-					if (marked.Contains (origin.OriginBlock)) {
+
+					if (marked.Contains (origin_block)) {
 						Scanner.LogDebug (2, $"  MARKED ORIGIN: {origin}");
 						reachable = true;
 					} else {

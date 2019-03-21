@@ -140,7 +140,7 @@ namespace Mono.Linker.Conditionals
 				}
 
 				var type = CecilHelper.GetBranchType (instruction);
-				LogDebug (2, $"    {CecilHelper.Format (instruction)} {type}");
+				LogDebug (2, $"    {type}: {CecilHelper.Format (instruction)}");
 
 				if (instruction.OpCode.OperandType == OperandType.InlineMethod) {
 					if (LinkerConditional.Scan (this, ref bb, ref i, instruction))

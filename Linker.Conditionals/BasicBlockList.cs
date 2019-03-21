@@ -68,6 +68,8 @@ namespace Mono.Linker.Conditionals
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
 
+			var oldBlock = block;
+			var oldOrigins = block.JumpOrigins;
 			var blockIndex = _block_list.IndexOf (block);
 			var oldInstruction = block.Instructions [0];
 			oldInstruction.Offset = -1;
@@ -78,7 +80,68 @@ namespace Mono.Linker.Conditionals
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
 
-			AdjustJumpTargets (oldInstruction, instructions [0]);
+
+#if FIXME
+			foreach (var origin in oldOrigins) {
+			if (origin.Exception != null)
+					throw new MartinTestException ();
+				block.AddJumpOrigin (new JumpOrigin (block, origin.OriginBlock, origin.Origin));
+			}
+#endif
+
+			// AdjustJumpTargets (oldInstruction, instructions [0]);
+			AdjustJumpTargets (oldBlock, block, oldInstruction);
+		}
+
+		void AdjustJumpTargets (BasicBlock oldBlock, BasicBlock newBlock, Instruction oldInstruction)
+		{
+			foreach (var origin in oldBlock.JumpOrigins) {
+				if (origin.Exception != null)
+					throw new MartinTestException ();
+				// newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
+				newBlock.AddJumpOrigin (origin);
+			}
+
+			foreach (var block in _block_list) {
+				for (var j = 0; j < block.JumpOrigins.Count; j++) {
+					var origin = block.JumpOrigins [j];
+					if (origin.Exception != null)
+						throw new MartinTestException ();
+					if (origin.Origin == oldInstruction) {
+						origin.Target = null;
+						continue;
+					}
+					if (origin.Target != oldBlock)
+						continue;
+					if (oldBlock.FirstInstruction != oldInstruction)
+						throw new MartinTestException ();
+					AdjustJump (origin.Origin, oldBlock.FirstInstruction, newBlock.FirstInstruction);
+					origin.Target = newBlock;
+
+//					if (origin.Origin == oldBlock.FirstInstruction) {
+//						AdjustJump (origin.Origin, origin.Target.FirstInstruction, newBlock.FirstInstruction);
+//					}
+				}
+			}
+		}
+
+		void AdjustJump (Instruction instruction, Instruction oldTarget, Instruction newTarget)
+		{
+			if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {
+				var labels = (Instruction [])instruction.Operand;
+				for (int i = 0; i < labels.Length; i++) {
+					if (labels [i] != oldTarget)
+						continue;
+					labels [i] = newTarget ?? throw CannotRemoveTarget;
+				}
+				return;
+			}
+			if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
+			    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
+				throw new MartinTestException ();
+			if (instruction.Operand != oldTarget)
+				throw new MartinTestException ();
+			instruction.Operand = newTarget ?? throw CannotRemoveTarget;
 		}
 
 		void AdjustJumpTargets (Instruction oldTarget, Instruction newTarget)

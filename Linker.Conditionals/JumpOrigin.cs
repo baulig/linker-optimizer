@@ -32,7 +32,7 @@ namespace Mono.Linker.Conditionals
 	public class JumpOrigin
 	{
 		public BasicBlock Target {
-			get;
+			get; set;
 		}
 
 		public BasicBlock OriginBlock {
@@ -82,7 +82,7 @@ namespace Mono.Linker.Conditionals
 		public override string ToString ()
 		{
 			if (Exception != null)
-				return $"[{GetType ().Name}: {Target} {Exception}]";
+				return $"[{GetType ().Name}: {Target} {Exception.HandlerType}]";
 			return $"[{GetType ().Name}: {Target} <== {OriginBlock} - {CecilHelper.Format (Origin)}]";
 		}
 	}
