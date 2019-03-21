@@ -1,4 +1,4 @@
-.assembly 'iltest-flowanalysis-1'
+.assembly 'iltest-flow-analysis-1'
 {
 }
 
