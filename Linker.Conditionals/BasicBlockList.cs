@@ -299,7 +299,7 @@ namespace Mono.Linker.Conditionals
 			_block_list [blockIndex] = previousBlock;
 			_bb_by_instruction [previousInstructions [0]] = previousBlock;
 
-			AdjustJumpTargets (previousBlock, block);
+			AdjustJumpTargets (block, previousBlock);
 
 			block = new BasicBlock (++_next_block_id, nextInstructions);
 			_block_list.Insert (blockIndex + 1, block);
@@ -391,6 +391,8 @@ namespace Mono.Linker.Conditionals
 			if (position < 0 || position > block.Count)
 				throw new ArgumentOutOfRangeException (nameof (position));
 
+			CheckAddJumpOrigin (block, instruction);
+
 			int index;
 			if (position == block.Count) {
 				// Appending to the end.
@@ -458,13 +460,12 @@ namespace Mono.Linker.Conditionals
 			}
 			var blockIndex = _block_list.IndexOf (block);
 			var nextBlock = blockIndex + 1 < Count ? _block_list [blockIndex + 1] : null;
-			var nextInstruction = blockIndex + 1 < Count ? _block_list [blockIndex + 1].FirstInstruction : null;
 			_block_list.RemoveAt (blockIndex);
 			_bb_by_instruction.Remove (firstInstruction);
 
+			CheckRemoveJumpOrigin (block.LastInstruction);
 			AdjustJumpTargets (block, nextBlock);
 
-//			AdjustJumpTargets (firstInstruction, nextInstruction);
 			block = null;
 		}
 	}
