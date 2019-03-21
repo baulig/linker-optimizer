@@ -81,7 +81,7 @@ namespace Mono.Linker.Conditionals
 
 			// Rewrite as constant, then put back the return
 			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			ReplaceWithInstruction (ref block, stackDepth, constant);
+			Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, constant);
 			BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
 		}
 
@@ -98,17 +98,14 @@ namespace Mono.Linker.Conditionals
 				 * Replace with direct jump.  Not that ReplaceWithInstruction() will take
 				 * care of popping extra values off the stack if needed.
 				 */
-				var target = (Instruction)block.LastInstruction.Operand;
-				var targetBlock = BlockList.GetBlock (target);
-				var branch = Instruction.Create (OpCodes.Br, target);
-				targetBlock.AddJumpOrigin (new JumpOrigin (targetBlock, block, branch));
-				ReplaceWithInstruction (ref block, stackDepth, branch);
+				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
+				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, branch);
 			} else if (stackDepth > 0) {
 				/*
 				 * The condition is false, but there are still values on the stack that
 				 * we need to pop.
 				 */
-				ReplaceWithInstruction (ref block, stackDepth, null);
+				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, null);
 			} else {
 				/*
 				 * The condition is false and there are no additional values on the stack.
@@ -124,42 +121,9 @@ namespace Mono.Linker.Conditionals
 			 * Replace the entire block with a constant.
 			 */
 			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			ReplaceWithInstruction (ref block, stackDepth, constant);
+			Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, constant);
 		}
 
-		/*
-		 * Replace the entire block with the following:
-		 *
-		 * - pop @stackDepth values from the stack
-		 * - (optional) instruction @instruction
-		 *
-		 * The block will be deleted if this would result in an empty block.
-		 *
-		 */
-		void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
-		{
-			if (stackDepth == 0 && instruction == null) {
-				// Delete the entire block.
-				BlockList.DeleteBlock (ref block);
-				return;
-			}
-
-			// Remove everything except the first instruction.
-			while (block.Count > 1)
-				BlockList.RemoveInstructionAt (block, 1);
-
-			if (stackDepth == 0) {
-				BlockList.ReplaceInstructionAt (ref block, 0, instruction);
-				return;
-			}
-
-			BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
-			for (int i = 1; i < stackDepth; i++)
-				BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
-
-			if (instruction != null)
-				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
-		}
 
 		public static bool Scan (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, Instruction instruction)
 		{

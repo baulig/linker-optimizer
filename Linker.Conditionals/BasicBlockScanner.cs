@@ -51,6 +51,10 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		public CodeRewriter Rewriter {
+			get;
+		}
+
 		public int DebugLevel {
 			get;
 			private set;
@@ -62,6 +66,7 @@ namespace Mono.Linker.Conditionals
 			Method = method;
 
 			BlockList = new BasicBlockList (this, method.Body);
+			Rewriter = new CodeRewriter (this);
 
 			DebugLevel = debug ?? context.GetDebugLevel (method);
 		}

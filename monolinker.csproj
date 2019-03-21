@@ -121,6 +121,7 @@
     <Compile Include="Linker.Conditionals\DeadCodeEliminator.cs" />
     <Compile Include="Linker.Conditionals\Reachability.cs" />
     <Compile Include="Linker.Conditionals\PreprocessStep.cs" />
+    <Compile Include="Linker.Conditionals\CodeRewriter.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
