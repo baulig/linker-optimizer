@@ -18,10 +18,6 @@ CORLIB_SOURCES := \
 	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerFeature.cs \
 	$(topdir)/class/corlib/System.Runtime.CompilerServices/MonoLinkerSupport.cs
 
-IL_HELPER_SOURCES := \
-	il-support.il \
-	test-helpers.il
-
 TEST_HELPER_SOURCES := \
 	AssertionException.cs \
 	TestHelpers.cs
