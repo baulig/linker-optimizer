@@ -135,18 +135,6 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"ANALYZE #1: {Method.Name}");
 
-			if (Scanner.DebugLevel > 2) {
-				for (int i = 0; i < BlockList.Count; i++) {
-					var block = BlockList [i];
-					Scanner.LogDebug (2, $"#{i}{(marked.Contains (block) ? " (Marked)" : "")}: {block}");
-					Scanner.LogDebug (2, "  ", null, block.JumpOrigins);
-					Scanner.LogDebug (2, "  ", null, block.Instructions);
-				}
-			}
-
-
-			Scanner.LogDebug (1, $"ANALYZE #2: {Method.Name} {unresolved.Count}");
-
 			for (int i = 0; i < BlockList.Count; i++) {
 				if (!marked.Contains (BlockList [i]))
 					BlockList [i].IsDead = true;
@@ -161,7 +149,7 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			Scanner.LogDebug (1, $"ANALYZE #3: {Method.Name}");
+			Scanner.LogDebug (1, $"ANALYZE DONE: {Method.Name}");
 
 			if (Scanner.DebugLevel > 0)
 				Scanner.Context.Debug ();

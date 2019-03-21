@@ -184,6 +184,8 @@ namespace Mono.Linker.Conditionals
 			_jump_origins.RemoveAll (j => j.Origin == origin);
 		}
 
+		internal List<JumpOrigin> GetJumpOrigins () => _jump_origins;
+
 		public override string ToString ()
 		{
 			return $"[BB {Index} ({OriginalIndex}:{Type},{BranchType}{(IsDead ? ",Dead" : "")}): {FirstInstruction.OpCode.Code}]";

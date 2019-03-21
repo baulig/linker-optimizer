@@ -47,15 +47,41 @@ namespace Mono.Linker.Conditionals
 
 		public bool RemoveDeadBlocks ()
 		{
-			var removedDeadBlocks = false;
+			Scanner.LogDebug (2, $"REMOVE DEAD BLOCKS: {Method.Name}");
+			Scanner.DumpBlocks (2);
+
+			var foundDeadBlocks = false;
 			for (int i = 0; i < BlockList.Count; i++) {
 				if (!BlockList [i].IsDead)
 					continue;
 
-				Scanner.LogDebug (2, $"  DEAD BLOCK: {BlockList [i]}");
+				Scanner.LogDebug (2, $"  FOUND DEAD BLOCK: {BlockList [i]}");
 
+				BlockList.CheckRemoveJumpOrigin (BlockList [i].LastInstruction);
+
+				if (BlockList [i].ExceptionHandlers.Count > 0)
+					CheckRemoveExceptionBlock (ref i);
+
+				foundDeadBlocks = true;
+			}
+
+			Scanner.LogDebug (2, $"REMOVE DEAD BLOCKS #1: {Method.Name} {foundDeadBlocks}");
+			Scanner.DumpBlocks (2);
+
+			if (!foundDeadBlocks)
+				return false;
+
+			var removedDeadBlocks = false;
+			for (int i = 0; i < BlockList.Count; i++) {
+				var block = BlockList [i];
+				if (!block.IsDead)
+					continue;
+
+				Scanner.LogDebug (2, $"  DELETING DEAD BLOCK: {block}");
+
+				BlockList.DeleteBlock (ref block);
 				removedDeadBlocks = true;
-				DeleteBlock (ref i);
+				i--;
 			}
 
 			if (removedDeadBlocks) {
@@ -67,23 +93,12 @@ namespace Mono.Linker.Conditionals
 			return removedDeadBlocks;
 		}
 
-		bool DeleteBlock (ref int position)
+		void CheckRemoveExceptionBlock (ref int index)
 		{
-			var block = BlockList [position];
-
-			Scanner.LogDebug (1, $"REMOVE BLOCKS - REMOVE - REMOVE: {Method.Name} {block}");
-
-			if (block.Type == BasicBlockType.Normal) {
-				BlockList.DeleteBlock (ref block);
-				position--;
-				return false;
-			}
-
-			if (block.Type != BasicBlockType.Try)
-				throw new InvalidOperationException ();
-
-			var index = BlockList.IndexOf (block);
+			var block = BlockList [index];
 			int end_index = index + 1;
+
+			Scanner.LogDebug (2, $"  CHECKING DEAD EXCEPTION BLOCK: {block}");
 
 			while (block.ExceptionHandlers.Count > 0) {
 				var handler = block.ExceptionHandlers [0];
@@ -93,21 +108,23 @@ namespace Mono.Linker.Conditionals
 
 				block.ExceptionHandlers.RemoveAt (0);
 				BlockList.Body.ExceptionHandlers.Remove (handler);
+
+				block.GetJumpOrigins ().RemoveAll (j => j.Exception == handler);
 			}
 
-			Scanner.LogDebug (2, $"  DEAD EXCEPTION BLOCK: {block} {end_index}");
+			Scanner.LogDebug (2, $"  CHECKING DEAD EXCEPTION BLOCK: {block} {end_index}");
 
 			while (end_index > index) {
 				var current = BlockList [index];
+				if (!current.IsDead)
+					throw new NotSupportedException ();
 
-				Scanner.LogDebug (2, $"      DELETE: {current}");
+				Scanner.LogDebug (2, $"      MARKING DEAD: {current}");
 
-				BlockList.DeleteBlock (ref current);
 				end_index--;
 			}
 
-			position = -1;
-			return true;
+			index = -1;
 		}
 
 		public bool RemoveDeadJumps ()

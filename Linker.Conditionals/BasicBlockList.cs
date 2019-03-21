@@ -174,7 +174,7 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		void CheckRemoveJumpOrigin (Instruction instruction)
+		internal void CheckRemoveJumpOrigin (Instruction instruction)
 		{
 			/*
 			 * Check whether we are removing a branch instruction and
@@ -461,7 +461,7 @@ namespace Mono.Linker.Conditionals
 			_bb_by_instruction.Remove (firstInstruction);
 
 			CheckRemoveJumpOrigin (block.LastInstruction);
-			AdjustJumpTargets (block, nextBlock);
+			AdjustJumpTargets (block, null);
 
 			block = null;
 		}
