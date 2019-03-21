@@ -51,12 +51,11 @@ TEST_CASES := \
 	test-flow-analysis-4.cs \
 	test-globalization-1.cs
 
-BROKEN_TESTS := \
-	test-globalization-1.cs \
-	test-flow-analysis-3
+BROKEN_TESTS :=
 
 ILTEST_CASES := \
-	iltest-conditionals-1.il
+	iltest-conditionals-1.il \
+	iltest-flow-analysis-1.il
 
 compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(BROKEN_TESTS:.cs=.exe)
 
@@ -69,26 +68,35 @@ iltest-%.exe: iltest-%.il $(IL_HELPER_SOURCES)
 	$(ILASM) /out:$@ $^
 
 define RunTests
-$(1): build $(patsubst %.cs,%,$(filter $(1)-%.cs,$(TEST_CASES)))
+test-$(1): build $(patsubst %.cs,%,$(filter test-$(1)-%.cs,$(TEST_CASES)))
 endef
 
-$(eval $(call RunTests,test-weak-instances))
-$(eval $(call RunTests,test-features))
-$(eval $(call RunTests,test-conditionals))
-$(eval $(call RunTests,test-flow-analysis))
-$(eval $(call RunTests,test-globalization))
+define RunIlTests
+iltest-$(1): build $(patsubst %.il,%,$(filter iltest-$(1)-%.il,$(ILTEST_CASES)))
+endef
+
+iltests: build $(ILTEST_CASES:.il=)
+
+$(eval $(call RunTests,weak-instances))
+$(eval $(call RunTests,features))
+$(eval $(call RunTests,conditionals))
+$(eval $(call RunTests,flow-analysis))
+$(eval $(call RunTests,globalization))
+
+$(eval $(call RunIlTests,conditionals))
+$(eval $(call RunIlTests,flow-analysis))
 
 test-%: test-%.exe build
 	@echo RUN TEST $@
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
 	$(LINKER_DEFAULT) --dump-dependencies --martin -a $@ $(if $(wildcard $(@F).xml), -i $(@F).xml)
-	gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
+	@gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/$(@F).exe > $(LINKER_OUTPUT)/$(@F).il
 	MONO_PATH=$(PROFILE_PATH) monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
-	! grep AssertRemoved $(LINKER_OUTPUT)/$(@F).il
-	ls -lR $(LINKER_OUTPUT)
+	@! grep AssertRemoved $(LINKER_OUTPUT)/$(@F).il
+	@ls -lR $(LINKER_OUTPUT)
 	(cd $(LINKER_OUTPUT); MONO_PATH=. $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot ./$(@F).exe)
 	#@rm -rf $(LINKER_OUTPUT)
 
@@ -97,11 +105,12 @@ iltest-%: iltest-%.exe build
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
 	$(LINKER_DEFAULT) --dump-dependencies --martin -a $@
-	gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
+	@gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/$(@F).exe > $(LINKER_OUTPUT)/$(@F).il
 	MONO_PATH=$(PROFILE_PATH) monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
-	ls -lR $(LINKER_OUTPUT)
+	@! grep AssertRemoved $(LINKER_OUTPUT)/$(@F).il
+	@ls -lR $(LINKER_OUTPUT)
 	(cd $(LINKER_OUTPUT); MONO_PATH=. $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot ./$(@F).exe)
 	#@rm -rf $(LINKER_OUTPUT)
 

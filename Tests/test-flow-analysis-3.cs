@@ -9,8 +9,10 @@ namespace Martin.LinkerTest
 		public static void Main ()
 		{
 			TryCatchMethod ();
-			var value = TestWithFinally ();
-			TestHelpers.AssertEqual (2, value, "TestWithFinally");
+			int argument = 0;
+			var value = TestWithFinally (ref argument);
+			TestHelpers.AssertEqual (1, value, "TestWithFinally");
+			TestHelpers.AssertEqual (2, argument, "TestWithFinally");
 		}
 
 		public static bool TryCatchMethod ()
@@ -25,18 +27,22 @@ namespace Martin.LinkerTest
 			}
 		}
 
-		public static int TestWithFinally ()
+		public static int TestWithFinally (ref int argument)
 		{
 			int value = 0;
 			try {
 				Console.WriteLine ("Hello!");
+				argument++;
 				value++;
 				return value;
 			} finally {
 				Console.WriteLine ("Finally!");
+				argument++;
+				// This won't modify the return value.
 				value++;
 			}
-			return value;
+
+			throw TestHelpers.AssertRemoved ();
 		}
 	}
 }

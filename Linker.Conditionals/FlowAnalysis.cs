@@ -72,6 +72,7 @@ namespace Mono.Linker.Conditionals
 				}
 
 				reachable |= marked.Contains (block);
+				reachable |= block.Type == BasicBlockType.Finally;
 
 				foreach (var origin in block.JumpOrigins) {
 					BasicBlock origin_block;
