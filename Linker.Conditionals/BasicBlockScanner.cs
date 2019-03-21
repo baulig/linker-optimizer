@@ -252,6 +252,9 @@ namespace Mono.Linker.Conditionals
 
 		void EliminateDeadBlocks (bool full = true)
 		{
+			if (Method.Body.HasExceptionHandlers)
+				return;
+
 			LogDebug (1, $"ELIMINATING DEAD BLOCKS");
 
 			bool removed;
@@ -273,7 +276,7 @@ namespace Mono.Linker.Conditionals
 					removed |= eliminator.RemoveDeadJumps ();
 					removed |= eliminator.RemoveConstantJumps ();
 				}
-				// removed |= eliminator.RemoveUnusedVariables ();
+				removed |= eliminator.RemoveUnusedVariables ();
 
 				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
 			} while (full && removed);

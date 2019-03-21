@@ -206,6 +206,9 @@ namespace Mono.Linker.Conditionals
 		{
 			Scanner.LogDebug (1, $"REMOVE VARIABLES: {Method.Name}");
 
+			if (Method.Body.HasExceptionHandlers)
+				return false;
+
 			var removed = false;
 			var variables = new Dictionary<VariableDefinition, VariableEntry> ();
 
