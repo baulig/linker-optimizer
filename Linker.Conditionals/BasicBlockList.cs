@@ -76,7 +76,7 @@ namespace Mono.Linker.Conditionals
 
 			_bb_by_instruction.Remove (oldInstruction);
 
-			CheckRemoveJumpOrigin (oldBlock.LastInstruction);
+			CheckRemoveJumpOrigin (oldBlock);
 
 			block = new BasicBlock (++_next_block_id, instructions);
 			_block_list [blockIndex] = block;
@@ -84,7 +84,7 @@ namespace Mono.Linker.Conditionals
 
 			AdjustJumpTargets (oldBlock, block);
 
-			CheckAddJumpOrigin (block, block.LastInstruction);
+			CheckAddJumpOrigin (block);
 		}
 
 		void AdjustJumpTargets (BasicBlock oldBlock, BasicBlock newBlock)
@@ -174,51 +174,20 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		internal void CheckRemoveJumpOrigin (Instruction instruction)
+		internal void CheckRemoveJumpOrigin (BasicBlock block)
 		{
-			/*
-			 * Check whether we are removing a branch instruction and
-			 * remove if from all jump origins.
-			 */
-			var type = CecilHelper.GetBranchType (instruction);
-			switch (type) {
-			case BranchType.None:
-			case BranchType.Return:
-			case BranchType.Exit:
-			case BranchType.EndFinally:
-				return;
-			case BranchType.Jump:
-			case BranchType.True:
-			case BranchType.False:
-			case BranchType.Conditional:
-				// We are removing a branch instruction.
-				var target = _bb_by_instruction [(Instruction)instruction.Operand];
-				target.RemoveJumpOrigin (instruction);
-				break;
-			default:
-				throw new MartinTestException ();
+			if (CecilHelper.IsBranch (block.BranchType)) {
+				var target = GetBlock ((Instruction)block.LastInstruction.Operand);
+				target.RemoveJumpOrigin (block.LastInstruction);
 			}
 		}
 
-		void CheckAddJumpOrigin (BasicBlock block, Instruction instruction)
+		void CheckAddJumpOrigin (BasicBlock block)
 		{
-			var type = CecilHelper.GetBranchType (instruction);
-			switch (type) {
-			case BranchType.None:
-			case BranchType.Return:
-			case BranchType.Exit:
-			case BranchType.EndFinally:
-				return;
-			case BranchType.Jump:
-			case BranchType.True:
-			case BranchType.False:
-			case BranchType.Conditional:
+			if (CecilHelper.IsBranch (block.BranchType)) {
 				// We are adding a new branch instruction.
-				var target = _bb_by_instruction [(Instruction)instruction.Operand];
-				target.AddJumpOrigin (new JumpOrigin (target, block, instruction));
-				break;
-			default:
-				throw new MartinTestException ();
+				var target = _bb_by_instruction [(Instruction)block.LastInstruction.Operand];
+				target.AddJumpOrigin (new JumpOrigin (target, block, block.LastInstruction));
 			}
 		}
 
@@ -366,7 +335,7 @@ namespace Mono.Linker.Conditionals
 
 			// Only the last instruction in a basic block can be a branch.
 			if (position == block.Count - 1)
-				CheckRemoveJumpOrigin (instruction);
+				CheckRemoveJumpOrigin (block);
 
 			if (position > 0) {
 				block.RemoveInstructionAt (position);
@@ -388,14 +357,13 @@ namespace Mono.Linker.Conditionals
 			if (position < 0 || position > block.Count)
 				throw new ArgumentOutOfRangeException (nameof (position));
 
-			CheckAddJumpOrigin (block, instruction);
-
 			int index;
 			if (position == block.Count) {
 				// Appending to the end.
 				index = Body.Instructions.IndexOf (block.LastInstruction);
 				Body.Instructions.Insert (index + 1, instruction);
 				block.AddInstruction (instruction);
+				CheckAddJumpOrigin (block);
 				return;
 			}
 
@@ -404,6 +372,8 @@ namespace Mono.Linker.Conditionals
 
 			if (position > 0) {
 				block.InsertAt (position, instruction);
+				if (position == block.Count - 1)
+					CheckAddJumpOrigin (block);
 				return;
 			}
 
@@ -424,10 +394,10 @@ namespace Mono.Linker.Conditionals
 			Body.Instructions [index] = instruction;
 			instruction.Offset = -1;
 
-			if (position == block.Count - 1)
-				CheckRemoveJumpOrigin (old);
-
-			CheckAddJumpOrigin (block, instruction);
+			if (position == block.Count - 1) {
+				CheckRemoveJumpOrigin (block);
+				CheckAddJumpOrigin (block);
+			}
 
 			if (position > 0) {
 				block.RemoveInstructionAt (position);
@@ -460,7 +430,7 @@ namespace Mono.Linker.Conditionals
 			_block_list.RemoveAt (blockIndex);
 			_bb_by_instruction.Remove (firstInstruction);
 
-			CheckRemoveJumpOrigin (block.LastInstruction);
+			CheckRemoveJumpOrigin (block);
 			AdjustJumpTargets (block, null);
 
 			block = null;

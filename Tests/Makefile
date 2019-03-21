@@ -45,11 +45,11 @@ TEST_CASES := \
 	test-conditionals-3.cs \
 	test-conditionals-4.cs \
 	test-conditionals-5.cs \
-	test-globalization-1.cs \
 	test-flow-analysis-1.cs \
 	test-flow-analysis-2.cs \
 	test-flow-analysis-3.cs \
-	test-flow-analysis-4.cs
+	test-flow-analysis-4.cs \
+	test-globalization-1.cs
 
 BROKEN_TESTS := \
 	test-globalization-1.cs \

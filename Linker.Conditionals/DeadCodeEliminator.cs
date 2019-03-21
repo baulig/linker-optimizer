@@ -52,14 +52,20 @@ namespace Mono.Linker.Conditionals
 
 			var foundDeadBlocks = false;
 			for (int i = 0; i < BlockList.Count; i++) {
-				if (!BlockList [i].IsDead)
+				var block = BlockList [i];
+				if (!block.IsDead)
 					continue;
 
-				Scanner.LogDebug (2, $"  FOUND DEAD BLOCK: {BlockList [i]}");
+				Scanner.LogDebug (2, $"  FOUND DEAD BLOCK: {block}");
 
-				BlockList.CheckRemoveJumpOrigin (BlockList [i].LastInstruction);
+				if (CecilHelper.IsBranch (block.BranchType)) {
+					var target = BlockList.GetBlock ((Instruction)block.LastInstruction.Operand);
+					target.RemoveJumpOrigin (block.LastInstruction);
+				}
 
-				if (BlockList [i].ExceptionHandlers.Count > 0)
+//				BlockList.CheckRemoveJumpOrigin (BlockList [i].LastInstruction);
+
+				if (block.ExceptionHandlers.Count > 0)
 					CheckRemoveExceptionBlock (ref i);
 
 				foundDeadBlocks = true;
@@ -146,8 +152,10 @@ namespace Mono.Linker.Conditionals
 
 				removedDeadBlocks = true;
 
+				BlockList [i + 1].RemoveJumpOrigin (lastInstruction);
+
 				var block = BlockList [i];
-				if (block.Count == 1) {
+				if (false && block.Count == 1) {
 					BlockList.DeleteBlock (ref block);
 					i--;
 				} else {

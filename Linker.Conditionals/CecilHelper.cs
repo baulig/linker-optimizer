@@ -238,6 +238,19 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		public static bool IsBranch (BranchType type)
+		{
+			switch (type) {
+			case BranchType.Jump:
+			case BranchType.True:
+			case BranchType.False:
+			case BranchType.Conditional:
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		public static IEnumerable<Instruction> GetAllTargets (MethodBody body)
 		{
 			var targets = new HashSet<Instruction> ();
