@@ -388,11 +388,14 @@ namespace Mono.Linker.Conditionals
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				var block = BlockList [i];
+
 				Scanner.LogDebug (2, $"#{i} ({(reachable ? "Reachable" : "Unreachable")}{(marked.Contains (block) ? ",Marked" : "")}): {block}");
 				if (Scanner.DebugLevel > 2) {
 					Scanner.LogDebug (2, "  ", null, block.JumpOrigins);
 					Scanner.LogDebug (2, "  ", null, block.Instructions);
 				}
+
+				reachable |= marked.Contains (block);
 
 				foreach (var origin in block.JumpOrigins) {
 					BasicBlock origin_block;
@@ -409,7 +412,7 @@ namespace Mono.Linker.Conditionals
 					if (marked.Contains (origin_block)) {
 						Scanner.LogDebug (2, $"  MARKED ORIGIN: {origin}");
 						reachable = true;
-					} else {
+					} else if (!reachable) {
 						Scanner.LogDebug (2, $"  UNRESOLVED ORIGIN: {origin}");
 						unresolved.Add (origin);
 					}
@@ -417,8 +420,6 @@ namespace Mono.Linker.Conditionals
 
 				if (reachable)
 					marked.Add (block);
-				else
-					reachable |= marked.Contains (block);
 
 				bool restart = false;
 				for (int j = 0; j < unresolved.Count; j++) {

@@ -31,6 +31,7 @@ namespace Mono.Linker.Conditionals
 		Normal,
 		Try,
 		Catch,
-		Filter
+		Filter,
+		Deleted
 	}
 }

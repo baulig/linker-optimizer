@@ -71,6 +71,7 @@ namespace Mono.Linker.Conditionals
 			var oldBlock = block;
 			var blockIndex = _block_list.IndexOf (block);
 			var oldInstruction = block.Instructions [0];
+			oldBlock.Type = BasicBlockType.Deleted;
 			oldInstruction.Offset = -1;
 
 			_bb_by_instruction.Remove (oldInstruction);
@@ -282,6 +283,8 @@ namespace Mono.Linker.Conditionals
 
 			var blockIndex = _block_list.IndexOf (block);
 
+			block.Type = BasicBlockType.Deleted;
+
 			var previousInstructions = block.GetInstructions (0, position);
 			var nextInstructions = block.GetInstructions (position);
 
@@ -437,6 +440,7 @@ namespace Mono.Linker.Conditionals
 
 		public void DeleteBlock (ref BasicBlock block)
 		{
+			block.Type = BasicBlockType.Deleted;
 			var firstInstruction = block.FirstInstruction;
 			var startIndex = Body.Instructions.IndexOf (firstInstruction);
 			for (int i = 0; i < block.Count; i++) {

@@ -36,6 +36,10 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public int OriginalIndex {
+			get;
+		}
+
 		public BasicBlockType Type {
 			get; set;
 		}
@@ -75,11 +79,13 @@ namespace Mono.Linker.Conditionals
 		readonly List<ExceptionHandler> _exception_handlers = new List<ExceptionHandler> ();
 		readonly List<FlowAnalysis.Origin> _flow_origins = new List<FlowAnalysis.Origin> ();
 		readonly List<JumpOrigin> _jump_origins = new List<JumpOrigin> ();
+		static int _next_index;
 
 		public BasicBlock (int index, Instruction instruction)
 		{
 			Index = index;
 			BranchType = BranchType.None;
+			OriginalIndex = ++_next_index;
 
 			AddInstruction (instruction);
 		}
@@ -88,12 +94,14 @@ namespace Mono.Linker.Conditionals
 			: this (index, instruction)
 		{
 			Type = type;
+			OriginalIndex = ++_next_index;
 		}
 
 		public BasicBlock (int index, IList<Instruction> instructions)
 		{
 			Index = index;
 			BranchType = BranchType.None;
+			OriginalIndex = ++_next_index;
 
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
@@ -192,7 +200,7 @@ namespace Mono.Linker.Conditionals
 
 		public override string ToString ()
 		{
-			return $"[BB {Index} ({Type},{BranchType}{(IsDead ? ",Dead" : "")}): {FirstInstruction.OpCode.Code}]";
+			return $"[BB {Index} ({OriginalIndex}:{Type},{BranchType}{(IsDead ? ",Dead" : "")}): {FirstInstruction.OpCode.Code}]";
 		}
 	}
 }
