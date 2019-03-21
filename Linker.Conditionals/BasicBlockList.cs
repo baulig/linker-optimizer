@@ -114,7 +114,7 @@ namespace Mono.Linker.Conditionals
 					if (origin.Exception != null)
 						throw new MartinTestException ();
 					if (origin.Origin == oldInstruction)
-						throw new MartinTestException ();
+						throw CannotRemoveTarget;
 					if (origin.OriginBlock == oldBlock) {
 						origin.OriginBlock = newBlock ?? throw CannotRemoveTarget;
 						continue;
@@ -139,41 +139,6 @@ namespace Mono.Linker.Conditionals
 				if (instruction.Operand != oldTarget)
 					throw new MartinTestException ();
 				instruction.Operand = newTarget ?? throw CannotRemoveTarget;
-			}
-		}
-
-		[Obsolete ("KILL")]
-		void AdjustJumpTargets (Instruction oldTarget, Instruction newTarget)
-		{
-			foreach (var instruction in Body.Instructions) {
-				if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {
-					var labels = (Instruction [])instruction.Operand;
-					for (int i = 0; i < labels.Length; i++) {
-						if (labels [i] != oldTarget)
-							continue;
-						labels [i] = newTarget ?? throw CannotRemoveTarget;
-					}
-					continue;
-				}
-				if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
-				    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
-					continue;
-				if (instruction.Operand != oldTarget)
-					continue;
-				instruction.Operand = newTarget ?? throw CannotRemoveTarget;
-			}
-
-			foreach (var handler in Body.ExceptionHandlers) {
-				if (handler.TryStart == oldTarget)
-					handler.TryStart = newTarget ?? throw CannotRemoveTarget;
-				if (handler.TryEnd == oldTarget)
-					handler.TryEnd = newTarget ?? throw CannotRemoveTarget;
-				if (handler.HandlerStart == oldTarget)
-					handler.HandlerStart = newTarget ?? throw CannotRemoveTarget;
-				if (handler.HandlerEnd == oldTarget)
-					handler.HandlerEnd = newTarget ?? throw CannotRemoveTarget;
-				if (handler.FilterStart == oldTarget)
-					handler.FilterStart = newTarget ?? throw CannotRemoveTarget;
 			}
 		}
 
