@@ -397,12 +397,15 @@ namespace Mono.Linker.Conditionals
 			ReplaceBlock (ref block, instructions);
 		}
 
-		[Obsolete ("USE REWRITER")]
 		public void ReplaceInstructionAt (ref BasicBlock block, int position, Instruction instruction)
 		{
-			var index = Body.Instructions.IndexOf (block.Instructions [position]);
+			var old = block.Instructions [position];
+			var index = Body.Instructions.IndexOf (old);
 			Body.Instructions [index] = instruction;
 			instruction.Offset = -1;
+
+			if (position == block.Count - 1)
+				CheckRemoveJumpOrigin (old);
 
 			if (position > 0) {
 				block.RemoveInstructionAt (position);
