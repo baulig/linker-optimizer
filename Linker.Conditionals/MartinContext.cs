@@ -72,6 +72,11 @@ namespace Mono.Linker.Conditionals
 
 		TypeDefinition _corlib_support_type;
 		TypeDefinition _test_helper_support_type;
+		SupportMethodRegistration _is_weak_instance_of;
+		SupportMethodRegistration _as_weak_instance_of;
+		SupportMethodRegistration _is_feature_supported;
+		SupportMethodRegistration _is_type_available;
+		SupportMethodRegistration _is_type_name_available;
 
 		void Initialize ()
 		{
@@ -91,12 +96,12 @@ namespace Mono.Linker.Conditionals
 			if (_corlib_support_type == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}` in corlib.");
 
-			IsWeakInstanceOfMethod = ResolveSupportMethod ("IsWeakInstanceOf");
-			AsWeakInstanceOfMethod = ResolveSupportMethod ("AsWeakInstanceOf");
+			_is_weak_instance_of = ResolveSupportMethod ("IsWeakInstanceOf");
+			_as_weak_instance_of = ResolveSupportMethod ("AsWeakInstanceOf");
 
-			IsFeatureSupportedMethod = ResolveSupportMethod ("IsFeatureSupported");
-			IsTypeAvailableMethod = ResolveSupportMethod (IsTypeAvailableName, true);
-			IsTypeNameAvailableMethod = ResolveSupportMethod (IsTypeNameAvailableName, true);
+			_is_feature_supported = ResolveSupportMethod ("IsFeatureSupported");
+			_is_type_available = ResolveSupportMethod (IsTypeAvailableName, true);
+			_is_type_name_available = ResolveSupportMethod (IsTypeNameAvailableName, true);
 		}
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)
@@ -114,30 +119,15 @@ namespace Mono.Linker.Conditionals
 			private set;
 		}
 
-		public SupportMethodRegistration IsWeakInstanceOfMethod {
-			get;
-			private set;
-		}
+		public bool IsWeakInstanceOfMethod (MethodDefinition method) => _is_weak_instance_of.Matches (method);
 
-		public SupportMethodRegistration IsTypeAvailableMethod {
-			get;
-			private set;
-		}
+		public bool IsTypeAvailableMethod (MethodDefinition method) => _is_type_available.Matches (method);
 
-		public SupportMethodRegistration IsTypeNameAvailableMethod {
-			get;
-			private set;
-		}
+		public bool IsTypeNameAvailableMethod (MethodDefinition method) => _is_type_name_available.Matches (method);
 
-		public SupportMethodRegistration AsWeakInstanceOfMethod {
-			get;
-			private set;
-		}
+		public bool AsWeakInstanceOfMethod (MethodDefinition method) => _as_weak_instance_of.Matches (method);
 
-		public SupportMethodRegistration IsFeatureSupportedMethod {
-			get;
-			private set;
-		}
+		public bool IsFeatureSupportedMethod (MethodDefinition method) => _is_feature_supported.Matches (method);
 
 		public bool IsEnabled (MethodDefinition method)
 		{
@@ -234,6 +224,25 @@ namespace Mono.Linker.Conditionals
 				Context.MartinContext.Initialize ();
 				base.Process ();
 			}
+		}
+
+		class SupportMethodRegistration
+		{
+			public MethodDefinition Corlib {
+				get;
+			}
+
+			public MethodDefinition Helper {
+				get;
+			}
+
+			public SupportMethodRegistration (MethodDefinition corlib, MethodDefinition helper)
+			{
+				Corlib = corlib;
+				Helper = helper;
+			}
+
+			public bool Matches (MethodDefinition method) => method != null && (method == Corlib || method == Helper);
 		}
 	}
 }

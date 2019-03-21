@@ -125,19 +125,19 @@ namespace Mono.Linker.Conditionals
 			scanner.LogDebug (2, $"    CALL: {target}");
 
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {
-				if (scanner.Context.IsWeakInstanceOfMethod.Matches (target)) {
+				if (scanner.Context.IsWeakInstanceOfMethod (target)) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
 					IsWeakInstanceOfConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
-				} else if (scanner.Context.AsWeakInstanceOfMethod.Matches (target)) {
+				} else if (scanner.Context.AsWeakInstanceOfMethod (target)) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
 					AsWeakInstanceOfConditional.Create (scanner, ref bb, ref index, conditionalType);
 					return true;
-				} else if (scanner.Context.IsTypeAvailableMethod.Matches (target)) {
+				} else if (scanner.Context.IsTypeAvailableMethod (target)) {
 					var conditionalType = genericInstance.GenericArguments [0].Resolve ();
 					if (conditionalType == null)
 						throw new ResolutionException (genericInstance.GenericArguments [0]);
@@ -147,12 +147,12 @@ namespace Mono.Linker.Conditionals
 				return false;
 			}
 
-			if (scanner.Context.IsFeatureSupportedMethod.Matches (target)) {
+			if (scanner.Context.IsFeatureSupportedMethod (target)) {
 				IsFeatureSupportedConditional.Create (scanner, ref bb, ref index);
 				return true;
 			}
 
-			if (scanner.Context.IsTypeNameAvailableMethod.Matches (target)) {
+			if (scanner.Context.IsTypeNameAvailableMethod (target)) {
 				IsTypeAvailableConditional.Create (scanner, ref bb, ref index);
 				return true;
 			}
