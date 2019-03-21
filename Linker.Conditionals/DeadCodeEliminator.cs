@@ -63,8 +63,6 @@ namespace Mono.Linker.Conditionals
 					target.RemoveJumpOrigin (block.LastInstruction);
 				}
 
-//				BlockList.CheckRemoveJumpOrigin (BlockList [i].LastInstruction);
-
 				if (block.ExceptionHandlers.Count > 0)
 					CheckRemoveExceptionBlock (ref i);
 

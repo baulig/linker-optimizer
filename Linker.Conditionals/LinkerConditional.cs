@@ -93,14 +93,20 @@ namespace Mono.Linker.Conditionals
 			 * need to load the boolean conditional value onto the stack.
 			 */
 
+			Instruction branch = null;
+
 			if (condition) {
 				/*
 				 * Replace with direct jump.  Not that ReplaceWithInstruction() will take
 				 * care of popping extra values off the stack if needed.
 				 */
-				var branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
-				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, branch);
-			} else if (stackDepth > 0) {
+				branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
+			}
+
+			Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, branch);
+
+#if FIXME
+			if (stackDepth > 0) {
 				/*
 				 * The condition is false, but there are still values on the stack that
 				 * we need to pop.
@@ -111,8 +117,10 @@ namespace Mono.Linker.Conditionals
 				 * The condition is false and there are no additional values on the stack.
 				 * We can just simply delete the entire block.
 				 */
-				BlockList.DeleteBlock (ref block);
+				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, null);
+//				BlockList.RemoveInstructionAt (ref block, 0);
 			}
+#endif
 		}
 
 		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool condition)

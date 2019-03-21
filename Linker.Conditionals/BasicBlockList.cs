@@ -325,6 +325,16 @@ namespace Mono.Linker.Conditionals
 
 		public void RemoveInstructionAt (ref BasicBlock block, int position)
 		{
+			if (position >= block.Count)
+				throw new ArgumentOutOfRangeException (nameof (position));
+
+			if (block.Count == 1) {
+				CheckRemoveJumpOrigin (block);
+				AdjustJumpTargets (block, null);
+				DeleteBlock (ref block);
+				return;
+			}
+
 			if (block.Count < 2)
 				throw new InvalidOperationException ("Basic block must have at least one instruction in it.");
 
@@ -416,6 +426,7 @@ namespace Mono.Linker.Conditionals
 			ReplaceBlock (ref block, instructions);
 		}
 
+		[Obsolete ("KILL")]
 		public void DeleteBlock (ref BasicBlock block)
 		{
 			block.Type = BasicBlockType.Deleted;
@@ -430,8 +441,8 @@ namespace Mono.Linker.Conditionals
 			_block_list.RemoveAt (blockIndex);
 			_bb_by_instruction.Remove (firstInstruction);
 
-			CheckRemoveJumpOrigin (block);
-			AdjustJumpTargets (block, null);
+			// CheckRemoveJumpOrigin (block);
+			// AdjustJumpTargets (block, null);
 
 			block = null;
 		}

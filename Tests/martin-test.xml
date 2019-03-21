@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="false" analyze-all="true" />
+		<options all-modules="true" analyze-all="true" />
 
 		<debug>
 			<!-- <fail-on type="HebrewNumber" /> -->
 
+			<break-on method="System.DateTimeParse::TryParse" />
+			<break-on method="DateTimeParse::MatchHebrewDigits" />
+			<break-on method="DateTimeFormatInfo::TryParseHebrewNumber" />
 			<!--
 			<break-on method="MatchHebrewDigits" />
 			<break-on method="DateTimeFormat::FormatCustomized" />
@@ -13,8 +16,6 @@
 			<break-on method="InvariantFindString" />
 			<break-on method="MatchHebrewDigits" />
 			<break-on method="GetCombinedPatterns" />
-
-			<break-on method="System.DateTimeParse::TryParse" />
 
 			<break-on method="ArrayElementsBeginWithDigit" />
 			-->
@@ -24,7 +25,6 @@
 			-->
 
 <!--			<break-on method="ArrayElementsHaveSpace" /> -->
-
 
 		</debug>
 

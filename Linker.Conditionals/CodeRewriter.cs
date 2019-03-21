@@ -60,18 +60,15 @@ namespace Mono.Linker.Conditionals
 			Scanner.LogDebug (1, $"REPLACE INSTRUCTION: {block} {stackDepth} {instruction}");
 			Scanner.DumpBlock (1, block);
 
-			if (stackDepth == 0 && instruction == null) {
-				// Delete the entire block.
-				BlockList.DeleteBlock (ref block);
-				return;
-			}
-
 			// Remove everything except the first instruction.
 			while (block.Count > 1)
 				BlockList.RemoveInstructionAt (ref block, 1);
 
 			if (stackDepth == 0) {
-				BlockList.ReplaceInstructionAt (ref block, 0, instruction);
+				if (instruction == null)
+					BlockList.RemoveInstructionAt (ref block, 0);
+				else
+					BlockList.ReplaceInstructionAt (ref block, 0, instruction);
 				return;
 			}
 
