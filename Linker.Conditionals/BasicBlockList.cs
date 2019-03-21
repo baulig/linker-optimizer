@@ -69,7 +69,6 @@ namespace Mono.Linker.Conditionals
 				throw new ArgumentOutOfRangeException ();
 
 			var oldBlock = block;
-			var oldOrigins = block.JumpOrigins;
 			var blockIndex = _block_list.IndexOf (block);
 			var oldInstruction = block.Instructions [0];
 			oldInstruction.Offset = -1;
@@ -80,16 +79,6 @@ namespace Mono.Linker.Conditionals
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
 
-
-#if FIXME
-			foreach (var origin in oldOrigins) {
-			if (origin.Exception != null)
-					throw new MartinTestException ();
-				block.AddJumpOrigin (new JumpOrigin (block, origin.OriginBlock, origin.Origin));
-			}
-#endif
-
-			// AdjustJumpTargets (oldInstruction, instructions [0]);
 			AdjustJumpTargets (oldBlock, block, oldInstruction);
 		}
 
@@ -100,8 +89,6 @@ namespace Mono.Linker.Conditionals
 					throw new MartinTestException ();
 				newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
 				AdjustJump (origin.Origin, oldBlock.FirstInstruction, newBlock.FirstInstruction);
-
-				// newBlock.AddJumpOrigin (origin);
 			}
 
 			Scanner.LogDebug (2, $"ADJUST JUMPS: {oldBlock} {newBlock} {oldInstruction}");
@@ -122,17 +109,6 @@ namespace Mono.Linker.Conditionals
 						origin.OriginBlock = newBlock;
 						continue;
 					}
-					if (origin.Target != oldBlock)
-						continue;
-					throw new MartinTestException ();
-					if (oldBlock.FirstInstruction != oldInstruction)
-						throw new MartinTestException ();
-					AdjustJump (origin.Origin, oldBlock.FirstInstruction, newBlock.FirstInstruction);
-					origin.Target = newBlock;
-
-//					if (origin.Origin == oldBlock.FirstInstruction) {
-//						AdjustJump (origin.Origin, origin.Target.FirstInstruction, newBlock.FirstInstruction);
-//					}
 				}
 			}
 		}
