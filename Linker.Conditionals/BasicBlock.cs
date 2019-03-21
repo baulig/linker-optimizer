@@ -53,10 +53,6 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
-		internal Reachability Reachability {
-			get; set;
-		}
-
 		public bool IsDead {
 			get; set;
 		}
@@ -71,13 +67,10 @@ namespace Mono.Linker.Conditionals
 
 		public Instruction LastInstruction => _instructions [_instructions.Count - 1];
 
-		internal IList<FlowAnalysis.Origin> FlowOrigins => _flow_origins;
-
 		public IReadOnlyList<JumpOrigin> JumpOrigins => _jump_origins;
 
 		readonly List<Instruction> _instructions = new List<Instruction> ();
 		readonly List<ExceptionHandler> _exception_handlers = new List<ExceptionHandler> ();
-		readonly List<FlowAnalysis.Origin> _flow_origins = new List<FlowAnalysis.Origin> ();
 		readonly List<JumpOrigin> _jump_origins = new List<JumpOrigin> ();
 		static int _next_index;
 
@@ -112,13 +105,6 @@ namespace Mono.Linker.Conditionals
 		void Update ()
 		{
 			BranchType = CecilHelper.GetBranchType (LastInstruction);
-		}
-
-		internal void ClearFlowInformation ()
-		{
-			_flow_origins.Clear ();
-			Reachability = Reachability.Unknown;
-			IsDead = false;
 		}
 
 		public void AddInstruction (Instruction instruction)

@@ -107,8 +107,6 @@ namespace Mono.Linker.Conditionals
 
 			while (end_index > index) {
 				var current = BlockList [index];
-				if (current.Reachability != Reachability.Dead)
-					throw new MartinTestException ();
 
 				Scanner.LogDebug (2, $"      DELETE: {current}");
 

@@ -340,12 +340,6 @@ namespace Mono.Linker.Conditionals
 				_block_list [i].Index = i;
 		}
 
-		internal void ClearFlowInformation ()
-		{
-			foreach (var block in _block_list)
-				block.ClearFlowInformation ();
-		}
-
 		public void Dump ()
 		{
 			Scanner.Context.LogMessage (MessageImportance.Low, $"BLOCK DUMP ({Body.Method})");
