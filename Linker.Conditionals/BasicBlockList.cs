@@ -63,7 +63,7 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
-		void ReplaceBlock (ref BasicBlock block, IList<Instruction> instructions)
+		internal void ReplaceBlock (ref BasicBlock block, IList<Instruction> instructions)
 		{
 			if (instructions.Count < 1)
 				throw new ArgumentOutOfRangeException ();
@@ -317,6 +317,7 @@ namespace Mono.Linker.Conditionals
 			RemoveInstructionAt (block, position);
 		}
 
+		[Obsolete ("USE REWRITER")]
 		public void RemoveInstructionAt (BasicBlock block, int position)
 		{
 			if (block.Count < 2)
@@ -387,6 +388,7 @@ namespace Mono.Linker.Conditionals
 			ReplaceBlock (ref block, instructions);
 		}
 
+		[Obsolete ("USE REWRITER")]
 		public void ReplaceInstructionAt (ref BasicBlock block, int position, Instruction instruction)
 		{
 			var index = Body.Instructions.IndexOf (block.Instructions [position]);

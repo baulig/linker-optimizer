@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -36,6 +38,8 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public BasicBlockList BlockList => Scanner.BlockList;
+
+		public MethodBody Body => Scanner.Body;
 
 		public CodeRewriter (BasicBlockScanner scanner)
 		{
@@ -61,14 +65,14 @@ namespace Mono.Linker.Conditionals
 
 			// Remove everything except the first instruction.
 			while (block.Count > 1)
-				BlockList.RemoveInstructionAt (block, 1);
+				RemoveInstructionAt (block, 1);
 
 			if (stackDepth == 0) {
-				BlockList.ReplaceInstructionAt (ref block, 0, instruction);
+				ReplaceInstructionAt (ref block, 0, instruction);
 				return;
 			}
 
-			BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
+			ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Pop));
 			for (int i = 1; i < stackDepth; i++)
 				BlockList.InsertInstructionAt (ref block, i, Instruction.Create (OpCodes.Pop));
 
@@ -76,5 +80,72 @@ namespace Mono.Linker.Conditionals
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
 		}
 
+		public void RemoveInstructionAt (BasicBlock block, int position)
+		{
+			if (block.Count < 2)
+				throw new InvalidOperationException ("Basic block must have at least one instruction in it.");
+			if (position == 0)
+				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
+
+			var instruction = block.Instructions [position];
+			Body.Instructions.Remove (instruction);
+			block.RemoveInstructionAt (position);
+			instruction.Offset = -1;
+
+			// Only the last instruction in a basic block can be a branch.
+			if (position == block.Count)
+				CheckRemoveJumpOrigin (instruction);
+		}
+
+		public void ReplaceInstructionAt (ref BasicBlock block, int position, Instruction instruction)
+		{
+			var old = block.Instructions [position];
+			var index = Body.Instructions.IndexOf (block.Instructions [position]);
+			Body.Instructions [index] = instruction;
+			instruction.Offset = -1;
+
+			if (position > 0) {
+				block.RemoveInstructionAt (position);
+				block.InsertAt (position, instruction);
+				if (position == block.Count - 1)
+					CheckRemoveJumpOrigin (old);
+				return;
+			}
+
+			/*
+			 * Our logic assumes that the first instruction in a basic block will never change
+			 * (because basic blocks are referenced by their first instruction).
+			 */
+
+			var instructions = block.Instructions.ToArray ();
+			instructions [position] = instruction;
+
+			BlockList.ReplaceBlock (ref block, instructions);
+		}
+
+		void CheckRemoveJumpOrigin (Instruction instruction)
+		{
+			var type = CecilHelper.GetBranchType (instruction);
+			switch (type) {
+			case BranchType.None:
+			case BranchType.Return:
+			case BranchType.Exit:
+			case BranchType.EndFinally:
+				return;
+			case BranchType.Jump:
+			case BranchType.True:
+			case BranchType.False:
+				RemoveJumpOrigin (instruction);
+				break;
+			default:
+				throw new MartinTestException ();
+			}
+		}
+
+		void RemoveJumpOrigin (Instruction instruction)
+		{
+			var target = BlockList.GetBlock ((Instruction)instruction.Operand);
+			target.RemoveJumpOrigin (instruction);
+		}
 	}
 }
