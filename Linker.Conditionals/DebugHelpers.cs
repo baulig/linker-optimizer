@@ -56,5 +56,11 @@ namespace Mono.Linker.Conditionals
 
 			throw AssertFail (method, block, message, caller);
 		}
+
+		public static void Assert (bool condition, [CallerMemberName] string caller = null)
+		{
+			if (!condition)
+				throw new MartinAssertException ($"Assertion failed{(!string.IsNullOrEmpty (caller) ? " in " + caller : "")}.");
+		}
 	}
 }

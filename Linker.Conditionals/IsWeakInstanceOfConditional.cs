@@ -56,41 +56,7 @@ namespace Mono.Linker.Conditionals
 			if (!evaluated)
 				RewriteConditional (ref block, HasLoadInstruction ? 0 : 1, false);
 			else
-				RewriteAsIsInst (ref block);
-		}
-
-		void RewriteAsIsInst (ref BasicBlock block)
-		{
-			Scanner.LogDebug (1, $"REWRITE AS ISINST: {block.Count} {block}");
-
-			var index = HasLoadInstruction ? 1 : 0;
-
-			/*
-			 * The block consists of the following:
-			 *
-			 * - optional simple load instruction
-			 * - conditional call
-			 * - optional branch instruction
-			 *
-			 */
-
-			var reference = Assembly.MainModule.ImportReference (InstanceType);
-
-			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, reference));
-
-			switch (block.BranchType) {
-			case BranchType.False:
-			case BranchType.True:
-				break;
-			case BranchType.None:
-			case BranchType.Return:
-				// Convert it into a bool.
-				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
-				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
-				break;
-			default:
-				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
-			}
+				Scanner.Rewriter.ReplaceWithIsInst (ref block, HasLoadInstruction ? 1 : 0, InstanceType);
 		}
 
 		public static IsWeakInstanceOfConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, TypeDefinition type)

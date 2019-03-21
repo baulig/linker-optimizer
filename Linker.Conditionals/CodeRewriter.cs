@@ -97,6 +97,61 @@ namespace Mono.Linker.Conditionals
 		}
 
 		/*
+		 * Replace block @block with an `isinst`, but keep @index instructions at the beginning
+		 * of the block and the (optional) branch at the end.
+		 *
+		 * The block is expected to contain the following:
+		 * 
+		 * - optional simple load instruction
+		 * - conditional call
+		 * - optional branch instruction
+		 *
+		 */
+		public void ReplaceWithIsInst (ref BasicBlock block, int index, TypeDefinition type)
+		{
+			if (index < 0 || index >= block.Count)
+				throw new ArgumentOutOfRangeException (nameof (index));
+
+			if (block.Instructions [index].OpCode.Code != Code.Call)
+				DebugHelpers.AssertFailUnexpected (Method, block, block.Instructions [index]);
+
+			/*
+			 * The block consists of the following:
+			 *
+			 * - optional simple load instruction
+			 * - conditional call
+			 * - optional branch instruction
+			 *
+			 */
+
+			var reference = Method.DeclaringType.Module.ImportReference (type);
+
+			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, reference));
+
+			switch (block.BranchType) {
+			case BranchType.False:
+			case BranchType.True:
+				DebugHelpers.Assert (index == block.Count - 1);
+				break;
+			case BranchType.None:
+				// Convert it into a bool.
+				DebugHelpers.Assert (index == block.Count);
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
+				break;
+			case BranchType.Return:
+				// Convert it into a bool.
+				DebugHelpers.Assert (index == block.Count - 1);
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
+				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
+				break;
+			default:
+				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
+			}
+		}
+
+
+		/*
 		 * Replace the entire block with the following:
 		 *
 		 * - pop @stackDepth values from the stack
@@ -105,7 +160,7 @@ namespace Mono.Linker.Conditionals
 		 * The block will be deleted if this would result in an empty block.
 		 *
 		 */
-		public void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
+		void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
 		{
 			Scanner.LogDebug (1, $"REPLACE INSTRUCTION: {block} {stackDepth} {instruction}");
 			Scanner.DumpBlock (1, block);
