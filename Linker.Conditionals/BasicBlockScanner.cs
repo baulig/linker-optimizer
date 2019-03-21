@@ -273,7 +273,7 @@ namespace Mono.Linker.Conditionals
 				var eliminator = new DeadCodeEliminator (this);
 				removed |= eliminator.RemoveDeadBlocks ();
 				if (full) {
-					removed |= eliminator.RemoveDeadJumps ();
+					// removed |= eliminator.RemoveDeadJumps ();
 					removed |= eliminator.RemoveConstantJumps ();
 				}
 				removed |= eliminator.RemoveUnusedVariables ();
