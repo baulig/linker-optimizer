@@ -209,8 +209,9 @@ namespace Mono.Linker.Conditionals
 				break;
 			case BranchType.False:
 			case BranchType.True:
-			case BranchType.Return:
 				blocks.EnsureBlock (bb, next, (Instruction)next.Operand);
+				goto case BranchType.Return;
+			case BranchType.Return:
 				bb.AddInstruction (next);
 				index++;
 				bb = null;

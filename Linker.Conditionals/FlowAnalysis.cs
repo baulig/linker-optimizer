@@ -484,8 +484,8 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"ANALYZE #2: {Method.Name} {unresolved.Count}");
 
-			if (unresolved.Count != 0)
-				throw new MartinTestException ();
+//			if (unresolved.Count != 0)
+//				throw new MartinTestException ();
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				if (!marked.Contains (BlockList [i]))
