@@ -116,9 +116,10 @@ namespace Mono.Linker.Conditionals
 
 			if (scanner.Context.TryGetConstantMethod (target, out var constant)) {
 				scanner.LogDebug (0, $"CONSTANT CALL: {target} {constant}");
+				scanner.DumpBlock (0, bb);
 				scanner.Context.Debug ();
 				var load = CecilHelper.CreateConstantLoad (constant ? 1 : 0);
-				scanner.BlockList.ReplaceInstructionAt (ref bb, index, load);
+				scanner.BlockList.ReplaceInstructionAt (ref bb, bb.Count - 1, load);
 				return true;
 			}
 

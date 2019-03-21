@@ -328,9 +328,11 @@ namespace Mono.Linker.Conditionals
 			if (position >= block.Count)
 				throw new ArgumentOutOfRangeException (nameof (position));
 
+			var index = _block_list.IndexOf (block);
 			if (block.Count == 1) {
 				CheckRemoveJumpOrigin (block);
-				AdjustJumpTargets (block, null);
+				var next = index < _block_list.Count ? _block_list [index + 1] : null;
+				AdjustJumpTargets (block, next);
 				DeleteBlock (ref block);
 				return;
 			}

@@ -347,13 +347,20 @@ namespace Mono.Linker.Conditionals
 				return false;
 			if (body.Instructions [1].OpCode.Code != Code.Ret)
 				return false;
-			switch (body.Instructions [0].OpCode.Code) {
+			return IsConstantLoad (body.Instructions [0], out value);
+		}
+
+		public static bool IsConstantLoad (Instruction instruction, out bool value)
+		{
+			switch (instruction.OpCode.Code) {
 			case Code.Ldc_I4_0:
+				value = false;
 				return true;
 			case Code.Ldc_I4_1:
 				value = true;
 				return true;
 			default:
+				value = false;
 				return false;
 			}
 		}

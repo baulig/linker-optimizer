@@ -252,9 +252,6 @@ namespace Mono.Linker.Conditionals
 
 		void EliminateDeadBlocks (bool full = true)
 		{
-			if (false && Method.Body.HasExceptionHandlers)
-				return;
-
 			LogDebug (1, $"ELIMINATING DEAD BLOCKS");
 
 			bool removed;

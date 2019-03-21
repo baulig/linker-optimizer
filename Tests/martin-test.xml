@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="true" analyze-all="true" prescan="true" />
+		<options all-modules="true" analyze-all="true" preprocess="true" />
 
 		<debug>
 			<fail-on type="HebrewNumber" />
-			<fail-on method="DateTimeParse::MatchHebrewDigits" />
 
 			<break-on method="System.DateTimeParse::TryParse" />
 			<break-on method="DateTimeParse::MatchHebrewDigits" />

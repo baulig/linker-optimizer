@@ -154,7 +154,8 @@ namespace Mono.Linker.Conditionals
 
 				var block = BlockList [i];
 				BlockList.RemoveInstructionAt (ref block, block.Count - 1);
-				BlockList.TryMergeBlock (ref block);
+				if (block != null)
+					BlockList.TryMergeBlock (ref block);
 			}
 
 			if (removedDeadBlocks) {
@@ -170,36 +171,14 @@ namespace Mono.Linker.Conditionals
 		{
 			var removedConstantJumps = false;
 
-			if (Scanner.DebugLevel > 0)
+			if (Scanner.DebugLevel > 0) {
+				Scanner.LogDebug (2, $"REMOVE CONSTANT JUMPS: {Method.Name}");
 				Scanner.Context.Debug ();
+			}
 
 			for (int i = 0; i < BlockList.Count - 1; i++) {
 				var block = BlockList [i];
-				if (block.Count < 2)
-					continue;
-
-				if (block.BranchType == BranchType.False) {
-					if (block.Instructions [block.Count - 2].OpCode.Code != Code.Ldc_I4_0)
-						continue;
-				} else if (block.BranchType == BranchType.True) {
-					if (block.Instructions [block.Count - 2].OpCode.Code != Code.Ldc_I4_1)
-						continue;
-				} else {
-					continue;
-				}
-
-				if (block.LastInstruction.OpCode.Code != Code.Brfalse && block.LastInstruction.OpCode.Code != Code.Brfalse_S)
-					throw DebugHelpers.AssertFailUnexpected (Method, block, block.LastInstruction);
-
-				var target = (Instruction)block.LastInstruction.Operand;
-
-				Scanner.LogDebug (2, $"ELIMINATE CONSTANT JUMP: {block.LastInstruction} {target}");
-
-				BlockList.RemoveInstructionAt (ref block, block.Count - 1);
-				BlockList.ReplaceInstructionAt (ref block, block.Count - 1, Instruction.Create (OpCodes.Br, target));
-
-				removedConstantJumps = true;
-
+				removedConstantJumps |= RemoveConstantJumps (ref block, i);
 			}
 
 			if (removedConstantJumps) {
@@ -209,6 +188,47 @@ namespace Mono.Linker.Conditionals
 			}
 
 			return removedConstantJumps;
+		}
+
+		bool RemoveConstantJumps (ref BasicBlock block, int index)
+		{
+			if (Scanner.DebugLevel > 2) {
+				Scanner.LogDebug (2, $"  #{index}: {block}");
+				Scanner.LogDebug (2, "  ", null, block.JumpOrigins);
+				Scanner.LogDebug (2, "  ", null, block.Instructions);
+				Scanner.Context.Debug ();
+			}
+
+			bool constant;
+			switch (block.BranchType) {
+			case BranchType.True:
+				if (block.Count < 2)
+					return false;
+				if (!CecilHelper.IsConstantLoad (block.Instructions [block.Count - 2], out constant))
+					return false;
+				break;
+			case BranchType.False:
+				if (block.Count < 2)
+					return false;
+				if (!CecilHelper.IsConstantLoad (block.Instructions [block.Count - 2], out constant))
+					return false;
+				constant = !constant;
+				break;
+			default:
+				return false;
+			}
+
+			var target = (Instruction)block.LastInstruction.Operand;
+
+			Scanner.LogDebug (2, $"  ELIMINATE CONSTANT JUMP: {constant} {block.LastInstruction} {CecilHelper.Format (target)}");
+
+			BlockList.RemoveInstructionAt (ref block, block.Count - 1);
+			if (constant)
+				BlockList.ReplaceInstructionAt (ref block, block.Count - 1, Instruction.Create (OpCodes.Br, target));
+			else
+				BlockList.RemoveInstructionAt (ref block, block.Count - 1);
+
+			return true;
 		}
 
 		public bool RemoveUnusedVariables ()
