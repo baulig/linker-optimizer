@@ -90,6 +90,7 @@ namespace Mono.Linker.Conditionals
 				// Rewrite as constant, then put back the return
 				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, instruction);
 				BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
+				BlockList.TryMergeBlock (ref block);
 				break;
 			default:
 				throw new NotSupportedException ($"{nameof (ReplaceWithConstant)} called on unsupported block type `{block.BranchType}`.");
@@ -148,8 +149,9 @@ namespace Mono.Linker.Conditionals
 			default:
 				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
 			}
-		}
 
+			BlockList.TryMergeBlock (ref block);
+		}
 
 		/*
 		 * Replace the entire block with the following:
@@ -174,6 +176,8 @@ namespace Mono.Linker.Conditionals
 					BlockList.RemoveInstructionAt (ref block, 0);
 				else
 					BlockList.ReplaceInstructionAt (ref block, 0, instruction);
+				if (block != null)
+					BlockList.TryMergeBlock (ref block);
 				return;
 			}
 
@@ -183,6 +187,8 @@ namespace Mono.Linker.Conditionals
 
 			if (instruction != null)
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
+
+			BlockList.TryMergeBlock (ref block);
 		}
 	}
 }

@@ -153,12 +153,8 @@ namespace Mono.Linker.Conditionals
 				BlockList [i + 1].RemoveJumpOrigin (lastInstruction);
 
 				var block = BlockList [i];
-				if (false && block.Count == 1) {
-					BlockList.DeleteBlock (ref block);
-					i--;
-				} else {
-					BlockList.RemoveInstructionAt (ref block, block.Count - 1);
-				}
+				BlockList.RemoveInstructionAt (ref block, block.Count - 1);
+				BlockList.TryMergeBlock (ref block);
 			}
 
 			if (removedDeadBlocks) {

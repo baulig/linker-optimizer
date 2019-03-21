@@ -441,5 +441,70 @@ namespace Mono.Linker.Conditionals
 
 			block = null;
 		}
+
+		bool TryMerge (BasicBlock first, BasicBlock second)
+		{
+			if (first.BranchType != BranchType.None)
+				return false;
+			if (second.JumpOrigins.Count > 0)
+				return false;
+
+			Scanner.LogDebug (1, $"MERGE BLOCK: {first} {second}");
+			Scanner.DumpBlocks (1);
+			Scanner.Context.Debug ();
+
+			CheckRemoveJumpOrigin (second);
+
+			var position = Body.Instructions.IndexOf (second.FirstInstruction);
+
+			foreach (var instruction in second.Instructions) {
+				Body.Instructions.Insert (position++, instruction);
+				first.AddInstruction (instruction);
+			}
+
+			CheckAddJumpOrigin (first);
+
+			Scanner.LogDebug (1, $"MERGE BLOCK WITH NEXT #1");
+			Scanner.DumpBlocks (1);
+			Scanner.Context.Debug ();
+
+			DeleteBlock (ref second);
+
+			Scanner.LogDebug (1, $"MERGE BLOCK WITH NEXT #2");
+			Scanner.DumpBlocks (1);
+			Scanner.Context.Debug ();
+
+			return true;
+		}
+
+		public void TryMergeBlock (ref BasicBlock block)
+		{
+			if (block == null)
+				throw new ArgumentNullException (nameof (block));
+			var index = _block_list.IndexOf (block);
+			if (index < 0)
+				throw new ArgumentOutOfRangeException (nameof (block));
+
+			TryMergeWithNext (ref block, index);
+			TryMergeWithPrevious (ref block, index);
+		}
+
+		bool TryMergeWithNext (ref BasicBlock block, int index)
+		{
+			if (index + 1 >= _block_list.Count)
+				return false;
+			return TryMerge (block, _block_list [index + 1]);
+		}
+
+		bool TryMergeWithPrevious (ref BasicBlock block, int index)
+		{
+			if (index < 1)
+				return false;
+			if (TryMerge (block, _block_list [index - 1])) {
+				block = _block_list [index - 1];
+				return true;
+			}
+			return false;
+		}
 	}
 }
