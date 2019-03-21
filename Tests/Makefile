@@ -57,15 +57,20 @@ ILTEST_CASES := \
 	iltest-conditionals-1.il \
 	iltest-flow-analysis-1.il
 
-compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(BROKEN_TESTS:.cs=.exe)
+TEST_HELPERS_LIBRARY := TestHelpers.dll
+
+$(TEST_HELPERS_LIBRARY): $(TEST_HELPER_SOURCES)
+	$(TESTS_COMPILER) /t:library /out:$@ $^
+
+compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY)
 
 run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 
-test-%.exe: test-%.cs $(TEST_HELPER_SOURCES)
-	$(TESTS_COMPILER) /optimize /out:$@ $^
+test-%.exe: test-%.cs $(TEST_HELPERS_LIBRARY)
+	$(TESTS_COMPILER) /optimize /out:$@ /r:$(TEST_HELPERS_LIBRARY) $(filter test-%.cs,$^)
 
-iltest-%.exe: iltest-%.il $(IL_HELPER_SOURCES)
-	$(ILASM) /out:$@ $^
+iltest-%.exe: iltest-%.il $(TEST_HELPERS_LIBRARY)
+	$(ILASM) /out:$@ $(filter iltest-%.il,$^)
 
 define RunTests
 test-$(1): build $(patsubst %.cs,%,$(filter test-$(1)-%.cs,$(TEST_CASES)))
@@ -119,6 +124,6 @@ build::
 
 clean:
 	@rm -rf $(LINKER_OUTPUT)
-	@rm -f $(executable_CLEAN_FILES) $(CLEAN_FILES) $(tests_CLEAN_FILES)
+	@rm -f $(executable_CLEAN_FILES) $(CLEAN_FILES) $(tests_CLEAN_FILES) $(TEST_HELPERS_LIBRARY)
 
 all: build compile-tests

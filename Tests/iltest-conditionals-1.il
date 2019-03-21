@@ -30,7 +30,7 @@
 			.locals init (int32 test, bool result)
 
 			ldc.i4.2
-			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
+			call bool class [mscorlib]System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype [mscorlib]System.Runtime.CompilerServices.MonoLinkerFeature)
 			brtrue return
 
 		conditional:
@@ -57,7 +57,7 @@
 			.locals init (int32 test)
 
 			ldc.i4.2
-			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
+			call bool class [mscorlib]System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype [mscorlib]System.Runtime.CompilerServices.MonoLinkerFeature)
 			brfalse return
 
 		conditional:
@@ -84,7 +84,7 @@
 			stloc.1
 
 			ldc.i4.2
-			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
+			call bool class [mscorlib]System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype [mscorlib]System.Runtime.CompilerServices.MonoLinkerFeature)
 			brfalse return
 
 		conditional:
@@ -118,7 +118,7 @@
 			stloc.1
 
 			ldc.i4.2
-			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
+			call bool class [mscorlib]System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype [mscorlib]System.Runtime.CompilerServices.MonoLinkerFeature)
 			brtrue return
 
 		conditional:
@@ -158,7 +158,7 @@
 			pop
 
 			ldc.i4.2
-			call bool class System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype System.Runtime.CompilerServices.MonoLinkerFeature)
+			call bool class [mscorlib]System.Runtime.CompilerServices.MonoLinkerSupport::IsFeatureSupported (valuetype [mscorlib]System.Runtime.CompilerServices.MonoLinkerFeature)
 			brfalse return
 
 		conditional:

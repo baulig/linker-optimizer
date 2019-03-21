@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Martin.LinkerTest
 {
-	static class TestHelpers
+	public static class TestHelpers
 	{
 		public static void Assert (bool condition, [CallerMemberName] string caller = null)
 		{

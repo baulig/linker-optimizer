@@ -2,7 +2,7 @@ using System;
 
 namespace Martin.LinkerTest
 {
-	class AssertionException : Exception
+	public class AssertionException : Exception
 	{
 		public AssertionException ()
 		{ }

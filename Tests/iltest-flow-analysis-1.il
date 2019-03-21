@@ -1,6 +1,10 @@
 .assembly 'iltest-flow-analysis-1'
 {
 }
+.assembly extern 'TestHelpers'
+{
+  .ver 0:0:0:0
+}
 
 .namespace Martin.LinkerTest
 {
@@ -37,7 +41,7 @@
 			br end
 
 		unreachable:
-			call [mscorlib]System.Exception class Martin.LinkerTest.TestHelpers::AssertRemoved ()
+			call [mscorlib]System.Exception class [TestHelpers] Martin.LinkerTest.TestHelpers::AssertRemoved ()
 
 		loop:
 			ldloc.0
