@@ -80,21 +80,26 @@ namespace Mono.Linker.Conditionals
 			_block_list [blockIndex] = block;
 			_bb_by_instruction.Add (instructions [0], block);
 
-			AdjustJumpTargets (oldBlock, block, oldInstruction);
+			AdjustJumpTargets (oldBlock, block);
 		}
 
-		void AdjustJumpTargets (BasicBlock oldBlock, BasicBlock newBlock, Instruction oldInstruction)
+		void AdjustJumpTargets (BasicBlock oldBlock, BasicBlock newBlock)
 		{
 			foreach (var origin in oldBlock.JumpOrigins) {
 				if (origin.Exception != null)
 					throw new MartinTestException ();
+				if (newBlock == null)
+					throw CannotRemoveTarget;
 				newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
 				AdjustJump (origin.Origin, oldBlock.FirstInstruction, newBlock.FirstInstruction);
 			}
 
+			var oldInstruction = oldBlock.LastInstruction;
+
 			Scanner.LogDebug (2, $"ADJUST JUMPS: {oldBlock} {newBlock} {oldInstruction}");
 			Dump (oldBlock);
-			Dump (newBlock);
+			if (newBlock != null)
+				Dump (newBlock);
 			Scanner.Context.Debug ();
 
 			foreach (var block in _block_list) {
@@ -107,32 +112,33 @@ namespace Mono.Linker.Conditionals
 					if (origin.Origin == oldInstruction)
 						throw CannotRemoveTarget;
 					if (origin.OriginBlock == oldBlock) {
-						origin.OriginBlock = newBlock;
+						origin.OriginBlock = newBlock ?? throw CannotRemoveTarget;
 						continue;
 					}
 				}
 			}
-		}
 
-		void AdjustJump (Instruction instruction, Instruction oldTarget, Instruction newTarget)
-		{
-			if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {
-				var labels = (Instruction [])instruction.Operand;
-				for (int i = 0; i < labels.Length; i++) {
-					if (labels [i] != oldTarget)
-						continue;
-					labels [i] = newTarget ?? throw CannotRemoveTarget;
+			void AdjustJump (Instruction instruction, Instruction oldTarget, Instruction newTarget)
+			{
+				if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {
+					var labels = (Instruction [])instruction.Operand;
+					for (int i = 0; i < labels.Length; i++) {
+						if (labels [i] != oldTarget)
+							continue;
+						labels [i] = newTarget ?? throw CannotRemoveTarget;
+					}
+					return;
 				}
-				return;
+				if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
+				    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
+					throw new MartinTestException ();
+				if (instruction.Operand != oldTarget)
+					throw new MartinTestException ();
+				instruction.Operand = newTarget ?? throw CannotRemoveTarget;
 			}
-			if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
-			    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
-				throw new MartinTestException ();
-			if (instruction.Operand != oldTarget)
-				throw new MartinTestException ();
-			instruction.Operand = newTarget ?? throw CannotRemoveTarget;
 		}
 
+		[Obsolete ("KILL")]
 		void AdjustJumpTargets (Instruction oldTarget, Instruction newTarget)
 		{
 			foreach (var instruction in Body.Instructions) {
@@ -242,6 +248,17 @@ namespace Mono.Linker.Conditionals
 					break;
 				}
 			}
+
+			void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
+			{
+				var block = EnsureBlock (target);
+				if (block.Type == BasicBlockType.Normal)
+					block.Type = type;
+				else if (block.Type != type)
+					throw new MartinTestException ();
+				block.ExceptionHandlers.Add (handler);
+				block.AddJumpOrigin (new JumpOrigin (block, handler));
+			}
 		}
 
 		BasicBlock EnsureBlock (Instruction target)
@@ -254,20 +271,10 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
-
-		void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
-		{
-			var block = EnsureBlock (target);
-			if (block.Type == BasicBlockType.Normal)
-				block.Type = type;
-			else if (block.Type != type)
-				throw new MartinTestException ();
-			block.ExceptionHandlers.Add (handler);
-			block.AddJumpOrigin (new JumpOrigin (block, handler));
-		}
-
 		internal void EnsureBlock (BasicBlock current, Instruction origin, Instruction target)
 		{
+			if (!_bb_by_instruction.ContainsKey (target))
+				throw new MartinTestException ();
 			var block = EnsureBlock (target);
 			block.AddJumpOrigin (new JumpOrigin (block, current, origin));
 		}
@@ -291,6 +298,8 @@ namespace Mono.Linker.Conditionals
 			var previousBlock = new BasicBlock (++_next_block_id, previousInstructions);
 			_block_list [blockIndex] = previousBlock;
 			_bb_by_instruction [previousInstructions [0]] = previousBlock;
+
+			AdjustJumpTargets (previousBlock, block);
 
 			block = new BasicBlock (++_next_block_id, nextInstructions);
 			_block_list.Insert (blockIndex + 1, block);
@@ -448,10 +457,14 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (startIndex);
 			}
 			var blockIndex = _block_list.IndexOf (block);
+			var nextBlock = blockIndex + 1 < Count ? _block_list [blockIndex + 1] : null;
 			var nextInstruction = blockIndex + 1 < Count ? _block_list [blockIndex + 1].FirstInstruction : null;
 			_block_list.RemoveAt (blockIndex);
 			_bb_by_instruction.Remove (firstInstruction);
-			AdjustJumpTargets (firstInstruction, nextInstruction);
+
+			AdjustJumpTargets (block, nextBlock);
+
+//			AdjustJumpTargets (firstInstruction, nextInstruction);
 			block = null;
 		}
 	}
