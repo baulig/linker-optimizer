@@ -68,6 +68,16 @@ test-%.exe: test-%.cs $(TEST_HELPER_SOURCES)
 iltest-%.exe: iltest-%.il $(IL_HELPER_SOURCES)
 	$(ILASM) /out:$@ $^
 
+define RunTests
+$(1): build $(patsubst %.cs,%,$(filter $(1)-%.cs,$(TEST_CASES)))
+endef
+
+$(eval $(call RunTests,test-weak-instances))
+$(eval $(call RunTests,test-features))
+$(eval $(call RunTests,test-conditionals))
+$(eval $(call RunTests,test-flow-analysis))
+$(eval $(call RunTests,test-globalization))
+
 test-%: test-%.exe build
 	@echo RUN TEST $@
 	@rm -rf $(LINKER_OUTPUT)
