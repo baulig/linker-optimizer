@@ -98,21 +98,33 @@ namespace Mono.Linker.Conditionals
 			foreach (var origin in oldBlock.JumpOrigins) {
 				if (origin.Exception != null)
 					throw new MartinTestException ();
-				// newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
-				newBlock.AddJumpOrigin (origin);
+				newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
+				AdjustJump (origin.Origin, oldBlock.FirstInstruction, newBlock.FirstInstruction);
+
+				// newBlock.AddJumpOrigin (origin);
 			}
 
+			Scanner.LogDebug (2, $"ADJUST JUMPS: {oldBlock} {newBlock} {oldInstruction}");
+			Dump (oldBlock);
+			Dump (newBlock);
+			Scanner.Context.Debug ();
+
 			foreach (var block in _block_list) {
+				Dump (block);
 				for (var j = 0; j < block.JumpOrigins.Count; j++) {
 					var origin = block.JumpOrigins [j];
+					Scanner.LogDebug (2, $"  ORIGIN: {origin}");
 					if (origin.Exception != null)
 						throw new MartinTestException ();
-					if (origin.Origin == oldInstruction) {
-						origin.Target = null;
+					if (origin.Origin == oldInstruction)
+						throw CannotRemoveTarget;
+					if (origin.OriginBlock == oldBlock) {
+						origin.OriginBlock = newBlock;
 						continue;
 					}
 					if (origin.Target != oldBlock)
 						continue;
+					throw new MartinTestException ();
 					if (oldBlock.FirstInstruction != oldInstruction)
 						throw new MartinTestException ();
 					AdjustJump (origin.Origin, oldBlock.FirstInstruction, newBlock.FirstInstruction);
@@ -180,6 +192,10 @@ namespace Mono.Linker.Conditionals
 
 		void CheckRemoveJumpOrigin (Instruction instruction)
 		{
+			/*
+			 * Check whether we are removing a branch instruction and
+			 * remove if from all jump origins.
+			 */
 			var type = CecilHelper.GetBranchType (instruction);
 			switch (type) {
 			case BranchType.None:
@@ -190,17 +206,34 @@ namespace Mono.Linker.Conditionals
 			case BranchType.Jump:
 			case BranchType.True:
 			case BranchType.False:
-				RemoveJumpOrigin (instruction);
+				// We are removing a branch instruction.
+				var target = _bb_by_instruction [(Instruction)instruction.Operand];
+				target.RemoveJumpOrigin (instruction);
 				break;
 			default:
 				throw new MartinTestException ();
 			}
 		}
 
-		void RemoveJumpOrigin (Instruction instruction)
+		void CheckAddJumpOrigin (BasicBlock block, Instruction instruction)
 		{
-			var target = _bb_by_instruction [(Instruction)instruction.Operand];
-			target.RemoveJumpOrigin (instruction);
+			var type = CecilHelper.GetBranchType (instruction);
+			switch (type) {
+			case BranchType.None:
+			case BranchType.Return:
+			case BranchType.Exit:
+			case BranchType.EndFinally:
+				return;
+			case BranchType.Jump:
+			case BranchType.True:
+			case BranchType.False:
+				// We are adding a new branch instruction.
+				var target = _bb_by_instruction [(Instruction)instruction.Operand];
+				target.AddJumpOrigin (new JumpOrigin (target, block, instruction));
+				break;
+			default:
+				throw new MartinTestException ();
+			}
 		}
 
 		public void Initialize ()
@@ -406,6 +439,8 @@ namespace Mono.Linker.Conditionals
 
 			if (position == block.Count - 1)
 				CheckRemoveJumpOrigin (old);
+
+			CheckAddJumpOrigin (block, instruction);
 
 			if (position > 0) {
 				block.RemoveInstructionAt (position);

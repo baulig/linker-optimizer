@@ -36,7 +36,7 @@ namespace Mono.Linker.Conditionals
 		}
 
 		public BasicBlock OriginBlock {
-			get;
+			get; set;
 		}
 
 		public Instruction Origin {
