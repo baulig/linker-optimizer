@@ -69,7 +69,7 @@ namespace Mono.Linker.Conditionals
 			BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Isinst, reference));
 			BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Dup));
 			BlockList.ReplaceInstructionAt (ref block, index++, Instruction.Create (OpCodes.Stloc, Variable));
-			BlockList.RemoveInstructionAt (block, index);
+			BlockList.RemoveInstructionAt (ref block, index);
 
 			switch (block.BranchType) {
 			case BranchType.False:

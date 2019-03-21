@@ -178,6 +178,31 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		void CheckRemoveJumpOrigin (Instruction instruction)
+		{
+			var type = CecilHelper.GetBranchType (instruction);
+			switch (type) {
+			case BranchType.None:
+			case BranchType.Return:
+			case BranchType.Exit:
+			case BranchType.EndFinally:
+				return;
+			case BranchType.Jump:
+			case BranchType.True:
+			case BranchType.False:
+				RemoveJumpOrigin (instruction);
+				break;
+			default:
+				throw new MartinTestException ();
+			}
+		}
+
+		void RemoveJumpOrigin (Instruction instruction)
+		{
+			var target = _bb_by_instruction [(Instruction)instruction.Operand];
+			target.RemoveJumpOrigin (instruction);
+		}
+
 		public void Initialize ()
 		{
 			_bb_by_instruction.Clear ();
@@ -311,26 +336,6 @@ namespace Mono.Linker.Conditionals
 			Scanner.LogDebug (0, "  ", null, block.Instructions);
 		}
 
-		public void RemoveInstruction (BasicBlock block, Instruction instruction)
-		{
-			var position = block.IndexOf (instruction);
-			RemoveInstructionAt (block, position);
-		}
-
-		[Obsolete ("USE REWRITER")]
-		public void RemoveInstructionAt (BasicBlock block, int position)
-		{
-			if (block.Count < 2)
-				throw new InvalidOperationException ("Basic block must have at least one instruction in it.");
-			if (position == 0)
-				throw new ArgumentOutOfRangeException (nameof (position), "Cannot replace first instruction in basic block.");
-
-			var instruction = block.Instructions [position];
-			Body.Instructions.Remove (instruction);
-			block.RemoveInstructionAt (position);
-			instruction.Offset = -1;
-		}
-
 		public void RemoveInstructionAt (ref BasicBlock block, int position)
 		{
 			if (block.Count < 2)
@@ -340,6 +345,10 @@ namespace Mono.Linker.Conditionals
 			instruction.Offset = -1;
 
 			Body.Instructions.Remove (instruction);
+
+			// Only the last instruction in a basic block can be a branch.
+			if (position == block.Count - 1)
+				CheckRemoveJumpOrigin (instruction);
 
 			if (position > 0) {
 				block.RemoveInstructionAt (position);

@@ -139,11 +139,12 @@ namespace Mono.Linker.Conditionals
 
 				removedDeadBlocks = true;
 
-				if (BlockList [i].Count == 1) {
-					var block = BlockList [i--];
+				var block = BlockList [i];
+				if (block.Count == 1) {
 					BlockList.DeleteBlock (ref block);
+					i--;
 				} else {
-					BlockList.RemoveInstruction (BlockList [i], lastInstruction);
+					BlockList.RemoveInstructionAt (ref block, block.Count - 1);
 				}
 			}
 
@@ -185,7 +186,7 @@ namespace Mono.Linker.Conditionals
 
 				Scanner.LogDebug (2, $"ELIMINATE CONSTANT JUMP: {block.LastInstruction} {target}");
 
-				BlockList.RemoveInstructionAt (block, block.Count - 1);
+				BlockList.RemoveInstructionAt (ref block, block.Count - 1);
 				BlockList.ReplaceInstructionAt (ref block, block.Count - 1, Instruction.Create (OpCodes.Br, target));
 
 				removedConstantJumps = true;
