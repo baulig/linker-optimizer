@@ -90,12 +90,25 @@ namespace Mono.Linker.Conditionals
 		void AdjustJumpTargets (BasicBlock oldBlock, BasicBlock newBlock)
 		{
 			foreach (var origin in oldBlock.JumpOrigins) {
-				if (origin.Exception != null)
-					throw new MartinTestException ();
 				if (newBlock == null)
 					throw CannotRemoveTarget;
-				newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
-				AdjustJump (origin.Origin, oldBlock.FirstInstruction, newBlock.FirstInstruction);
+				if (origin.Exception != null) {
+					if (origin.Exception.TryStart == oldBlock.FirstInstruction)
+						origin.Exception.TryStart = newBlock.FirstInstruction;
+					if (origin.Exception.TryEnd == oldBlock.FirstInstruction)
+						origin.Exception.TryEnd = newBlock.FirstInstruction;
+					if (origin.Exception.HandlerStart == oldBlock.FirstInstruction)
+						origin.Exception.HandlerStart = newBlock.FirstInstruction;
+					if (origin.Exception.HandlerEnd == oldBlock.FirstInstruction)
+						origin.Exception.HandlerEnd = newBlock.FirstInstruction;
+					if (origin.Exception.FilterStart == oldBlock.FirstInstruction)
+						origin.Exception.FilterStart = newBlock.FirstInstruction;
+					AdjustException (origin.Exception);
+					newBlock.AddJumpOrigin (origin);
+				} else {
+					newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
+					AdjustJump (origin.Origin);
+				}
 			}
 
 			var oldInstruction = oldBlock.LastInstruction;
@@ -111,8 +124,13 @@ namespace Mono.Linker.Conditionals
 				for (var j = 0; j < block.JumpOrigins.Count; j++) {
 					var origin = block.JumpOrigins [j];
 					Scanner.LogDebug (2, $"  ORIGIN: {origin}");
-					if (origin.Exception != null)
-						throw new MartinTestException ();
+					if (origin.Exception != null) {
+						Scanner.LogDebug (2, $"  EXCEPTION ORIGIN: {origin}");
+						if (origin.Exception.TryStart == oldInstruction)
+							throw CannotRemoveTarget;
+						if (origin.Exception.HandlerStart == oldInstruction)
+							throw CannotRemoveTarget;
+					}
 					if (origin.Origin == oldInstruction)
 						throw CannotRemoveTarget;
 					if (origin.OriginBlock == oldBlock) {
@@ -122,23 +140,37 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			void AdjustJump (Instruction instruction, Instruction oldTarget, Instruction newTarget)
+			void AdjustException (ExceptionHandler handler)
+			{
+				if (handler.TryStart == oldBlock.FirstInstruction)
+					handler.TryStart = newBlock.FirstInstruction;
+				if (handler.TryEnd == oldBlock.FirstInstruction)
+					handler.TryEnd = newBlock.FirstInstruction;
+				if (handler.HandlerStart == oldBlock.FirstInstruction)
+					handler.HandlerStart = newBlock.FirstInstruction;
+				if (handler.HandlerEnd == oldBlock.FirstInstruction)
+					handler.HandlerEnd = newBlock.FirstInstruction;
+				if (handler.FilterStart == oldBlock.FirstInstruction)
+					handler.FilterStart = newBlock.FirstInstruction;
+			}
+
+			void AdjustJump (Instruction instruction)
 			{
 				if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {
 					var labels = (Instruction [])instruction.Operand;
 					for (int i = 0; i < labels.Length; i++) {
-						if (labels [i] != oldTarget)
+						if (labels [i] != oldBlock.FirstInstruction)
 							continue;
-						labels [i] = newTarget ?? throw CannotRemoveTarget;
+						labels [i] = newBlock?.FirstInstruction ?? throw CannotRemoveTarget;
 					}
 					return;
 				}
 				if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
 				    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
 					throw new MartinTestException ();
-				if (instruction.Operand != oldTarget)
+				if (instruction.Operand != oldBlock.FirstInstruction)
 					throw new MartinTestException ();
-				instruction.Operand = newTarget ?? throw CannotRemoveTarget;
+				instruction.Operand = newBlock?.FirstInstruction ?? throw CannotRemoveTarget;
 			}
 		}
 
@@ -158,6 +190,7 @@ namespace Mono.Linker.Conditionals
 			case BranchType.Jump:
 			case BranchType.True:
 			case BranchType.False:
+			case BranchType.Conditional:
 				// We are removing a branch instruction.
 				var target = _bb_by_instruction [(Instruction)instruction.Operand];
 				target.RemoveJumpOrigin (instruction);
@@ -179,6 +212,7 @@ namespace Mono.Linker.Conditionals
 			case BranchType.Jump:
 			case BranchType.True:
 			case BranchType.False:
+			case BranchType.Conditional:
 				// We are adding a new branch instruction.
 				var target = _bb_by_instruction [(Instruction)instruction.Operand];
 				target.AddJumpOrigin (new JumpOrigin (target, block, instruction));

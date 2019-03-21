@@ -144,24 +144,8 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-#if FIXME
-			for (int j = 0; j < unresolved.Count; j++) {
-				reachable = marked.Contains (unresolved [j].OriginBlock);
-				Scanner.LogDebug (2, $"CHECK UNRESOLVED ({j},{reachable}): {unresolved [j]}");
-				if (reachable) {
-					Scanner.LogDebug (2, $"  -> RESOLVE AND MARK: {unresolved [j].Target}");
-					marked.Add (unresolved [j].Target);
-					unresolved.RemoveAt (j);
-					j--;
-					j = -1;
-				}
-			}
-#endif
 
 			Scanner.LogDebug (1, $"ANALYZE #2: {Method.Name} {unresolved.Count}");
-
-//			if (unresolved.Count != 0)
-//				throw new MartinTestException ();
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				if (!marked.Contains (BlockList [i]))

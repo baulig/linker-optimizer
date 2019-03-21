@@ -57,6 +57,9 @@ namespace Mono.Linker.Conditionals
 		 */
 		public void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
 		{
+			Scanner.LogDebug (1, $"REPLACE INSTRUCTION: {block} {stackDepth} {instruction}");
+			Scanner.DumpBlock (1, block);
+
 			if (stackDepth == 0 && instruction == null) {
 				// Delete the entire block.
 				BlockList.DeleteBlock (ref block);
