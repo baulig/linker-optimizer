@@ -104,23 +104,6 @@ namespace Mono.Linker.Conditionals
 			}
 
 			Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, branch);
-
-#if FIXME
-			if (stackDepth > 0) {
-				/*
-				 * The condition is false, but there are still values on the stack that
-				 * we need to pop.
-				 */
-				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, null);
-			} else {
-				/*
-				 * The condition is false and there are no additional values on the stack.
-				 * We can just simply delete the entire block.
-				 */
-				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, null);
-//				BlockList.RemoveInstructionAt (ref block, 0);
-			}
-#endif
 		}
 
 		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool condition)

@@ -426,7 +426,6 @@ namespace Mono.Linker.Conditionals
 			ReplaceBlock (ref block, instructions);
 		}
 
-		[Obsolete ("KILL")]
 		public void DeleteBlock (ref BasicBlock block)
 		{
 			block.Type = BasicBlockType.Deleted;
@@ -437,12 +436,8 @@ namespace Mono.Linker.Conditionals
 				Body.Instructions.RemoveAt (startIndex);
 			}
 			var blockIndex = _block_list.IndexOf (block);
-			var nextBlock = blockIndex + 1 < Count ? _block_list [blockIndex + 1] : null;
 			_block_list.RemoveAt (blockIndex);
 			_bb_by_instruction.Remove (firstInstruction);
-
-			// CheckRemoveJumpOrigin (block);
-			// AdjustJumpTargets (block, null);
 
 			block = null;
 		}
