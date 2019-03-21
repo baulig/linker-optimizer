@@ -21,6 +21,13 @@ namespace Martin.LinkerTest
 			throw new AssertionException ($"Assertion failed: {message}");
 		}
 
+		public static void AssertEqual (int expected, int actual, string message = null, [CallerMemberName] string caller = null)
+		{
+			if (actual == expected)
+				return;
+			throw new AssertionException ($"Assertion failed (expected {expected}, got {actual}){(caller != null ? " at " + caller : "")}{(message != null ? ": " + message : "")}.");
+		}
+
 		/*
 		 * We scan the generated output for any references to this method and make the test fail.
 		 */

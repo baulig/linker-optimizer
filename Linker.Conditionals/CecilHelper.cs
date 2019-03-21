@@ -307,7 +307,7 @@ namespace Mono.Linker.Conditionals
 			case Code.Stloc:
 				var variable = ((VariableReference)instruction.Operand).Resolve ();
 				if (variable == null)
-					throw new MartinTestException ();
+					throw DebugHelpers.AssertFail (body.Method, $"Unable to resolve variable from `{CecilHelper.Format (instruction)}`");
 				return variable;
 			default:
 				return null;

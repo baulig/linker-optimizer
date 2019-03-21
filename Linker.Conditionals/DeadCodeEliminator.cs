@@ -193,7 +193,7 @@ namespace Mono.Linker.Conditionals
 				}
 
 				if (block.LastInstruction.OpCode.Code != Code.Brfalse && block.LastInstruction.OpCode.Code != Code.Brfalse_S)
-					throw new MartinTestException ();
+					throw DebugHelpers.AssertFailUnexpected (Method, block, block.LastInstruction);
 
 				var target = (Instruction)block.LastInstruction.Operand;
 
@@ -243,7 +243,7 @@ namespace Mono.Linker.Conditionals
 
 					var entry = variables [variable];
 					if (entry == null)
-						throw new MartinTestException ();
+						throw DebugHelpers.AssertFail (Method, block, $"Cannot resolve variable from instruction `{CecilHelper.Format (instruction)}`.");
 
 					entry.Used = true;
 					if (entry.Modified)
@@ -272,7 +272,7 @@ namespace Mono.Linker.Conditionals
 						break;
 
 					default:
-						throw new MartinTestException ();
+						throw DebugHelpers.AssertFailUnexpected (Method, block, instruction);
 					}
 
 					if (i == 0 || entry.IsConstant) {

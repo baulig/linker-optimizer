@@ -26,6 +26,7 @@
 using System;
 namespace Mono.Linker.Conditionals
 {
+	[Obsolete ("REMOVE")]
 	class MartinTestException : Exception
 	{
 		public MartinTestException ()

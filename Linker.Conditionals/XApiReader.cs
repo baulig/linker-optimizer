@@ -53,10 +53,8 @@ namespace Mono.Linker
 					type_name = null;
 				if (string.IsNullOrEmpty (method_name))
 					method_name = null;
-				if (type_name == null && method_name == null)
-					throw new MartinTestException ();
-				if (type_name != null && method_name != null)
-					throw new MartinTestException ();
+				if ((type_name == null && method_name == null) || (type_name != null && method_name != null))
+					throw new NotSupportedException ($"XML node `{child}` needs either `type` or `method` argument.");
 				if (type_name != null)
 					_context.MartinContext.Options.DebugTypes.Add (type_name);
 				if (method_name != null)
@@ -70,10 +68,8 @@ namespace Mono.Linker
 					type_name = null;
 				if (string.IsNullOrEmpty (method_name))
 					method_name = null;
-				if (type_name == null && method_name == null)
-					throw new MartinTestException ();
-				if (type_name != null && method_name != null)
-					throw new MartinTestException ();
+				if ((type_name == null && method_name == null) || (type_name != null && method_name != null))
+					throw new NotSupportedException ($"XML node `{child}` needs either `type` or `method` argument.");
 				if (type_name != null)
 					_context.MartinContext.Options.FailOnTypes.Add (type_name);
 				if (method_name != null)

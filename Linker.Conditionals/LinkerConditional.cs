@@ -70,7 +70,7 @@ namespace Mono.Linker.Conditionals
 				RewriteReturn (ref block, stackDepth, condition);
 				break;
 			default:
-				throw new MartinTestException ();
+				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
 			}
 		}
 
@@ -200,7 +200,7 @@ namespace Mono.Linker.Conditionals
 				break;
 			case BranchType.False:
 			case BranchType.True:
-				blocks.EnsureBlock (bb, next, (Instruction)next.Operand);
+				blocks.AddJumpOrigin (bb, next, (Instruction)next.Operand);
 				goto case BranchType.Return;
 			case BranchType.Return:
 				bb.AddInstruction (next);
@@ -208,7 +208,7 @@ namespace Mono.Linker.Conditionals
 				bb = null;
 				break;
 			default:
-				throw new MartinTestException ($"UNKNOWN BRANCH TYPE: {type} {next.OpCode}");
+				throw DebugHelpers.AssertFailUnexpected (blocks.Method, bb, type);
 			}
 		}
 	}

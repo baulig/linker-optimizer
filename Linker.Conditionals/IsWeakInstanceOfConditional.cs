@@ -89,8 +89,7 @@ namespace Mono.Linker.Conditionals
 				BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
 				break;
 			default:
-				throw new MartinTestException ();
-
+				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
 			}
 		}
 

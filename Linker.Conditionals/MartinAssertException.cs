@@ -1,5 +1,5 @@
 ﻿//
-// BasicBlockType.cs
+// MartinAssertException.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -26,13 +26,13 @@
 using System;
 namespace Mono.Linker.Conditionals
 {
-	public enum BasicBlockType
+	class MartinAssertException : Exception
 	{
-		Normal,
-		Try,
-		Catch,
-		Finally,
-		Filter,
-		Deleted
+		public MartinAssertException ()
+		{ }
+
+		public MartinAssertException (string message)
+			: base (message)
+		{ }
 	}
 }

@@ -134,7 +134,7 @@ namespace Mono.Linker.Conditionals
 
 				if (BlockList.TryGetBlock (instruction, out var newBB)) {
 					if (bb != null && bb.BranchType != BranchType.None)
-						throw new MartinTestException ();
+						throw DebugHelpers.AssertFail (Method, bb, $"Found known basic block with unexpected branch type `{bb.BranchType}`");
 					LogDebug (2, $"  KNOWN BB: {newBB}");
 					bb = newBB;
 				} else if (bb == null) {
@@ -161,7 +161,7 @@ namespace Mono.Linker.Conditionals
 				case BranchType.False:
 				case BranchType.True:
 				case BranchType.Jump:
-					BlockList.EnsureBlock (bb, instruction, (Instruction)instruction.Operand);
+					BlockList.AddJumpOrigin (bb, instruction, (Instruction)instruction.Operand);
 					bb = null;
 					break;
 
@@ -173,7 +173,7 @@ namespace Mono.Linker.Conditionals
 
 				case BranchType.Switch:
 					foreach (var label in (Instruction [])bb.LastInstruction.Operand)
-						BlockList.EnsureBlock (bb, instruction, label);
+						BlockList.AddJumpOrigin (bb, instruction, label);
 					bb = null;
 					break;
 

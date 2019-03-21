@@ -26,6 +26,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace Mono.Linker.Conditionals
@@ -39,6 +40,8 @@ namespace Mono.Linker.Conditionals
 		public MethodBody Body {
 			get;
 		}
+
+		public MethodDefinition Method => Body.Method; 
 
 		readonly Dictionary<Instruction, BasicBlock> _bb_by_instruction;
 		readonly List<BasicBlock> _block_list;
@@ -93,21 +96,11 @@ namespace Mono.Linker.Conditionals
 				if (newBlock == null)
 					throw CannotRemoveTarget;
 				if (origin.Exception != null) {
-					if (origin.Exception.TryStart == oldBlock.FirstInstruction)
-						origin.Exception.TryStart = newBlock.FirstInstruction;
-					if (origin.Exception.TryEnd == oldBlock.FirstInstruction)
-						origin.Exception.TryEnd = newBlock.FirstInstruction;
-					if (origin.Exception.HandlerStart == oldBlock.FirstInstruction)
-						origin.Exception.HandlerStart = newBlock.FirstInstruction;
-					if (origin.Exception.HandlerEnd == oldBlock.FirstInstruction)
-						origin.Exception.HandlerEnd = newBlock.FirstInstruction;
-					if (origin.Exception.FilterStart == oldBlock.FirstInstruction)
-						origin.Exception.FilterStart = newBlock.FirstInstruction;
 					AdjustException (origin.Exception);
 					newBlock.AddJumpOrigin (origin);
 				} else {
 					newBlock.AddJumpOrigin (new JumpOrigin (newBlock, origin.OriginBlock, origin.Origin));
-					AdjustJump (origin.Origin);
+					AdjustJump (origin);
 				}
 			}
 
@@ -154,8 +147,9 @@ namespace Mono.Linker.Conditionals
 					handler.FilterStart = newBlock.FirstInstruction;
 			}
 
-			void AdjustJump (Instruction instruction)
+			void AdjustJump (JumpOrigin origin)
 			{
+				var instruction = origin.Origin;
 				if (instruction.OpCode.OperandType == OperandType.InlineSwitch) {
 					var labels = (Instruction [])instruction.Operand;
 					for (int i = 0; i < labels.Length; i++) {
@@ -167,9 +161,9 @@ namespace Mono.Linker.Conditionals
 				}
 				if (instruction.OpCode.OperandType != OperandType.InlineBrTarget &&
 				    instruction.OpCode.OperandType != OperandType.ShortInlineBrTarget)
-					throw new MartinTestException ();
+					throw DebugHelpers.AssertFailUnexpected (Method, origin.OriginBlock, instruction);
 				if (instruction.Operand != oldBlock.FirstInstruction)
-					throw new MartinTestException ();
+					throw DebugHelpers.AssertFailUnexpected (Method, origin.OriginBlock, instruction);
 				instruction.Operand = newBlock?.FirstInstruction ?? throw CannotRemoveTarget;
 			}
 		}
@@ -200,12 +194,18 @@ namespace Mono.Linker.Conditionals
 			foreach (var handler in Body.ExceptionHandlers) {
 				if (handler.TryStart != null)
 					EnsureExceptionBlock (BasicBlockType.Try, handler.TryStart, handler);
-				if (handler.HandlerStart != null)
+				switch (handler.HandlerType) {
+				case ExceptionHandlerType.Catch:
 					EnsureExceptionBlock (BasicBlockType.Catch, handler.HandlerStart, handler);
-				if (handler.HandlerEnd != null)
 					EnsureExceptionBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
-				if (handler.FilterStart != null)
-					EnsureExceptionBlock (BasicBlockType.Filter, handler.FilterStart, handler);
+					break;
+				case ExceptionHandlerType.Finally:
+					EnsureExceptionBlock (BasicBlockType.Finally, handler.HandlerStart, handler);
+					EnsureExceptionBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
+					break;
+				default:
+					throw new NotSupportedException ($"Unknown exception type `{handler.HandlerType}` in `{Scanner.Method}`.");
+				}
 			}
 
 			foreach (var instruction in Body.Instructions) {
@@ -223,11 +223,13 @@ namespace Mono.Linker.Conditionals
 
 			void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
 			{
+				if (target == null)
+					return;
 				var block = EnsureBlock (target);
 				if (block.Type == BasicBlockType.Normal)
 					block.Type = type;
 				else if (block.Type != type)
-					throw new MartinTestException ();
+					throw DebugHelpers.AssertFailUnexpected (Method, block, type);
 				block.ExceptionHandlers.Add (handler);
 				block.AddJumpOrigin (new JumpOrigin (block, handler));
 			}
@@ -243,11 +245,9 @@ namespace Mono.Linker.Conditionals
 			return block;
 		}
 
-		internal void EnsureBlock (BasicBlock current, Instruction origin, Instruction target)
+		internal void AddJumpOrigin (BasicBlock current, Instruction origin, Instruction target)
 		{
-			if (!_bb_by_instruction.ContainsKey (target))
-				throw new MartinTestException ();
-			var block = EnsureBlock (target);
+			var block = _bb_by_instruction [target];
 			block.AddJumpOrigin (new JumpOrigin (block, current, origin));
 		}
 
