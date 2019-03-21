@@ -39,11 +39,61 @@ namespace Mono.Linker.Conditionals
 
 		public BasicBlockList BlockList => Scanner.BlockList;
 
+		public MethodDefinition Method => Scanner.Method;
+
 		public MethodBody Body => Scanner.Body;
 
 		public CodeRewriter (BasicBlockScanner scanner)
 		{
 			Scanner = scanner;
+		}
+
+		/*
+		 * The block @block contains a linker conditional that resolves into the
+		 * boolean constant @condition.  There are @stackDepth extra values on the
+		 * stack and the block ends with a branch instruction.
+		 *
+		 * If @condition is true, then we replace the branch with a direct jump.
+		 *
+		 * If @condition is false, then we remove the branch.
+		 *
+		 * In either case, we need to make sure to pop the extra @stackDepth values
+		 * off the stack.
+		 *
+		 */
+
+		public void ReplaceWithBranch (ref BasicBlock block, int stackDepth, bool condition)
+		{
+			if (!CecilHelper.IsBranch (block.BranchType))
+				throw new NotSupportedException ($"{nameof (ReplaceWithBranch)} used on non-branch block.");
+
+			Instruction branch = null;
+			if (condition)
+				branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
+
+			ReplaceWithInstruction (ref block, stackDepth, branch);
+		}
+
+		/*
+		 * Replace block @block with a boolean constant @constant, optionally popping
+		 * @stackDepth extra values off the stack.
+		 */
+		public void ReplaceWithConstant (ref BasicBlock block, int stackDepth, bool constant)
+		{
+			var instruction = Instruction.Create (constant ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+
+			switch (block.BranchType) {
+			case BranchType.None:
+				ReplaceWithInstruction (ref block, stackDepth, instruction);
+				break;
+			case BranchType.Return:
+				// Rewrite as constant, then put back the return
+				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, instruction);
+				BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
+				break;
+			default:
+				throw new NotSupportedException ($"{nameof (ReplaceWithConstant)} called on unsupported block type `{block.BranchType}`.");
+			}
 		}
 
 		/*

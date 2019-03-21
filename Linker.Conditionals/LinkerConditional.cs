@@ -58,63 +58,19 @@ namespace Mono.Linker.Conditionals
 
 			switch (block.BranchType) {
 			case BranchType.False:
-				RewriteBranch (ref block, stackDepth, !condition);
+				Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, !condition);
 				break;
 			case BranchType.True:
-				RewriteBranch (ref block, stackDepth, condition);
+				Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, condition);
 				break;
 			case BranchType.None:
-				RewriteAsConstant (ref block, stackDepth, condition);
-				break;
 			case BranchType.Return:
-				RewriteReturn (ref block, stackDepth, condition);
+				Scanner.Rewriter.ReplaceWithConstant (ref block, stackDepth, condition);
 				break;
 			default:
 				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
 			}
 		}
-
-		void RewriteReturn (ref BasicBlock block, int stackDepth, bool condition)
-		{
-			if (block.LastInstruction.OpCode.Code != Code.Ret)
-				throw new NotSupportedException ();
-
-			// Rewrite as constant, then put back the return
-			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, constant);
-			BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
-		}
-
-		void RewriteBranch (ref BasicBlock block, int stackDepth, bool condition)
-		{
-			/*
-			 * If the instruction immediately following the conditional call is a
-			 * conditional branch, then we can resolve the conditional and do not
-			 * need to load the boolean conditional value onto the stack.
-			 */
-
-			Instruction branch = null;
-
-			if (condition) {
-				/*
-				 * Replace with direct jump.  Not that ReplaceWithInstruction() will take
-				 * care of popping extra values off the stack if needed.
-				 */
-				branch = Instruction.Create (OpCodes.Br, (Instruction)block.LastInstruction.Operand);
-			}
-
-			Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, branch);
-		}
-
-		void RewriteAsConstant (ref BasicBlock block, int stackDepth, bool condition)
-		{
-			/*
-			 * Replace the entire block with a constant.
-			 */
-			var constant = Instruction.Create (condition ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-			Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, constant);
-		}
-
 
 		public static bool Scan (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, Instruction instruction)
 		{
