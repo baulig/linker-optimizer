@@ -26,6 +26,7 @@
 
 		<features>
 			<feature name="remoting" enabled="false" />
+			<feature name="globalization" enabled="false" />
 		</features>
 	</martin>
 </linker>

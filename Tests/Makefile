@@ -9,7 +9,7 @@ LINKER_OUTPUT := output
 PROFILE_PATH := $(abspath $(topdir)/class/lib/$(PROFILE_DIRECTORY))
 XUNIT_PATH := $(abspath $(topdir)/..)/external/xunit-binaries
 LINKER = MONO_PATH=$(topdir)/class/lib/$(BUILD_TOOLS_PROFILE) $(RUNTIME) $(RUNTIME_FLAGS) --debug $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/monolinker.exe -out $(LINKER_OUTPUT) -b true -d $(PROFILE_PATH)
-LINKER_DEFAULT = $(LINKER) -c link -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre
+LINKER_DEFAULT = $(LINKER) -c link -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre --exclude-feature security --exclude-feature globalization
 LINKER_CORLIB_TEST = $(LINKER) -c copy -p link mscorlib -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre
 TEST_EXEC = MONO_PATH=$(LINKER_OUTPUT) $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot
 NUNIT_ARGS := -exclude=NotOnMac,MacNotWorking,ReflectionEmit,NotWorking,CAS
@@ -52,7 +52,9 @@ TEST_CASES := \
 	test-flow-analysis-2.cs \
 	test-flow-analysis-3.cs \
 	test-flow-analysis-4.cs \
-	test-globalization-1.cs
+	test-globalization-1.cs \
+	test-security-1.cs \
+	test-remoting-1.cs
 
 BROKEN_TESTS :=
 
