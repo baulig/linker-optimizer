@@ -5,8 +5,12 @@
 
 		<debug>
 			<type name="SynchronizationAttribute" action="fail" />
-			<!-- <type fullname="System.Threading.WaitHandle" action="debug" /> -->
-			<method substring="System.Threading.WaitHandle::WaitOneNative" action="debug" />
+			<!-- this one has a preserve entry -->
+			<!-- <type fullname="System.Runtime.Remoting.RemotingServices" action="fail" /> -->
+			<type fullname="System.Runtime.Serialization.FormatterServices" action="fail" />
+			<type fullname="System.Runtime.Serialization.Formatters.Binary.ObjectReader" action="fail" />
+			<method substring="System.Runtime.Serialization.FormatterServices::GetSafeUninitializedObject" action="fail" />
+			<method substring="System.Runtime.Serialization.Formatters.Binary.BinaryFormatter::Deserialize" action="fail" />
 		</debug>
 
 		<features>
