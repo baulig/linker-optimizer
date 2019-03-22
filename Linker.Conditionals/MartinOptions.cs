@@ -56,33 +56,14 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
-		public IList<string> DebugTypes {
-			get;
-		}
-
-		public IList<string> DebugMethods {
-			get;
-		}
-
-		[Obsolete ("KILL")]
-		public IList<string> FailOnTypes {
-			get;
-		}
-
-		public IList<string> FailOnMethods {
-			get;
-		}
-
 		readonly List<TypeEntry> _type_actions;
+		readonly List<MethodEntry> _method_actions;
 
 		public MartinOptions ()
 		{
 			NoConditionalRedefinition = true;
-			DebugTypes = new List<string> ();
-			DebugMethods = new List<string> ();
-			FailOnTypes = new List<string> ();
-			FailOnMethods = new List<string> ();
 			_type_actions = new List<TypeEntry> ();
+			_method_actions = new List<MethodEntry> ();
 		}
 
 		bool DontDebugThis (TypeDefinition type)
@@ -112,7 +93,7 @@ namespace Mono.Linker.Conditionals
 			if (type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin"))
 				return true;
 
-			return DebugTypes.Any (t => type.FullName.Contains (t));
+			return _type_actions.Any (t => t.Matches (type, TypeAction.Debug));
 		}
 
 		public bool EnableDebugging (MethodDefinition method)
@@ -126,7 +107,7 @@ namespace Mono.Linker.Conditionals
 			if (method.FullName.Contains ("Martin"))
 				return true;
 
-			return DebugMethods.Any (m => method.FullName.Contains (m));
+			return _method_actions.Any (e => e.Matches (method, MethodAction.Debug));
 		}
 
 		public bool FailOnMethod (MethodDefinition method)
@@ -134,7 +115,7 @@ namespace Mono.Linker.Conditionals
 			if (HasTypeEntry (method.DeclaringType, TypeAction.Fail))
 				return true;
 
-			return FailOnMethods.Any (m => method.FullName.Contains (m));
+			return _method_actions.Any (e => e.Matches (method, MethodAction.Fail));
 		}
 
 		public void CheckFailList (MartinContext context, TypeDefinition type, string original = null)
@@ -161,7 +142,7 @@ namespace Mono.Linker.Conditionals
 		{
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
-			var fail = FailOnMethods.FirstOrDefault (m => method.FullName.Contains (m));
+			var fail = _method_actions.FirstOrDefault (e => e.Matches (method, MethodAction.Fail));
 			if (fail == null)
 				return;
 
@@ -173,9 +154,14 @@ namespace Mono.Linker.Conditionals
 			throw new NotSupportedException (message);
 		}
 
-		public void AddTypeEntry (string name, bool full, TypeAction action)
+		public void AddTypeEntry (string name, MatchKind match, TypeAction action)
 		{
-			_type_actions.Add (new TypeEntry (name, full, action));
+			_type_actions.Add (new TypeEntry (name, match, action));
+		}
+
+		public void AddMethodEntry (string name, MatchKind match, MethodAction action)
+		{
+			_method_actions.Add (new MethodEntry (name, match, action));
 		}
 
 		public bool HasTypeEntry (TypeDefinition type, TypeAction action)
@@ -217,13 +203,28 @@ namespace Mono.Linker.Conditionals
 			Mark
 		}
 
+		public enum MethodAction
+		{
+			None,
+			Debug,
+			Fail,
+			Mark
+		}
+
+		public enum MatchKind
+		{
+			Name,
+			FullName,
+			Substring
+		}
+
 		public class TypeEntry
 		{
 			public string Name {
 				get;
 			}
 
-			public bool MatchFull {
+			public MatchKind Match {
 				get;
 			}
 
@@ -231,20 +232,71 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
-			public bool Matches (TypeDefinition type) => MatchFull ? type.FullName == Name : type.Name == Name;
+			public bool Matches (TypeDefinition type)
+			{
+				switch (Match) {
+				case MatchKind.FullName:
+					return type.FullName == Name;
+				case MatchKind.Substring:
+					return type.FullName.Contains (Name);
+				default:
+					return type.Name == Name;
+				}
+			}
 
 			public bool Matches (TypeDefinition type, TypeAction action) => Action == action && Matches (type);
 
-			public TypeEntry (string name, bool full, TypeAction action)
+			public TypeEntry (string name, MatchKind match, TypeAction action)
 			{
 				Name = name;
-				MatchFull = full;
+				Match = match;
 				Action = action;
 			}
 
 			public override string ToString ()
 			{
-				return $"[{GetType ().Name} {Name}:{MatchFull}:{Action}]";
+				return $"[{GetType ().Name} {Name}:{Match}:{Action}]";
+			}
+		}
+
+		public class MethodEntry
+		{
+			public string Name {
+				get;
+			}
+
+			public MatchKind Match {
+				get;
+			}
+
+			public MethodAction Action {
+				get;
+			}
+
+			public bool Matches (MethodDefinition method)
+			{
+				switch (Match) {
+				case MatchKind.FullName:
+					return method.FullName == Name;
+				case MatchKind.Substring:
+					return method.FullName.Contains (Name);
+				default:
+					return method.Name == Name;
+				}
+			}
+
+			public bool Matches (MethodDefinition method, MethodAction action) => Action == action && Matches (method);
+
+			public MethodEntry (string name, MatchKind match, MethodAction action)
+			{
+				Name = name;
+				Match = match;
+				Action = action;
+			}
+
+			public override string ToString ()
+			{
+				return $"[{GetType ().Name} {Name}:{Match}:{Action}]";
 			}
 		}
 	}

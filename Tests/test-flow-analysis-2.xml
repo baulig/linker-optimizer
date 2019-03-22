@@ -4,8 +4,7 @@
 		<options all-modules="false" analyze-all="true" preprocess="false" />
 
 		<debug>
-			<break-on method="ArrayElementsHaveSpace" />
+			<method substring="ArrayElementsHaveSpace" action="debug"/>
 		</debug>
-
 	</martin>
 </linker>

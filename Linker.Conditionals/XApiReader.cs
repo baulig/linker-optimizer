@@ -46,39 +46,10 @@ namespace Mono.Linker
 			if (options != null)
 				OnOptions (_context.MartinContext.Options, options);
 
-			ProcessChildren (root, "debug/break-on", child => {
-				var type_name = GetAttribute (child, "type");
-				var method_name = GetAttribute (child, "method");
-				if (string.IsNullOrEmpty (type_name))
-					type_name = null;
-				if (string.IsNullOrEmpty (method_name))
-					method_name = null;
-				if ((type_name == null && method_name == null) || (type_name != null && method_name != null))
-					throw new NotSupportedException ($"XML node `{child}` needs either `type` or `method` argument.");
-				if (type_name != null)
-					_context.MartinContext.Options.DebugTypes.Add (type_name);
-				if (method_name != null)
-					_context.MartinContext.Options.DebugMethods.Add (method_name);
-			});
-
-			ProcessChildren (root, "debug/fail-on", child => {
-				var type_name = GetAttribute (child, "type");
-				var method_name = GetAttribute (child, "method");
-				if (string.IsNullOrEmpty (type_name))
-					type_name = null;
-				if (string.IsNullOrEmpty (method_name))
-					method_name = null;
-				if ((type_name == null && method_name == null) || (type_name != null && method_name != null))
-					throw new NotSupportedException ($"XML node `{child}` needs either `type` or `method` argument.");
-				if (type_name != null)
-					_context.MartinContext.Options.FailOnTypes.Add (type_name);
-				if (method_name != null)
-					_context.MartinContext.Options.FailOnMethods.Add (method_name);
-			});
-
 			ProcessChildren (root, "features/feature", OnFeature);
 
 			ProcessChildren (root, "debug/type", OnDebugType);
+			ProcessChildren (root, "debug/method", OnDebugMethod);
 		}
 
 		void OnOptions (MartinOptions options, XPathNavigator nav)
@@ -130,10 +101,47 @@ namespace Mono.Linker
 			return value;
 		}
 
+		bool GetName (XPathNavigator nav, out string name, out MartinOptions.MatchKind match)
+		{
+			name = GetAttribute (nav, "name");
+			var fullname = GetAttribute (nav, "fullname");
+			var substring = GetAttribute (nav, "substring");
+
+			if (!string.IsNullOrEmpty (fullname)) {
+				match = MartinOptions.MatchKind.FullName;
+				if (!string.IsNullOrEmpty (name) || !string.IsNullOrEmpty (substring))
+					return false;
+				name = fullname;
+			} else if (!string.IsNullOrEmpty (name)) {
+				match = MartinOptions.MatchKind.Name;
+				if (!string.IsNullOrEmpty (fullname) || !string.IsNullOrEmpty (substring))
+					return false;
+			} else if (!string.IsNullOrEmpty (substring)) {
+				match = MartinOptions.MatchKind.Substring;
+				if (!string.IsNullOrEmpty (name) || !string.IsNullOrEmpty (fullname))
+					return false;
+				name = substring;
+			} else {
+				match = MartinOptions.MatchKind.Name;
+				return false;
+			}
+
+			return true;
+		}
+
+		Exception ThrowMissingActionAttribute (XPathNavigator nav)
+		{
+			_context.MartinContext.LogMessage (MessageImportance.High, $"Missing `action` attribute in {nav.OuterXml}.");
+			throw new NotSupportedException ($"Missing `action` attribute in {nav.OuterXml}.");
+		}
+
 		void OnDebugType (XPathNavigator nav)
 		{
-			var name = GetAttribute (nav, "name");
-			var fullname = GetAttribute (nav, "fullname");
+			if (!GetName (nav, out var name, out var match)) {
+				_context.MartinContext.LogMessage (MessageImportance.High, $"Ambiguous name in type entry `{nav.OuterXml}`.");
+				throw new NotSupportedException ($"Ambiguous name in type entry `{nav.OuterXml}`.");
+			}
+
 			var action = GetAttribute (nav, "action");
 			if (string.IsNullOrEmpty (action)) {
 				_context.MartinContext.LogMessage (MessageImportance.High, $"Missing `action` attribute in {nav.OuterXml}.");
@@ -145,15 +153,32 @@ namespace Mono.Linker
 				throw new NotSupportedException ($"Invalid `action` attribute in {nav.OuterXml}.");
 			}
 
-			bool full = false;
-			if (!string.IsNullOrEmpty (fullname)) {
-				name = fullname;
-				full = true;
+			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {name} {match} {typeAction}");
+
+			_context.MartinContext.Options.AddTypeEntry (name, match, typeAction);
+		}
+
+		void OnDebugMethod (XPathNavigator nav)
+		{
+			if (!GetName (nav, out var name, out var match)) {
+				_context.MartinContext.LogMessage (MessageImportance.High, $"Ambiguous name in method entry `{nav.OuterXml}`.");
+				throw new NotSupportedException ($"Ambiguous name in method entry `{nav.OuterXml}`.");
 			}
 
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {name} {typeAction}");
+			var action = GetAttribute (nav, "action");
+			if (string.IsNullOrEmpty (action)) {
+				_context.MartinContext.LogMessage (MessageImportance.High, $"Missing `action` attribute in {nav.OuterXml}.");
+				throw new NotSupportedException ($"Missing `action` attribute in {nav.OuterXml}.");
+			}
 
-			_context.MartinContext.Options.AddTypeEntry (name, full, typeAction);
+			if (!Enum.TryParse<MartinOptions.MethodAction> (action, true, out var methodAction)) {
+				_context.MartinContext.LogMessage (MessageImportance.High, $"Invalid `action` attribute in {nav.OuterXml}.");
+				throw new NotSupportedException ($"Invalid `action` attribute in {nav.OuterXml}.");
+			}
+
+			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {match} {methodAction}");
+
+			_context.MartinContext.Options.AddMethodEntry (name, match, methodAction);
 		}
 	}
 }

@@ -7,19 +7,14 @@
 			<type name="HebrewNumber" action="fail" />
 			<type name="System.Reflection.Emit" action="fail" />
 
-			<break-on method="System.DateTimeParse::TryParse" />
-			<break-on method="DateTimeParse::MatchHebrewDigits" />
-			<break-on method="DateTimeFormatInfo::TryParseHebrewNumber" />
+			<method substring="System.DateTimeParse::TryParse" action="debug"/>
+			<method substring="DateTimeParse::MatchHebrewDigits" action="debug"/>
+			<method substring="DateTimeFormatInfo::TryParseHebrewNumber" action="debug"/>
 		</debug>
 
 		<features>
 			<feature name="globalization" enabled="false" />
 			<feature name="sre" enabled="false" />
 		</features>
-
-		<preprocess>
-			<type fullname="System.Globalization.ChineseLunisolarCalendar" mark="true" />
-			<type fullname="System.Globalization.Calendar" mark="true" />
-		</preprocess>
 	</martin>
 </linker>
