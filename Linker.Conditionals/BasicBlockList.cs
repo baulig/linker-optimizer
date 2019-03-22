@@ -185,7 +185,7 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
-		public void Initialize ()
+		public bool Initialize ()
 		{
 			_bb_by_instruction.Clear ();
 			_block_list.Clear ();
@@ -204,7 +204,8 @@ namespace Mono.Linker.Conditionals
 					EnsureExceptionBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
 					break;
 				default:
-					throw new NotSupportedException ($"Unknown exception type `{handler.HandlerType}` in `{Scanner.Method}`.");
+					Scanner.Context.LogMessage (MessageImportance.High, $"Unknown exception type `{handler.HandlerType}` in `{Scanner.Method}`.");
+					return false;
 				}
 			}
 
@@ -220,6 +221,8 @@ namespace Mono.Linker.Conditionals
 					break;
 				}
 			}
+
+			return true;
 
 			void EnsureExceptionBlock (BasicBlockType type, Instruction target, ExceptionHandler handler)
 			{

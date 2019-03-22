@@ -127,7 +127,8 @@ namespace Mono.Linker.Conditionals
 			if (DebugLevel > 0)
 				Context.Debug ();
 
-			BlockList.Initialize ();
+			if (!BlockList.Initialize ())
+				return false;
 
 			for (int i = 0; i < Method.Body.Instructions.Count; i++) {
 				var instruction = Method.Body.Instructions [i];
