@@ -4,8 +4,9 @@ include ../../../../build/rules.make
 
 # LINKER_PROFILE_OPTIONS += --exclude-feature remoting --exclude-feature com --exclude-feature etw
 
+abs_topdir := $(abspath $(topdir))
 LINKER_OUTPUT := output
-PROFILE_PATH = $(topdir)/class/lib/$(PROFILE_DIRECTORY)
+PROFILE_PATH := $(abspath $(topdir)/class/lib/$(PROFILE_DIRECTORY))
 LINKER = MONO_PATH=$(topdir)/class/lib/$(BUILD_TOOLS_PROFILE) $(RUNTIME) $(RUNTIME_FLAGS) --debug $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/monolinker.exe -c link -out $(LINKER_OUTPUT) -b true -d $(PROFILE_PATH)
 LINKER_DEFAULT = $(LINKER) -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre
 TEST_EXEC = MONO_PATH=$(LINKER_OUTPUT) $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot
@@ -116,6 +117,18 @@ iltest-%: iltest-%.exe build
 	@ls -lR $(LINKER_OUTPUT)
 	(cd $(LINKER_OUTPUT); MONO_PATH=. $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot ./$(@F).exe)
 	#@rm -rf $(LINKER_OUTPUT)
+
+corlib-test:
+	@echo RUN TEST $@
+#	@rm -rf $(LINKER_OUTPUT)
+#	@mkdir $(LINKER_OUTPUT)
+	ls -la $(PROFILE_PATH)/tests/*_test.dll
+	ls -la $(PROFILE_PATH)/nunit*
+#	$(LINKER_DEFAULT) --dump-dependencies --martin -a $(PROFILE_PATH)/tests/net_4_x_corlib_test.dll
+	#@ls -lR $(LINKER_OUTPUT)
+	@echo $(PROFILE_PATH)
+	(cd $(LINKER_OUTPUT); MONO_PATH=$(PROFILE_PATH):$(abs_topdir)/external/xunit-binaries:. $(RUNTIME) $(RUNTIME_FLAGS) --debug $(PROFILE_PATH)/nunit-lite-console.exe net_4_x_corlib_test.dll -exclude=NotOnMac,MacNotWorking,NotWorking,CAS)
+
 
 build::
 	$(MAKE) PROFILE=build -C ../..
