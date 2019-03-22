@@ -52,6 +52,10 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public bool ReportSize {
+			get; set;
+		}
+
 		public IList<string> DebugTypes {
 			get;
 		}
@@ -73,7 +77,6 @@ namespace Mono.Linker.Conditionals
 		public MartinOptions ()
 		{
 			NoConditionalRedefinition = true;
-			IgnoreResolutionErrors = true;
 			DebugTypes = new List<string> ();
 			DebugMethods = new List<string> ();
 			FailOnTypes = new List<string> ();

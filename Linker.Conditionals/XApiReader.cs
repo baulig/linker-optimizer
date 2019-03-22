@@ -83,22 +83,23 @@ namespace Mono.Linker
 
 		void OnOptions (MartinOptions options, XPathNavigator nav)
 		{
-			var all_modules = nav.GetAttribute ("all-modules", string.Empty);
-			Console.Error.WriteLine (all_modules);
-			if (!string.IsNullOrEmpty (all_modules))
-				options.ScanAllModules = bool.Parse (all_modules);
+			if (GetBoolAttribute (nav, "all-modules", out var value))
+				options.ScanAllModules = value;
 
-			var analyze_all = nav.GetAttribute ("analyze-all", string.Empty);
-			if (!string.IsNullOrEmpty (analyze_all))
-				options.AnalyzeAll = bool.Parse (analyze_all);
+			if (GetBoolAttribute (nav, "analyze-all", out value))
+				options.AnalyzeAll = value;
 
-			var preprocess = nav.GetAttribute ("preprocess", string.Empty);
-			if (!string.IsNullOrEmpty (preprocess))
-				options.Preprocess = bool.Parse (preprocess);
+			if (GetBoolAttribute (nav, "preprocess", out value))
+				options.Preprocess = value;
 
-			var no_conditional_redefinition = nav.GetAttribute ("no_conditional_redefinition", string.Empty);
-			if (!string.IsNullOrEmpty (no_conditional_redefinition))
-				options.NoConditionalRedefinition = bool.Parse (no_conditional_redefinition);
+			if (GetBoolAttribute (nav, "no-conditional-redefinition", out value))
+				options.NoConditionalRedefinition = value;
+
+			if (GetBoolAttribute (nav, "ignore-resolution-errors", out value))
+				options.IgnoreResolutionErrors = value;
+
+			if (GetBoolAttribute (nav, "report-size", out value))
+				options.ReportSize = value;
 		}
 
 		void OnFeature (XPathNavigator nav)

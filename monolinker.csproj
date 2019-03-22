@@ -123,6 +123,7 @@
     <Compile Include="Linker.Conditionals\CodeRewriter.cs" />
     <Compile Include="Linker.Conditionals\DebugHelpers.cs" />
     <Compile Include="Linker.Conditionals\MartinAssertException.cs" />
+    <Compile Include="Linker.Conditionals\SizeReportStep.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

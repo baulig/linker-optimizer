@@ -64,6 +64,7 @@ namespace Mono.Linker.Conditionals
 			context.Pipeline.AddStepAfter (typeof (InitializeStep), new PreprocessStep ());
 			context.Pipeline.AddStepBefore (typeof (MarkStep), new MartinTestStep ());
 			context.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep ());
+			context.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep ());
 		}
 
 		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";
