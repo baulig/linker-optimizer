@@ -64,6 +64,7 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		[Obsolete ("KILL")]
 		public IList<string> FailOnTypes {
 			get;
 		}
@@ -72,7 +73,7 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		List<TypeEntry> _type_actions;
+		readonly List<TypeEntry> _type_actions;
 
 		public MartinOptions ()
 		{
@@ -128,17 +129,9 @@ namespace Mono.Linker.Conditionals
 			return DebugMethods.Any (m => method.FullName.Contains (m));
 		}
 
-		public bool FailOnType (TypeDefinition type)
-		{
-			if (type.DeclaringType != null)
-				return FailOnType (type.DeclaringType);
-
-			return FailOnTypes.Any (t => type.FullName.Contains (t));
-		}
-
 		public bool FailOnMethod (MethodDefinition method)
 		{
-			if (FailOnType (method.DeclaringType))
+			if (HasTypeEntry (method.DeclaringType, TypeAction.Fail))
 				return true;
 
 			return FailOnMethods.Any (m => method.FullName.Contains (m));
@@ -151,7 +144,7 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
-			var fail = FailOnTypes.FirstOrDefault (t => type.FullName.Contains (t));
+			var fail = _type_actions.FirstOrDefault (e => e.Matches (type, TypeAction.Fail));
 			if (fail == null)
 				return;
 
@@ -183,6 +176,13 @@ namespace Mono.Linker.Conditionals
 		public void AddTypeEntry (string name, bool full, TypeAction action)
 		{
 			_type_actions.Add (new TypeEntry (name, full, action));
+		}
+
+		public bool HasTypeEntry (TypeDefinition type, TypeAction action)
+		{
+			if (type.DeclaringType != null)
+				return HasTypeEntry (type.DeclaringType, action);
+			return _type_actions.Any (e => e.Matches (type, action));
 		}
 
 		public void ProcessTypeEntries (TypeDefinition type, Action<TypeAction> action)
@@ -232,6 +232,8 @@ namespace Mono.Linker.Conditionals
 			}
 
 			public bool Matches (TypeDefinition type) => MatchFull ? type.FullName == Name : type.Name == Name;
+
+			public bool Matches (TypeDefinition type, TypeAction action) => Action == action && Matches (type);
 
 			public TypeEntry (string name, bool full, TypeAction action)
 			{

@@ -98,11 +98,6 @@ namespace Mono.Linker.Conditionals
 				Context.MartinContext.Debug ();
 				break;
 
-			case MartinOptions.TypeAction.Fail:
-				Context.MartinContext.LogMessage (MessageImportance.High, $"Fail type: {type} {action}");
-				Context.MartinContext.Debug ();
-				throw new NotSupportedException ($"Type `{type}` is on fail-list!");
-
 			case MartinOptions.TypeAction.Mark:
 				Context.Annotations.Mark (type);
 				break;

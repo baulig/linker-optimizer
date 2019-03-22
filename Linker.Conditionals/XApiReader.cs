@@ -78,7 +78,7 @@ namespace Mono.Linker
 
 			ProcessChildren (root, "features/feature", OnFeature);
 
-			ProcessChildren (root, "preprocess/type", OnPreprocessType);
+			ProcessChildren (root, "debug/type", OnDebugType);
 		}
 
 		void OnOptions (MartinOptions options, XPathNavigator nav)
@@ -130,10 +130,20 @@ namespace Mono.Linker
 			return value;
 		}
 
-		void OnPreprocessType (XPathNavigator nav)
+		void OnDebugType (XPathNavigator nav)
 		{
 			var name = GetAttribute (nav, "name");
 			var fullname = GetAttribute (nav, "fullname");
+			var action = GetAttribute (nav, "action");
+			if (string.IsNullOrEmpty (action)) {
+				_context.MartinContext.LogMessage (MessageImportance.High, $"Missing `action` attribute in {nav.OuterXml}.");
+				throw new NotSupportedException ($"Missing `action` attribute in {nav.OuterXml}.");
+			}
+
+			if (!Enum.TryParse<MartinOptions.TypeAction> (action, true, out var typeAction)) {
+				_context.MartinContext.LogMessage (MessageImportance.High, $"Invalid `action` attribute in {nav.OuterXml}.");
+				throw new NotSupportedException ($"Invalid `action` attribute in {nav.OuterXml}.");
+			}
 
 			bool full = false;
 			if (!string.IsNullOrEmpty (fullname)) {
@@ -141,14 +151,9 @@ namespace Mono.Linker
 				full = true;
 			}
 
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {name} {full}");
+			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {name} {typeAction}");
 
-			if (GetBoolAttribute (nav, "fail"))
-				_context.MartinContext.Options.AddTypeEntry (name, full, MartinOptions.TypeAction.Fail);
-			if (GetBoolAttribute (nav, "debug"))
-				_context.MartinContext.Options.AddTypeEntry (name, full, MartinOptions.TypeAction.Debug);
-			if (GetBoolAttribute (nav, "mark"))
-				_context.MartinContext.Options.AddTypeEntry (name, full, MartinOptions.TypeAction.Mark);
+			_context.MartinContext.Options.AddTypeEntry (name, full, typeAction);
 		}
 	}
 }
