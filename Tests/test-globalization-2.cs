@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Runtime.CompilerServices;
 
 namespace Martin.LinkerTest
@@ -15,19 +16,23 @@ namespace Martin.LinkerTest
 			if (now.ToString () != parsed.ToString ())
 				throw new AssertionException ();
 
+			var ascii = Encoding.ASCII.GetBytes ("Hello");
+			var utf8 = Encoding.UTF8.GetBytes ("Hello");
+			var utf32 = Encoding.UTF32.GetBytes ("Hello");
+			Console.WriteLine ($"ENCODED: {ascii.Length} {utf8.Length} {utf32.Length}");
+
+			try {
+				Encoding.GetEncoding ("ascii");
+				throw new AssertionException ("Encoding.GetEncoding() should throw!");
+			} catch (PlatformNotSupportedException) { }
+
 			Test ();
 		}
 
 		static void Test ()
 		{
-			if (MonoLinkerSupport.IsTypeAvailable ("Mono.Globalization.Unicode.SimpleCollator"))
-				throw new AssertionException ("Mono.Globalization.Unicode.SimpleCollator");
-			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.JapaneseCalendar"))
-				throw new AssertionException ("System.Globalization.JapaneseCalendar");
-			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.TaiwanCalendar"))
-				throw new AssertionException ("System.Globalization.TaiwanCalendar");
-			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.HebrewNumber"))
-				throw new AssertionException ("System.Globalization.HebrewNumber");
+			if (MonoLinkerSupport.IsTypeAvailable ("System.Globalization.EncodingTable"))
+				throw new AssertionException ("System.Globalization.EncodingTable");
 		}
 	}
 }

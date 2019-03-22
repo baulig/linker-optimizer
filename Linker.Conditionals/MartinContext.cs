@@ -156,6 +156,10 @@ namespace Mono.Linker.Conditionals
 				return MonoLinkerFeature.Remoting;
 			case "globalization":
 				return MonoLinkerFeature.Globalization;
+			case "encoding":
+				return MonoLinkerFeature.Encoding;
+			case "security":
+				return MonoLinkerFeature.Security;
 			case "martin":
 				return MonoLinkerFeature.Martin;
 			default:

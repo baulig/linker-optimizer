@@ -33,6 +33,8 @@ namespace Mono.Linker.Conditionals
 		ReflectionEmit,
 		Remoting,
 		Globalization,
+		Encoding,
+		Security,
 		Martin
 	}
 }

@@ -8,6 +8,8 @@ namespace System.Runtime.CompilerServices
 		ReflectionEmit,
 		Remoting,
 		Globalization,
+		Encoding,
+		Security,
 		Martin
 	}
 }
