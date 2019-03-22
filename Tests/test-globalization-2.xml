@@ -17,6 +17,7 @@
 
 		<preprocess>
 			<type fullname="System.Globalization.ChineseLunisolarCalendar" mark="true" />
+			<type fullname="System.Globalization.Calendar" mark="true" />
 		</preprocess>
 	</martin>
 </linker>

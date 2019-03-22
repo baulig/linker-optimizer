@@ -77,6 +77,8 @@ namespace Mono.Linker
 			});
 
 			ProcessChildren (root, "features/feature", OnFeature);
+
+			ProcessChildren (root, "preprocess/type", OnPreprocessType);
 		}
 
 		void OnOptions (MartinOptions options, XPathNavigator nav)
@@ -109,6 +111,43 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"FEATURE FROM XML: {name} {enabled}");
 			_context.MartinContext.SetFeatureEnabled (name, enabled);
+		}
+
+		bool GetBoolAttribute (XPathNavigator nav, string name, out bool value)
+		{
+			var attr = GetAttribute (nav, name);
+			if (!string.IsNullOrEmpty (attr) && bool.TryParse (attr, out value))
+				return true;
+			value = false;
+			return false;
+		}
+
+		bool GetBoolAttribute (XPathNavigator nav, string name)
+		{
+			if (!GetBoolAttribute (nav, name, out var value))
+				return false;
+			return value;
+		}
+
+		void OnPreprocessType (XPathNavigator nav)
+		{
+			var name = GetAttribute (nav, "name");
+			var fullname = GetAttribute (nav, "fullname");
+
+			bool full = false;
+			if (!string.IsNullOrEmpty (fullname)) {
+				name = fullname;
+				full = true;
+			}
+
+			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {name} {full}");
+
+			if (GetBoolAttribute (nav, "fail"))
+				_context.MartinContext.Options.AddTypeEntry (name, full, MartinOptions.TypeAction.Fail);
+			if (GetBoolAttribute (nav, "debug"))
+				_context.MartinContext.Options.AddTypeEntry (name, full, MartinOptions.TypeAction.Debug);
+			if (GetBoolAttribute (nav, "mark"))
+				_context.MartinContext.Options.AddTypeEntry (name, full, MartinOptions.TypeAction.Mark);
 		}
 	}
 }

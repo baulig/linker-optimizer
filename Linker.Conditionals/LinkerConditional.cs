@@ -76,8 +76,12 @@ namespace Mono.Linker.Conditionals
 		{
 			var reference = (MethodReference)instruction.Operand;
 			var target = reference.Resolve ();
-			if (target == null)
+			if (target == null) {
+				scanner.Context.LogMessage (MessageImportance.High, $"Cannot resolve call target: {CecilHelper.Format (instruction)}");
+				if (scanner.Context.Options.IgnoreResolutionErrors)
+					return false;
 				throw new ResolutionException (reference);
+			}
 			scanner.LogDebug (2, $"    CALL: {target}");
 
 			if (instruction.Operand is GenericInstanceMethod genericInstance) {

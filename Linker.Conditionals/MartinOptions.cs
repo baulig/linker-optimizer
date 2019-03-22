@@ -48,6 +48,10 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public bool IgnoreResolutionErrors {
+			get; set;
+		}
+
 		public IList<string> DebugTypes {
 			get;
 		}
@@ -64,13 +68,17 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		List<TypeEntry> _type_actions;
+
 		public MartinOptions ()
 		{
 			NoConditionalRedefinition = true;
+			IgnoreResolutionErrors = true;
 			DebugTypes = new List<string> ();
 			DebugMethods = new List<string> ();
 			FailOnTypes = new List<string> ();
 			FailOnMethods = new List<string> ();
+			_type_actions = new List<TypeEntry> ();
 		}
 
 		bool DontDebugThis (TypeDefinition type)
@@ -167,6 +175,72 @@ namespace Mono.Linker.Conditionals
 			context.Context.Tracer.Dump ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			throw new NotSupportedException (message);
+		}
+
+		public void AddTypeEntry (string name, bool full, TypeAction action)
+		{
+			_type_actions.Add (new TypeEntry (name, full, action));
+		}
+
+		public void ProcessTypeEntries (TypeDefinition type, Action<TypeAction> action)
+		{
+			if (type.DeclaringType != null) {
+				ProcessTypeEntries (type.DeclaringType, action);
+				return;
+			}
+			foreach (var entry in _type_actions) {
+				if (entry.Matches (type))
+					action (entry.Action);
+			}
+		}
+
+		public void ProcessTypeEntries (TypeDefinition type, TypeAction filter, Action action)
+		{
+			if (type.DeclaringType != null) {
+				ProcessTypeEntries (type.DeclaringType, filter, action);
+				return;
+			}
+			foreach (var entry in _type_actions) {
+				if (entry.Action == filter && entry.Matches (type))
+					action ();
+			}
+		}
+
+		public enum TypeAction
+		{
+			None,
+			Debug,
+			Fail,
+			Mark
+		}
+
+		public class TypeEntry
+		{
+			public string Name {
+				get;
+			}
+
+			public bool MatchFull {
+				get;
+			}
+
+			public TypeAction Action {
+				get;
+			}
+
+			public bool Matches (TypeDefinition type) => MatchFull ? type.FullName == Name : type.Name == Name;
+
+			public TypeEntry (string name, bool full, TypeAction action)
+			{
+				Name = name;
+				MatchFull = full;
+				Action = action;
+			}
+
+			public override string ToString ()
+			{
+				return $"[{GetType ().Name} {Name}:{MatchFull}:{Action}]";
+			}
 		}
 	}
 }

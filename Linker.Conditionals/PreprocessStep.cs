@@ -47,6 +47,8 @@ namespace Mono.Linker.Conditionals
 
 		void ProcessType (TypeDefinition type)
 		{
+			Context.MartinContext.Options.ProcessTypeEntries (type, a => ProcessTypeActions (type, a));
+
 			if (type.HasNestedTypes) {
 				foreach (var nested in type.NestedTypes)
 					ProcessType (nested);
@@ -84,6 +86,27 @@ namespace Mono.Linker.Conditionals
 			Context.MartinContext.MarkAsConstantProperty (property, value);
 
 			Context.MartinContext.Debug ();
+		}
+
+		void ProcessTypeActions (TypeDefinition type, MartinOptions.TypeAction action)
+		{
+			Context.MartinContext.LogMessage (MessageImportance.Normal, $"Type action: {type} {action}");
+
+			switch (action) {
+			case MartinOptions.TypeAction.Debug:
+				Context.MartinContext.LogMessage (MessageImportance.High, $"Debug type: {type} {action}");
+				Context.MartinContext.Debug ();
+				break;
+
+			case MartinOptions.TypeAction.Fail:
+				Context.MartinContext.LogMessage (MessageImportance.High, $"Fail type: {type} {action}");
+				Context.MartinContext.Debug ();
+				throw new NotSupportedException ($"Type `{type}` is on fail-list!");
+
+			case MartinOptions.TypeAction.Mark:
+				Context.Annotations.Mark (type);
+				break;
+			}
 		}
 	}
 }
