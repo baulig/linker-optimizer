@@ -82,7 +82,7 @@ namespace Mono.Linker
 				enabled = true;
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"FEATURE FROM XML: {name} {enabled}");
-			_context.MartinContext.SetFeatureEnabled (name, enabled);
+			_context.MartinContext.Options.SetFeatureEnabled (name, enabled);
 		}
 
 		bool GetBoolAttribute (XPathNavigator nav, string name, out bool value)

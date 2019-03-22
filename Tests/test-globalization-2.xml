@@ -6,18 +6,11 @@
 		<debug>
 			<type name="HebrewNumber" action="fail" />
 			<type name="EncodingTable" action="fail" />
-
-			<type name="X509Helper" action="fail" />
-			<type name="X509Certificate" action="fail" />
-			<type name="DependencyInjector" action="fail" />
-			<type name="SystemDependencyProvider" action="fail" />
-			<method name="GetDefaultHostEvidence" action="fail" />
 		</debug>
 
 		<features>
 			<feature name="encoding" enabled="false" />
 			<feature name="globalization" enabled="false" />
-			<feature name="security" enabled="false" />
 		</features>
 	</martin>
 </linker>

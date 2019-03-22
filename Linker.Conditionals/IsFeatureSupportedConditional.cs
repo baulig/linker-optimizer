@@ -41,7 +41,7 @@ namespace Mono.Linker.Conditionals
 
 		public override void RewriteConditional (ref BasicBlock block)
 		{
-			var evaluated = Context.IsFeatureEnabled (Feature);
+			var evaluated = Context.Options.IsFeatureEnabled (Feature);
 			Scanner.LogDebug (1, $"REWRITE FEATURE CONDITIONAL: {Feature} {evaluated}");
 
 			RewriteConditional (ref block, 0, evaluated);

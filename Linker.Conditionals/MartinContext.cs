@@ -143,56 +143,8 @@ namespace Mono.Linker.Conditionals
 		internal void Debug ()
 		{ }
 
-		readonly Dictionary<MonoLinkerFeature, bool> enabled_features = new Dictionary<MonoLinkerFeature, bool> ();
 		readonly HashSet<TypeDefinition> conditional_types = new HashSet<TypeDefinition> ();
 		readonly Dictionary<MethodDefinition, bool> constant_properties = new Dictionary<MethodDefinition, bool> ();
-
-		static MonoLinkerFeature FeatureByName (string name)
-		{
-			switch (name.ToLowerInvariant ()) {
-			case "sre":
-				return MonoLinkerFeature.ReflectionEmit;
-			case "remoting":
-				return MonoLinkerFeature.Remoting;
-			case "globalization":
-				return MonoLinkerFeature.Globalization;
-			case "encoding":
-				return MonoLinkerFeature.Encoding;
-			case "security":
-				return MonoLinkerFeature.Security;
-			case "martin":
-				return MonoLinkerFeature.Martin;
-			default:
-				throw new NotSupportedException ($"Unknown linker feature `{name}`.");
-			}
-		}
-
-		static MonoLinkerFeature FeatureByIndex (int index)
-		{
-			if (index < 0 || index > (int)MonoLinkerFeature.Martin)
-				throw new NotSupportedException ($"Unknown feature {index}.");
-			return (MonoLinkerFeature)index;
-		}
-
-		public bool IsFeatureEnabled (int index)
-		{
-			var feature = FeatureByIndex (index);
-			if (enabled_features.TryGetValue (feature, out var value))
-				return value;
-			return false;
-		}
-
-		public void SetFeatureEnabled (int index, bool enabled)
-		{
-			var feature = FeatureByIndex (index);
-			enabled_features [feature] = enabled;
-		}
-
-		public void SetFeatureEnabled (string name, bool enabled)
-		{
-			var feature = FeatureByName (name);
-			enabled_features [feature] = enabled;
-		}
 
 		public bool IsConditionalTypeMarked (TypeDefinition type)
 		{

@@ -58,12 +58,64 @@ namespace Mono.Linker.Conditionals
 
 		readonly List<TypeEntry> _type_actions;
 		readonly List<MethodEntry> _method_actions;
+		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
 		public MartinOptions ()
 		{
 			NoConditionalRedefinition = true;
 			_type_actions = new List<TypeEntry> ();
 			_method_actions = new List<MethodEntry> ();
+			_enabled_features = new Dictionary<MonoLinkerFeature, bool> {
+				[MonoLinkerFeature.Security] = false,
+				[MonoLinkerFeature.Martin] = false
+			};
+		}
+
+		public bool IsFeatureEnabled (int index)
+		{
+			var feature = FeatureByIndex (index);
+			if (_enabled_features.TryGetValue (feature, out var value))
+				return value;
+			return false;
+		}
+
+		public void SetFeatureEnabled (int index, bool enabled)
+		{
+			var feature = FeatureByIndex (index);
+			_enabled_features [feature] = enabled;
+		}
+
+		public void SetFeatureEnabled (string name, bool enabled)
+		{
+			var feature = FeatureByName (name);
+			_enabled_features [feature] = enabled;
+		}
+
+		static MonoLinkerFeature FeatureByName (string name)
+		{
+			switch (name.ToLowerInvariant ()) {
+			case "sre":
+				return MonoLinkerFeature.ReflectionEmit;
+			case "remoting":
+				return MonoLinkerFeature.Remoting;
+			case "globalization":
+				return MonoLinkerFeature.Globalization;
+			case "encoding":
+				return MonoLinkerFeature.Encoding;
+			case "security":
+				return MonoLinkerFeature.Security;
+			case "martin":
+				return MonoLinkerFeature.Martin;
+			default:
+				throw new NotSupportedException ($"Unknown linker feature `{name}`.");
+			}
+		}
+
+		static MonoLinkerFeature FeatureByIndex (int index)
+		{
+			if (index < 0 || index > (int)MonoLinkerFeature.Martin)
+				throw new NotSupportedException ($"Unknown feature {index}.");
+			return (MonoLinkerFeature)index;
 		}
 
 		bool DontDebugThis (TypeDefinition type)
