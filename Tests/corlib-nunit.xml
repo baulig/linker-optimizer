@@ -4,7 +4,7 @@
 		<options all-modules="true" analyze-all="true" preprocess="true" />
 
 		<debug>
-			<fail-on type="HebrewNumber" />
+			<type name="HebrewNumber" action="fail" />
 
 			<break-on method="System.DateTimeParse::TryParse" />
 			<break-on method="DateTimeParse::MatchHebrewDigits" />
