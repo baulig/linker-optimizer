@@ -7,7 +7,7 @@ include ../../../../build/rules.make
 LINKER_OUTPUT := output
 PROFILE_PATH = $(topdir)/class/lib/$(PROFILE_DIRECTORY)
 LINKER = MONO_PATH=$(topdir)/class/lib/$(BUILD_TOOLS_PROFILE) $(RUNTIME) $(RUNTIME_FLAGS) --debug $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/monolinker.exe -c link -out $(LINKER_OUTPUT) -b true -d $(PROFILE_PATH)
-LINKER_DEFAULT = $(LINKER) -l none $(LINKER_PROFILE_OPTIONS)
+LINKER_DEFAULT = $(LINKER) -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre
 TEST_EXEC = MONO_PATH=$(LINKER_OUTPUT) $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot
 
 TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(topdir)/class/lib/$(PROFILE_DIRECTORY)/mscorlib.dll

@@ -5,6 +5,7 @@
 
 		<debug>
 			<fail-on type="HebrewNumber" />
+			<fail-on type="System.Reflection.Emit" />
 
 			<break-on method="System.DateTimeParse::TryParse" />
 			<break-on method="DateTimeParse::MatchHebrewDigits" />
@@ -13,6 +14,7 @@
 
 		<features>
 			<feature name="globalization" enabled="false" />
+			<feature name="sre" enabled="false" />
 		</features>
 
 		<preprocess>
