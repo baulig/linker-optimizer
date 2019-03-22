@@ -5,8 +5,7 @@
 
 		<debug>
 			<type name="SynchronizationAttribute" action="fail" />
-			<!-- <type fullname="System.Threading.WaitHandle" action="debug" /> -->
-			<method substring="System.Threading.WaitHandle::WaitOneNative" action="debug" />
+			<type fullname="System.Threading.WaitHandle" action="debug" />
 		</debug>
 
 		<features>
