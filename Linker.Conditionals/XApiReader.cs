@@ -50,7 +50,7 @@ namespace Mono.Linker
 			ProcessChildren (root, "features/feature", OnFeature);
 			ProcessChildren (root, "conditional", OnConditional);
 
-			ProcessChildren (root, "debug/type", child => OnTypeEntry (child));
+			ProcessChildren (root, "debug/type", child => OnTypeEntry (child, null));
 			ProcessChildren (root, "debug/method", child => OnMethodEntry (child));
 		}
 
@@ -100,7 +100,7 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"CONDITIONAL FROM XML: {feature} {enabled}");
 
-			ProcessChildren (nav, "type", child => OnTypeEntry (child, t => Conditional ()));
+			ProcessChildren (nav, "type", child => OnTypeEntry (child, null, t => Conditional ()));
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, m => Conditional ()));
 
 			bool Conditional () => _context.MartinContext.Options.IsFeatureEnabled (feature) == enabled;
@@ -158,27 +158,29 @@ namespace Mono.Linker
 
 			var action = GetAttribute (nav, "action");
 			if (!string.IsNullOrEmpty (action))
-				AddTypeEntry (name, MartinOptions.MatchKind.Substring, action, conditional);
+				AddTypeEntry (name, null, MartinOptions.MatchKind.Namespace, action, conditional);
+
+			ProcessChildren (nav, "type", child => OnTypeEntry (child, name, conditional));
 		}
 
-		void OnTypeEntry (XPathNavigator nav, Func<TypeDefinition, bool> conditional = null)
+		void OnTypeEntry (XPathNavigator nav, string ns, Func<TypeDefinition, bool> conditional = null)
 		{
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
 
 			var action = GetAttribute (nav, "action");
 			if (!string.IsNullOrEmpty (action))
-				AddTypeEntry (name, match, action, conditional);
+				AddTypeEntry (ns, name, match, action, conditional);
 		}
 
-		void AddTypeEntry (string name, MartinOptions.MatchKind match, string action, Func<TypeDefinition, bool> conditional = null)
+		void AddTypeEntry (string ns, string name, MartinOptions.MatchKind match, string action, Func<TypeDefinition, bool> conditional = null)
 		{
 			if (!Enum.TryParse<MartinOptions.TypeAction> (action, true, out var typeAction))
 				throw ThrowError ($"Invalid `action` attribute: `{action}`.");
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {name} {match} {typeAction}");
 
-			_context.MartinContext.Options.AddTypeEntry (name, match, typeAction, conditional);
+			_context.MartinContext.Options.AddTypeEntry (ns, name, match, typeAction, conditional);
 		}
 
 		void OnMethodEntry (XPathNavigator nav, Func<MethodDefinition, bool> conditional = null)

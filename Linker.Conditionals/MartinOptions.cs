@@ -210,9 +210,9 @@ namespace Mono.Linker.Conditionals
 			throw new NotSupportedException (message);
 		}
 
-		public void AddTypeEntry (string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
+		public void AddTypeEntry (string ns, string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
 		{
-			_type_actions.Add (new TypeEntry (name, match, action, conditional));
+			_type_actions.Add (new TypeEntry (ns, name, match, action, conditional));
 		}
 
 		public void AddMethodEntry (string name, MatchKind match, MethodAction action, Func<MethodDefinition, bool> conditional = null)
@@ -272,11 +272,16 @@ namespace Mono.Linker.Conditionals
 		{
 			Name,
 			FullName,
-			Substring
+			Substring,
+			Namespace
 		}
 
 		public class TypeEntry
 		{
+			public string Namespace {
+				get;
+			}
+
 			public string Name {
 				get;
 			}
@@ -297,11 +302,29 @@ namespace Mono.Linker.Conditionals
 			{
 				if (Conditional != null && !Conditional (type))
 					return false;
+
+				if (Namespace != null) {
+					if (type.Namespace != Namespace)
+						return false;
+					switch (Match) {
+					case MatchKind.FullName:
+						return type.FullName == Namespace + "." + Name;
+					case MatchKind.Substring:
+						return type.FullName.Contains (Name);
+					case MatchKind.Namespace:
+						return true;
+					default:
+						return type.Name == Name;
+					}
+				}
+
 				switch (Match) {
 				case MatchKind.FullName:
 					return type.FullName == Name;
 				case MatchKind.Substring:
 					return type.FullName.Contains (Name);
+				case MatchKind.Namespace:
+					return false;
 				default:
 					return type.Name == Name;
 				}
@@ -309,8 +332,9 @@ namespace Mono.Linker.Conditionals
 
 			public bool Matches (TypeDefinition type, TypeAction action) => Action == action && Matches (type);
 
-			public TypeEntry (string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
+			public TypeEntry (string ns, string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
 			{
+				Namespace = ns;
 				Name = name;
 				Match = match;
 				Action = action;
