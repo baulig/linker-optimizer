@@ -63,7 +63,7 @@ namespace Mono.Linker.Conditionals
 		{
 			if (property.SetMethod != null)
 				return;
-			if (property.GetMethod == null || !property.GetMethod.HasBody || !property.GetMethod.IsStatic)
+			if (property.GetMethod == null || !property.GetMethod.HasBody)
 				return;
 			if (property.PropertyType.MetadataType != MetadataType.Boolean)
 				return;

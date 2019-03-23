@@ -22,6 +22,8 @@ namespace Martin.LinkerTest
 			foreach (var pattern in dtfi.GetAllDateTimePatterns ('y'))
 				Console.WriteLine ($"DTFI PATTERN: |{pattern}|");
 
+			Console.WriteLine (dtfi.IsReadOnly);
+
 			Test ();
 		}
 

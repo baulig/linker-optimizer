@@ -7,6 +7,8 @@
 			<type fullname="System.DateTimeParse" action="size" />
 			<type fullname="System.Globalization.DateTimeFormatInfo" action="size" />
 			<method substring="ProcessHebrewTerminalState" action="fail" />
+			<method substring="CreateTokenHashTable" action="none" />
+			<method substring="Main" action="debug" />
 		</debug>
 
 		<features>

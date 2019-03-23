@@ -48,6 +48,7 @@ TEST_CASES := \
 	test-conditionals-3.cs \
 	test-conditionals-4.cs \
 	test-conditionals-5.cs \
+	test-conditionals-6.cs \
 	test-flow-analysis-1.cs \
 	test-flow-analysis-2.cs \
 	test-flow-analysis-3.cs \

@@ -12,6 +12,17 @@ namespace Martin.LinkerTest
 				Foo.Hello ();
 			if (!Property2)
 				Foo.Hello ();
+
+			var instance = new TestConditionals ();
+			var retval = instance.InstanceProperty;
+
+			instance.Test ();
+			var retval2 = instance.InstanceProperty;
+
+			if (retval)
+				throw new AssertionException ();
+			if (retval2)
+				throw new AssertionException ();
 		}
 
 		static bool value;
@@ -28,9 +39,20 @@ namespace Martin.LinkerTest
 			}
 		}
 
+		internal bool InstanceProperty {
+			get {
+				return MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature.Martin) && ReturnFalse ();
+			}
+		}
+
 		static bool ReturnFalse ()
 		{
 			return false;
+		}
+
+		void Test ()
+		{
+			Console.WriteLine ("Test");
 		}
 	}
 
