@@ -158,31 +158,32 @@ namespace Mono.Linker
 			if (string.IsNullOrEmpty (name))
 				throw ThrowError ("<namespace> entry needs `name` attribute.");
 
+			MartinOptions.TypeEntry entry = null;
 			var action = GetAttribute (nav, "action");
 			if (!string.IsNullOrEmpty (action))
-				AddTypeEntry (name, null, MartinOptions.MatchKind.Namespace, action, conditional);
+				entry = AddTypeEntry (name, MartinOptions.MatchKind.Namespace, action, null, conditional);
 
-			ProcessChildren (nav, "type", child => OnTypeEntry (child, name, conditional));
+			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
 		}
 
-		void OnTypeEntry (XPathNavigator nav, string ns, Func<TypeDefinition, bool> conditional = null)
+		void OnTypeEntry (XPathNavigator nav, MartinOptions.TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
 		{
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
 
 			var action = GetAttribute (nav, "action");
 			if (!string.IsNullOrEmpty (action))
-				AddTypeEntry (ns, name, match, action, conditional);
+				AddTypeEntry (name, match, action, parent, conditional);
 		}
 
-		void AddTypeEntry (string ns, string name, MartinOptions.MatchKind match, string action, Func<TypeDefinition, bool> conditional = null)
+		MartinOptions.TypeEntry AddTypeEntry (string name, MartinOptions.MatchKind match, string action, MartinOptions.TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
 		{
 			if (!Enum.TryParse<MartinOptions.TypeAction> (action, true, out var typeAction))
 				throw ThrowError ($"Invalid `action` attribute: `{action}`.");
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {name} {match} {typeAction}");
 
-			_context.MartinContext.Options.AddTypeEntry (ns, name, match, typeAction, conditional);
+			return _context.MartinContext.Options.AddTypeEntry (name, match, typeAction, parent, conditional);
 		}
 
 		void OnMethodEntry (XPathNavigator nav, Func<MethodDefinition, bool> conditional = null)

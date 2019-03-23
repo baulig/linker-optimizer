@@ -210,9 +210,11 @@ namespace Mono.Linker.Conditionals
 			throw new NotSupportedException (message);
 		}
 
-		public void AddTypeEntry (string ns, string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
+		public TypeEntry AddTypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
 		{
-			_type_actions.Add (new TypeEntry (ns, name, match, action, conditional));
+			var entry = new TypeEntry (name, match, action, parent, conditional);
+			_type_actions.Add (entry);
+			return entry;
 		}
 
 		public void AddMethodEntry (string name, MatchKind match, MethodAction action, Func<MethodDefinition, bool> conditional = null)
@@ -278,10 +280,6 @@ namespace Mono.Linker.Conditionals
 
 		public class TypeEntry
 		{
-			public string Namespace {
-				get;
-			}
-
 			public string Name {
 				get;
 			}
@@ -294,29 +292,23 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
+			public TypeEntry Parent {
+				get;
+			}
+
 			public Func<TypeDefinition, bool> Conditional {
 				get;
 			}
 
-			public bool Matches (TypeDefinition type)
+			public bool Matches (TypeDefinition type, TypeAction? action = null)
 			{
+				if (action != null && action.Value != Action)
+					return false;
 				if (Conditional != null && !Conditional (type))
 					return false;
 
-				if (Namespace != null) {
-					if (type.Namespace != Namespace)
-						return false;
-					switch (Match) {
-					case MatchKind.FullName:
-						return type.FullName == Namespace + "." + Name;
-					case MatchKind.Substring:
-						return type.FullName.Contains (Name);
-					case MatchKind.Namespace:
-						return true;
-					default:
-						return type.Name == Name;
-					}
-				}
+				if (Parent != null && !Parent.Matches (type, action))
+					return false;
 
 				switch (Match) {
 				case MatchKind.FullName:
@@ -324,26 +316,24 @@ namespace Mono.Linker.Conditionals
 				case MatchKind.Substring:
 					return type.FullName.Contains (Name);
 				case MatchKind.Namespace:
-					return false;
+					return type.Namespace.StartsWith (Name, StringComparison.InvariantCulture);
 				default:
 					return type.Name == Name;
 				}
 			}
 
-			public bool Matches (TypeDefinition type, TypeAction action) => Action == action && Matches (type);
-
-			public TypeEntry (string ns, string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
+			public TypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
 			{
-				Namespace = ns;
 				Name = name;
 				Match = match;
 				Action = action;
+				Parent = parent;
 				Conditional = conditional;
 			}
 
 			public override string ToString ()
 			{
-				return $"[{GetType ().Name}{(Namespace != null ? $" NS={Namespace}" : "")}{(Name != null ? $" NS={Name}" : "")} Match={Match} Action={Action}]";
+				return $"[{GetType ().Name} {Name} {Match} {Action}]";
 			}
 		}
 
