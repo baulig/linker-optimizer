@@ -56,12 +56,17 @@ namespace Mono.Linker.Conditionals
 			get; set;
 		}
 
+		public bool AutoDebugMain {
+			get; set;
+		}
+
 		readonly List<TypeEntry> _type_actions;
 		readonly List<MethodEntry> _method_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
 		public MartinOptions ()
 		{
+			AutoDebugMain = true;
 			NoConditionalRedefinition = true;
 			_type_actions = new List<TypeEntry> ();
 			_method_actions = new List<MethodEntry> ();
@@ -140,10 +145,12 @@ namespace Mono.Linker.Conditionals
 			if (DontDebugThis (type))
 				return false;
 
-			if (type.Namespace == "Martin.LinkerTest")
-				return true;
-			if (type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin"))
-				return true;
+			if (AutoDebugMain) {
+				if (type.Namespace == "Martin.LinkerTest")
+					return true;
+				if (type.Module.Assembly.Name.Name.ToLowerInvariant ().Contains ("martin"))
+					return true;
+			}
 
 			return _type_actions.Any (t => t.Matches (type, TypeAction.Debug));
 		}
@@ -154,10 +161,13 @@ namespace Mono.Linker.Conditionals
 				return false;
 			if (EnableDebugging (method.DeclaringType))
 				return true;
-			if (method.Name == "Main")
-				return true;
-			if (method.FullName.Contains ("Martin"))
-				return true;
+
+			if (AutoDebugMain) {
+				if (method.Name == "Main")
+					return true;
+				if (method.FullName.Contains ("Martin"))
+					return true;
+			}
 
 			return _method_actions.Any (e => e.Matches (method, MethodAction.Debug));
 		}

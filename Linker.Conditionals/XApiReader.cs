@@ -54,7 +54,10 @@ namespace Mono.Linker
 
 		void OnOptions (MartinOptions options, XPathNavigator nav)
 		{
-			if (GetBoolAttribute (nav, "all-modules", out var value))
+			if (GetBoolAttribute (nav, "main-debug", out var value))
+				options.AutoDebugMain = value;
+
+			if (GetBoolAttribute (nav, "all-modules", out value))
 				options.ScanAllModules = value;
 
 			if (GetBoolAttribute (nav, "analyze-all", out value))

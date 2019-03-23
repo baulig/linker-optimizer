@@ -107,13 +107,9 @@ namespace Mono.Linker.Conditionals
 			var oldInstruction = oldBlock.LastInstruction;
 
 			Scanner.LogDebug (2, $"ADJUST JUMPS: {oldBlock} {newBlock} {oldInstruction}");
-			Dump (oldBlock);
-			if (newBlock != null)
-				Dump (newBlock);
 			Scanner.Context.Debug ();
 
 			foreach (var block in _block_list) {
-				Dump (block);
 				for (var j = 0; j < block.JumpOrigins.Count; j++) {
 					var origin = block.JumpOrigins [j];
 					Scanner.LogDebug (2, $"  ORIGIN: {origin}");

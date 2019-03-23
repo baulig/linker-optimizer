@@ -68,15 +68,13 @@ namespace Mono.Linker.Conditionals
 			if (property.PropertyType.MetadataType != MetadataType.Boolean)
 				return;
 
-			var scanner = BasicBlockScanner.Scan (Context.MartinContext, property.GetMethod, 5);
+			var scanner = BasicBlockScanner.Scan (Context.MartinContext, property.GetMethod);
 			if (scanner == null || !scanner.FoundConditionals)
 				return;
 
 			Context.MartinContext.LogMessage (MessageImportance.Normal, $"Found conditional property: {property}");
 
-			scanner.DumpBlocks ();
 			scanner.RewriteConditionals ();
-			scanner.DumpBlocks ();
 
 			if (!CecilHelper.IsConstantLoad (scanner.Body, out var value)) {
 				Context.MartinContext.LogMessage (MessageImportance.High, $"Property `{property}` uses conditionals, but does not return a constant.");
