@@ -3,10 +3,24 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" preprocess="true" report-size="false" />
 
-		<conditional feature="remoting" enabled="false">
+		<conditional feature="remoting" enabled="true">
 			<type name="SynchronizationAttribute" action="fail" />
 			<!-- this one has a preserve entry -->
 			<!-- <type fullname="System.Runtime.Remoting.RemotingServices" action="fail" /> -->
+
+			<namespace name="System.Runtime.Remoting.Channels">
+			<type fullname="System.Runtime.Remoting.Channels.CADSerializer" action="fail" />
+			<type fullname="System.Runtime.Remoting.Channels.CrossAppDomainSink" action="fail" />
+			<type fullname="System.Runtime.Remoting.Activation.AppDomainLevelActivator" action="fail" />
+			<type fullname="System.Runtime.Remoting.Proxies.RemotingProxy" action="fail" />
+			<method substring="System.Runtime.Remoting.Activation.ActivationServices::CreateConstructionCall" action="fail" />
+			<method substring="System.Runtime.Remoting.RemotingServices::CreateClientProxyForContextBound" action="fail" />
+			<method substring="System.Runtime.Remoting.RemotingServices::GetOrCreateClientIdentity" action="fail" />
+			<method substring="System.Runtime.Remoting.RemotingServices::GetRemoteObject" action="fail" />
+			<method substring="System.Runtime.Remoting.RemotingServices::Unmarshal" action="none" />
+			<method substring="System.Runtime.Remoting.ObjRef::GetRealObject" action="none" />
+			</namespace>
+
 			<type fullname="System.Runtime.Remoting.Channels.CADSerializer" action="fail" />
 			<type fullname="System.Runtime.Remoting.Channels.CrossAppDomainSink" action="fail" />
 			<type fullname="System.Runtime.Remoting.Activation.AppDomainLevelActivator" action="fail" />
@@ -25,7 +39,7 @@
 		</conditional>
 
 		<features>
-			<feature name="remoting" enabled="false" />
+			<feature name="remoting" enabled="true" />
 		</features>
 	</martin>
 </linker>

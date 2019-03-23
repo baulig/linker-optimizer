@@ -185,8 +185,8 @@ namespace Mono.Linker.Conditionals
 			if (fail == null)
 				return;
 
-			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
-			var message = $"Found type `{type.FullName}`{original_message}, which matches fail-list entry `{fail}.";
+			var original_message = original != null ? $"{Environment.NewLine}  while parsing `{original}`" : string.Empty;
+			var message = $"Found type `{type.FullName}`, which matches fail-list entry:{Environment.NewLine}  {fail}{original_message}{Environment.NewLine}";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message);
 			context.Context.Tracer.Dump ();
@@ -202,7 +202,7 @@ namespace Mono.Linker.Conditionals
 			if (fail == null)
 				return;
 
-			var message = $"Found method `{method.FullName}`, which matches fail-list entry `{fail}.";
+			var message = $"Found method `{method.FullName}`, which matches fail-list entry `{fail}`.";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message);
 			context.Context.Tracer.Dump ();
@@ -343,7 +343,7 @@ namespace Mono.Linker.Conditionals
 
 			public override string ToString ()
 			{
-				return $"[{GetType ().Name} {Name}:{Match}:{Action}]";
+				return $"[{GetType ().Name}{(Namespace != null ? $" NS={Namespace}" : "")}{(Name != null ? $" NS={Name}" : "")} Match={Match} Action={Action}]";
 			}
 		}
 

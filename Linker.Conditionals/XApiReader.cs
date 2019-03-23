@@ -50,6 +50,7 @@ namespace Mono.Linker
 			ProcessChildren (root, "features/feature", OnFeature);
 			ProcessChildren (root, "conditional", OnConditional);
 
+			ProcessChildren (root, "debug/namespace", child => OnNamespaceEntry (child));
 			ProcessChildren (root, "debug/type", child => OnTypeEntry (child, null));
 			ProcessChildren (root, "debug/method", child => OnMethodEntry (child));
 		}
@@ -100,6 +101,7 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"CONDITIONAL FROM XML: {feature} {enabled}");
 
+			ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, t => Conditional ()));
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, null, t => Conditional ()));
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, m => Conditional ()));
 
