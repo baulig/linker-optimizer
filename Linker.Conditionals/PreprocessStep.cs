@@ -68,7 +68,7 @@ namespace Mono.Linker.Conditionals
 			if (property.PropertyType.MetadataType != MetadataType.Boolean)
 				return;
 
-			var scanner = BasicBlockScanner.Scan (Context.MartinContext, property.GetMethod);
+			var scanner = BasicBlockScanner.Scan (Context.MartinContext, property.GetMethod, 5);
 			if (scanner == null || !scanner.FoundConditionals)
 				return;
 

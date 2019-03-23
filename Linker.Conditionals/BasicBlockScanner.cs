@@ -242,7 +242,10 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
-			block.LinkerConditional.RewriteConditional (ref block);
+			var conditional = block.LinkerConditional;
+			block.LinkerConditional = null;
+
+			conditional.RewriteConditional (ref block);
 
 			BlockList.ComputeOffsets ();
 
@@ -271,10 +274,13 @@ namespace Mono.Linker.Conditionals
 				var eliminator = new DeadCodeEliminator (this);
 				removed |= eliminator.RemoveDeadBlocks ();
 				if (full) {
-					// removed |= eliminator.RemoveDeadJumps ();
+					removed |= eliminator.RemoveDeadJumps ();
 					removed |= eliminator.RemoveConstantJumps ();
 				}
 				removed |= eliminator.RemoveUnusedVariables ();
+
+				if (removed)
+					BlockList.ComputeOffsets ();
 
 				LogDebug (1, $"ELIMINATING DEAD BLOCKS DONE: {removed}");
 			} while (full && removed);

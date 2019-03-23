@@ -449,6 +449,8 @@ namespace Mono.Linker.Conditionals
 
 		bool TryMerge (BasicBlock first, BasicBlock second)
 		{
+			if (first.LinkerConditional != null || second.LinkerConditional != null)
+				return false;
 			if (first.BranchType != BranchType.None)
 				return false;
 			if (second.JumpOrigins.Count > 0)

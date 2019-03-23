@@ -88,7 +88,7 @@ namespace Mono.Linker.Conditionals
 				break;
 			case BranchType.Return:
 				// Rewrite as constant, then put back the return
-				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, instruction);
+				Scanner.Rewriter.ReplaceWithInstruction (ref block, stackDepth, instruction, false);
 				BlockList.InsertInstructionAt (ref block, block.Count, Instruction.Create (OpCodes.Ret));
 				BlockList.TryMergeBlock (ref block);
 				break;
@@ -162,7 +162,7 @@ namespace Mono.Linker.Conditionals
 		 * The block will be deleted if this would result in an empty block.
 		 *
 		 */
-		void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction)
+		void ReplaceWithInstruction (ref BasicBlock block, int stackDepth, Instruction instruction, bool merge = true)
 		{
 			Scanner.LogDebug (1, $"REPLACE INSTRUCTION: {block} {stackDepth} {instruction}");
 			Scanner.DumpBlock (1, block);
@@ -176,7 +176,7 @@ namespace Mono.Linker.Conditionals
 					BlockList.RemoveInstructionAt (ref block, 0);
 				else
 					BlockList.ReplaceInstructionAt (ref block, 0, instruction);
-				if (block != null)
+				if (merge && block != null)
 					BlockList.TryMergeBlock (ref block);
 				return;
 			}
@@ -188,7 +188,8 @@ namespace Mono.Linker.Conditionals
 			if (instruction != null)
 				BlockList.InsertInstructionAt (ref block, stackDepth, instruction);
 
-			BlockList.TryMergeBlock (ref block);
+			if (merge)
+				BlockList.TryMergeBlock (ref block);
 		}
 	}
 }
