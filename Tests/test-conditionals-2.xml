@@ -2,8 +2,7 @@
 <linker>
 	<martin>
 		<features>
-			<feature name="martin" enabled="true" />
-			<feature name="remoting" enabled="false" />
+			<feature name="globalization" enabled="false" />
 		</features>
 	</martin>
 </linker>

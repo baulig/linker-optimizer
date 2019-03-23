@@ -81,7 +81,7 @@ namespace Mono.Linker.Conditionals
 		{
 			if (_enabled_features.TryGetValue (feature, out var value))
 				return value;
-			return false;
+			return true;
 		}
 
 		public void SetFeatureEnabled (MonoLinkerFeature feature, bool enabled)

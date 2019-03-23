@@ -13,5 +13,10 @@
 			<type name="SystemDependencyProvider" action="fail" />
 			<method name="GetDefaultHostEvidence" action="fail" />
 		</debug>
+
+		<features>
+			<feature name="encoding" enabled="false" />
+			<feature name="globalization" enabled="false" />
+		</features>
 	</martin>
 </linker>

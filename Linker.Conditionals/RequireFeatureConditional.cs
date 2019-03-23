@@ -24,6 +24,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.Linker.Conditionals
 {
@@ -55,10 +58,17 @@ namespace Mono.Linker.Conditionals
 			Context.Context.Tracer.Dump ();
 			Context.LogMessage (MessageImportance.High, Environment.NewLine);
 
+			var pns = Context.Context.GetType ("System.PlatformNotSupportedException");
+			var ctor = pns?.Methods.FirstOrDefault (m => m.Name == ".ctor");
+			if (ctor == null)
+				throw new NotSupportedException ($"Can't find `System.PlatformNotSupportedException`.");
 
-			// BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
-			// BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
+			Scanner.LogDebug (1, $"REWRITE FEATURE CONDITIONAL #1: {pns} {ctor}");
 
+			var reference = Method.DeclaringType.Module.ImportReference (ctor);
+
+			BlockList.ReplaceInstructionAt (ref block, 0, Instruction.Create (OpCodes.Newobj, reference));
+			BlockList.ReplaceInstructionAt (ref block, 1, Instruction.Create (OpCodes.Throw));
 		}
 
 		public static RequireFeatureConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index)

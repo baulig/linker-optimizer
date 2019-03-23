@@ -64,6 +64,7 @@ BROKEN_TESTS :=
 
 ILTEST_CASES := \
 	iltest-conditionals-1.il \
+	iltest-conditionals-2.il \
 	iltest-flow-analysis-1.il
 
 TEST_HELPERS_LIBRARY := TestHelpers.dll

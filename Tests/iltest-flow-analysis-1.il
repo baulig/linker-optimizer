@@ -42,6 +42,7 @@
 
 		unreachable:
 			call [mscorlib]System.Exception class [TestHelpers] Martin.LinkerTest.TestHelpers::AssertRemoved ()
+			pop
 
 		loop:
 			ldloc.0

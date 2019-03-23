@@ -2,7 +2,6 @@
 <linker>
 	<martin>
 		<features>
-			<feature name="martin" enabled="true" />
 			<feature name="remoting" enabled="false" />
 		</features>
 	</martin>
