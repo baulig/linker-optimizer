@@ -78,6 +78,7 @@ namespace Mono.Linker.Conditionals
 		SupportMethodRegistration _is_feature_supported;
 		SupportMethodRegistration _is_type_available;
 		SupportMethodRegistration _is_type_name_available;
+		SupportMethodRegistration _require_feature;
 
 		void Initialize ()
 		{
@@ -103,6 +104,7 @@ namespace Mono.Linker.Conditionals
 			_is_feature_supported = ResolveSupportMethod ("IsFeatureSupported");
 			_is_type_available = ResolveSupportMethod (IsTypeAvailableName, true);
 			_is_type_name_available = ResolveSupportMethod (IsTypeNameAvailableName, true);
+			_require_feature = ResolveSupportMethod ("RequireFeature");
 		}
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)
@@ -129,6 +131,8 @@ namespace Mono.Linker.Conditionals
 		public bool AsWeakInstanceOfMethod (MethodDefinition method) => _as_weak_instance_of.Matches (method);
 
 		public bool IsFeatureSupportedMethod (MethodDefinition method) => _is_feature_supported.Matches (method);
+
+		public bool IsRequireFeatureMethod (MethodDefinition method) => _require_feature.Matches (method);
 
 		public bool IsEnabled (MethodDefinition method)
 		{

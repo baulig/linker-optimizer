@@ -125,6 +125,7 @@
     <Compile Include="Linker.Conditionals\MartinAssertException.cs" />
     <Compile Include="Linker.Conditionals\SizeReportStep.cs" />
     <Compile Include="Linker.Conditionals\ConstantCallConditional.cs" />
+    <Compile Include="Linker.Conditionals\RequireFeatureConditional.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

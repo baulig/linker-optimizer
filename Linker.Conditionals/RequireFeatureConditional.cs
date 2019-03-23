@@ -1,5 +1,5 @@
 ﻿//
-// IsFeatureSupportedConditional.cs
+// RequireFeatureConditional.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -27,13 +27,13 @@ using System;
 
 namespace Mono.Linker.Conditionals
 {
-	public class IsFeatureSupportedConditional : LinkerConditional
+	public class RequireFeatureConditional : LinkerConditional
 	{
 		public MonoLinkerFeature Feature {
 			get;
 		}
 
-		IsFeatureSupportedConditional (BasicBlockScanner scanner, MonoLinkerFeature feature)
+		RequireFeatureConditional (BasicBlockScanner scanner, MonoLinkerFeature feature)
 			: base (scanner)
 		{
 			Feature = feature;
@@ -44,10 +44,24 @@ namespace Mono.Linker.Conditionals
 			var evaluated = Context.Options.IsFeatureEnabled (Feature);
 			Scanner.LogDebug (1, $"REWRITE FEATURE CONDITIONAL: {Feature} {evaluated}");
 
-			RewriteConditional (ref block, 0, evaluated);
+
+			if (evaluated) {
+				BlockList.DeleteBlock (ref block);
+				return;
+			}
+
+			Context.LogMessage (MessageImportance.High, Environment.NewLine);
+			Context.LogMessage (MessageImportance.High, $"Required feature `{Feature}` not available.");
+			Context.Context.Tracer.Dump ();
+			Context.LogMessage (MessageImportance.High, Environment.NewLine);
+
+
+			// BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Ldnull));
+			// BlockList.InsertInstructionAt (ref block, index++, Instruction.Create (OpCodes.Cgt_Un));
+
 		}
 
-		public static IsFeatureSupportedConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index)
+		public static RequireFeatureConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index)
 		{
 			if (bb.Instructions.Count == 1)
 				throw new NotSupportedException ();
@@ -55,7 +69,7 @@ namespace Mono.Linker.Conditionals
 				throw new NotSupportedException ();
 
 			/*
-			 * `bool MonoLinkerSupport.IsFeatureSupported (MonoLinkerFeature feature)`
+			 * `void MonoLinkerSupport.RequireFeature (MonoLinkerFeature feature)`
 			 *
 			 */
 
@@ -63,10 +77,9 @@ namespace Mono.Linker.Conditionals
 				scanner.BlockList.SplitBlockAt (ref bb, bb.Instructions.Count - 2);
 
 			var feature = (MonoLinkerFeature)CecilHelper.GetFeatureArgument (bb.FirstInstruction);
-			var instance = new IsFeatureSupportedConditional (scanner, feature);
+			var instance = new RequireFeatureConditional (scanner, feature);
 			bb.LinkerConditional = instance;
-
-			LookAheadAfterConditional (scanner.BlockList, ref bb, ref index);
+			bb = null;
 
 			return instance;
 		}

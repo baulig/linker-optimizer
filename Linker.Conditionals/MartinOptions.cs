@@ -76,17 +76,15 @@ namespace Mono.Linker.Conditionals
 			};
 		}
 
-		public bool IsFeatureEnabled (int index)
+		public bool IsFeatureEnabled (MonoLinkerFeature feature)
 		{
-			var feature = FeatureByIndex (index);
 			if (_enabled_features.TryGetValue (feature, out var value))
 				return value;
 			return false;
 		}
 
-		public void SetFeatureEnabled (int index, bool enabled)
+		public void SetFeatureEnabled (MonoLinkerFeature feature, bool enabled)
 		{
-			var feature = FeatureByIndex (index);
 			_enabled_features [feature] = enabled;
 		}
 
@@ -114,13 +112,6 @@ namespace Mono.Linker.Conditionals
 			default:
 				throw new NotSupportedException ($"Unknown linker feature `{name}`.");
 			}
-		}
-
-		static MonoLinkerFeature FeatureByIndex (int index)
-		{
-			if (index < 0 || index > (int)MonoLinkerFeature.Martin)
-				throw new NotSupportedException ($"Unknown feature {index}.");
-			return (MonoLinkerFeature)index;
 		}
 
 		bool DontDebugThis (TypeDefinition type)

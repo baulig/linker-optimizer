@@ -28,7 +28,7 @@ using System;
 namespace Mono.Linker.Conditionals
 {
 	// Keep in sync with corlib's version in System.Runtime.CompilerServices
-	enum MonoLinkerFeature
+	public enum MonoLinkerFeature
 	{
 		ReflectionEmit,
 		Remoting,
