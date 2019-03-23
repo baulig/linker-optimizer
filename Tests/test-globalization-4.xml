@@ -4,9 +4,11 @@
 		<options all-modules="true" analyze-all="true" preprocess="true" report-size="true" main-debug="false" />
 
 		<debug>
-			<type fullname="System.TimeSpanParse" action="fail" />
-			<type fullname="System.TimeZoneInfo" action="size" />
+			<!-- There is both System.DateTimeParse and System.Globalization.DateTimeParse -->
+			<type fullname="System.DateTimeParse" action="none" />
+			<type fullname="System.TimeZoneInfo" action="fail" />
 			<method substring="TimeSpan::TryParse" action="fail" />
+			<type fullname="System.Globalization.DateTimeParse" action="fail" />
 			<type fullname="System.Globalization.TimeSpanParse" action="fail" />
 			<type fullname="System.Globalization.DateTimeFormatInfo" action="size" />
 		</debug>
