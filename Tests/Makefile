@@ -56,6 +56,7 @@ TEST_CASES := \
 	test-globalization-1.cs \
 	test-globalization-2.cs \
 	test-globalization-3.cs \
+	test-globalization-4.cs \
 	test-security-1.cs \
 	test-remoting-1.cs
 
