@@ -118,6 +118,11 @@ namespace Mono.Linker.Conditionals
 			}
 
 
+			if (scanner.Context.IsRequireFeatureMethod (target)) {
+				RequireFeatureConditional.Create (scanner, ref bb, ref index);
+				return true;
+			}
+
 			if (scanner.Context.TryGetConstantMethod (target, out var constant)) {
 				ConstantCallConditional.Create (scanner, ref bb, ref index, target, constant);
 				return true;
