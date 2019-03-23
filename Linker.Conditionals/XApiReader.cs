@@ -101,11 +101,11 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"CONDITIONAL FROM XML: {feature} {enabled}");
 
-			ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, t => Conditional ()));
-			ProcessChildren (nav, "type", child => OnTypeEntry (child, null, t => Conditional ()));
-			ProcessChildren (nav, "method", child => OnMethodEntry (child, m => Conditional ()));
+			ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, Conditional));
+			ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
+			ProcessChildren (nav, "method", child => OnMethodEntry (child, null, Conditional));
 
-			bool Conditional () => _context.MartinContext.Options.IsFeatureEnabled (feature) == enabled;
+			bool Conditional (MemberReference reference) => _context.MartinContext.Options.IsFeatureEnabled (feature) == enabled;
 		}
 
 		bool GetBoolAttribute (XPathNavigator nav, string name, out bool value)
@@ -152,7 +152,7 @@ namespace Mono.Linker
 			return true;
 		}
 
-		void OnNamespaceEntry (XPathNavigator nav, Func<TypeDefinition, bool> conditional = null)
+		void OnNamespaceEntry (XPathNavigator nav, Func<MemberReference, bool> conditional = null)
 		{
 			var name = GetAttribute (nav, "name");
 			if (string.IsNullOrEmpty (name))
@@ -166,17 +166,20 @@ namespace Mono.Linker
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
 		}
 
-		void OnTypeEntry (XPathNavigator nav, MartinOptions.TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
+		void OnTypeEntry (XPathNavigator nav, MartinOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
 
+			MartinOptions.TypeEntry entry = null;
 			var action = GetAttribute (nav, "action");
 			if (!string.IsNullOrEmpty (action))
-				AddTypeEntry (name, match, action, parent, conditional);
+				entry = AddTypeEntry (name, match, action, parent, conditional);
+
+			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
 		}
 
-		MartinOptions.TypeEntry AddTypeEntry (string name, MartinOptions.MatchKind match, string action, MartinOptions.TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
+		MartinOptions.TypeEntry AddTypeEntry (string name, MartinOptions.MatchKind match, string action, MartinOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
 			if (!Enum.TryParse<MartinOptions.TypeAction> (action, true, out var typeAction))
 				throw ThrowError ($"Invalid `action` attribute: `{action}`.");
@@ -186,7 +189,7 @@ namespace Mono.Linker
 			return _context.MartinContext.Options.AddTypeEntry (name, match, typeAction, parent, conditional);
 		}
 
-		void OnMethodEntry (XPathNavigator nav, Func<MethodDefinition, bool> conditional = null)
+		void OnMethodEntry (XPathNavigator nav, MartinOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in method entry `{nav.OuterXml}`.");
@@ -200,7 +203,7 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {match} {methodAction}");
 
-			_context.MartinContext.Options.AddMethodEntry (name, match, methodAction, conditional);
+			_context.MartinContext.Options.AddMethodEntry (name, match, methodAction, parent, conditional);
 		}
 
 		Exception ThrowError (string message)

@@ -210,16 +210,16 @@ namespace Mono.Linker.Conditionals
 			throw new NotSupportedException (message);
 		}
 
-		public TypeEntry AddTypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
+		public TypeEntry AddTypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
 			var entry = new TypeEntry (name, match, action, parent, conditional);
 			_type_actions.Add (entry);
 			return entry;
 		}
 
-		public void AddMethodEntry (string name, MatchKind match, MethodAction action, Func<MethodDefinition, bool> conditional = null)
+		public void AddMethodEntry (string name, MatchKind match, MethodAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
-			_method_actions.Add (new MethodEntry (name, match, action, conditional));
+			_method_actions.Add (new MethodEntry (name, match, action, parent, conditional));
 		}
 
 		public bool HasTypeEntry (TypeDefinition type, TypeAction action)
@@ -306,7 +306,6 @@ namespace Mono.Linker.Conditionals
 					return false;
 				if (Conditional != null && !Conditional (type))
 					return false;
-
 				if (Parent != null && !Parent.Matches (type, action))
 					return false;
 
@@ -322,7 +321,7 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			public TypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<TypeDefinition, bool> conditional = null)
+			public TypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 			{
 				Name = name;
 				Match = match;
@@ -351,14 +350,23 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
+			public TypeEntry Parent {
+				get;
+			}
+
 			public Func<MethodDefinition, bool> Conditional {
 				get;
 			}
 
-			public bool Matches (MethodDefinition method)
+			public bool Matches (MethodDefinition method, MethodAction? action = null)
 			{
+				if (action != null && action.Value != Action)
+					return false;
 				if (Conditional != null && !Conditional (method))
 					return false;
+				if (Parent != null && !Parent.Matches (method.DeclaringType))
+					return false;
+
 				switch (Match) {
 				case MatchKind.FullName:
 					return method.FullName == Name;
@@ -371,11 +379,12 @@ namespace Mono.Linker.Conditionals
 
 			public bool Matches (MethodDefinition method, MethodAction action) => Action == action && Matches (method);
 
-			public MethodEntry (string name, MatchKind match, MethodAction action, Func<MethodDefinition, bool> conditional = null)
+			public MethodEntry (string name, MatchKind match, MethodAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 			{
 				Name = name;
 				Match = match;
 				Action = action;
+				Parent = parent;
 				Conditional = conditional;
 			}
 
