@@ -185,13 +185,14 @@ namespace Mono.Linker.Conditionals
 			if (fail == null)
 				return;
 
-			var original_message = original != null ? $"{Environment.NewLine}  while parsing `{original}`" : string.Empty;
-			var message = $"Found type `{type.FullName}`, which matches fail-list entry:{Environment.NewLine}  {fail}{original_message}{Environment.NewLine}";
+			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
+			var message = $"Found fail-listed type `{type.FullName}";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			context.LogMessage (MessageImportance.High, message);
+			context.LogMessage (MessageImportance.High, message + ":");
+			DumpFailEntry (context, fail);
 			context.Context.Tracer.Dump ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			throw new NotSupportedException (message);
+			throw new NotSupportedException (message + original_message + ".");
 		}
 
 		public void CheckFailList (MartinContext context, MethodDefinition method)
@@ -202,15 +203,30 @@ namespace Mono.Linker.Conditionals
 			if (fail == null)
 				return;
 
-			var message = $"Found method `{method.FullName}`, which matches fail-list entry `{fail}`.";
+			var message = $"Found fail-listed method `{method.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			context.LogMessage (MessageImportance.High, message);
+			context.LogMessage (MessageImportance.High, message + ":");
+			DumpFailEntry (context, fail);
 			context.Context.Tracer.Dump ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			throw new NotSupportedException (message);
+			throw new NotSupportedException (message + ".");
 		}
 
-		public TypeEntry AddTypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
+		static void DumpFailEntry (MartinContext context, TypeEntry entry)
+		{
+			context.LogMessage (MessageImportance.High, "  " + entry.ToString ());
+			if (entry.Parent != null)
+				DumpFailEntry (context, entry.Parent);
+		}
+
+		static void DumpFailEntry (MartinContext context, MethodEntry entry)
+		{
+			context.LogMessage (MessageImportance.High, "  " + entry.ToString ());
+			if (entry.Parent != null)
+				DumpFailEntry (context, entry.Parent);
+		}
+
+		public TypeEntry AddTypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent, Func<MemberReference, bool> conditional)
 		{
 			var entry = new TypeEntry (name, match, action, parent, conditional);
 			_type_actions.Add (entry);
@@ -306,7 +322,7 @@ namespace Mono.Linker.Conditionals
 					return false;
 				if (Conditional != null && !Conditional (type))
 					return false;
-				if (Parent != null && !Parent.Matches (type, action))
+				if (Parent != null && !Parent.Matches (type))
 					return false;
 
 				switch (Match) {
@@ -321,7 +337,7 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			public TypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
+			public TypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent, Func<MemberReference, bool> conditional)
 			{
 				Name = name;
 				Match = match;

@@ -3,45 +3,29 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" preprocess="true" report-size="false" />
 
-		<conditional feature="remoting" enabled="true">
-			<type name="SynchronizationAttribute" action="fail" />
-			<!-- this one has a preserve entry -->
-			<!-- <type fullname="System.Runtime.Remoting.RemotingServices" action="fail" /> -->
+		<conditional feature="remoting" enabled="false">
+			<namespace name="System.Runtime.Remoting">
+				<type name="SynchronizationAttribute" action="fail" />
+				<type name="CADSerializer" action="fail" />
+				<type name="RemotingProxy" action="fail" />
+				<type name="CrossAppDomainSink" action="fail" />
+				<type name="AppDomainLevelActivator" action="fail" />
 
-			<namespace name="System.Runtime.XRemoting">
-				<type substring="Channels.CADSerializer" action="fail" />
-				<type fullname="System.Runtime.Remoting.Channels.CrossAppDomainSink" action="fail" />
-				<type fullname="System.Runtime.Remoting.Activation.AppDomainLevelActivator" action="fail" />
-				<type fullname="System.Runtime.Remoting.Proxies.RemotingProxy" action="fail" />
-				<method substring="System.Runtime.Remoting.Activation.ActivationServices::CreateConstructionCall" action="fail" />
-				<method substring="System.Runtime.Remoting.RemotingServices::CreateClientProxyForContextBound" action="fail" />
-				<method substring="System.Runtime.Remoting.RemotingServices::GetOrCreateClientIdentity" action="fail" />
-				<method substring="System.Runtime.Remoting.RemotingServices::GetRemoteObject" action="fail" />
-				<method substring="System.Runtime.Remoting.RemotingServices::Unmarshal" action="none" />
-				<method substring="System.Runtime.Remoting.ObjRef::GetRealObject" action="none" />
+				<type name="ActivationServices">
+					<method name="CreateConstructionCall" action="fail" />
+				</type>
+
+				<type name="RemotingServices">
+					<!-- this type has some preserve entries -->
+					<method name="CreateClientProxyForContextBound" action="fail" />
+					<method name="GetOrCreateClientIdentity" action="fail" />
+					<method name="GetRemoteObject" action="fail" />
+				</type>
 			</namespace>
 		</conditional>
 
-		<conditional feature="remoting" enabled="false">
-			<type fullname="System.Runtime.Remoting.Channels.CADSerializer" action="fail" />
-			<type fullname="System.Runtime.Remoting.Channels.CrossAppDomainSink" action="fail" />
-			<type fullname="System.Runtime.Remoting.Activation.AppDomainLevelActivator" action="fail" />
-			<type fullname="System.Runtime.Remoting.Proxies.RemotingProxy" action="fail" />
-			<method substring="System.Runtime.Remoting.Activation.ActivationServices::CreateConstructionCall" action="fail" />
-			<method substring="System.Runtime.Remoting.RemotingServices::CreateClientProxyForContextBound" action="fail" />
-			<method substring="System.Runtime.Remoting.RemotingServices::GetOrCreateClientIdentity" action="fail" />
-			<method substring="System.Runtime.Remoting.RemotingServices::GetRemoteObject" action="fail" />
-			<method substring="System.Runtime.Remoting.RemotingServices::Unmarshal" action="none" />
-			<method substring="System.Runtime.Remoting.ObjRef::GetRealObject" action="none" />
-			<method substring="System.Runtime.Serialization.FormatterServices::GetSafeUninitializedObject" action="none" />
-
-			<type fullname="System.Runtime.Serialization.FormatterServices" action="none" />
-			<type fullname="System.Runtime.Serialization.Formatters.Binary.ObjectReader" action="none" />
-			<method substring="System.Runtime.Serialization.Formatters.Binary.BinaryFormatter::Deserialize" action="none" />
-		</conditional>
-
 		<features>
-			<feature name="remoting" enabled="true" />
+			<feature name="remoting" enabled="false" />
 		</features>
 	</martin>
 </linker>

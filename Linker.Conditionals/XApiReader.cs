@@ -158,10 +158,12 @@ namespace Mono.Linker
 			if (string.IsNullOrEmpty (name))
 				throw ThrowError ("<namespace> entry needs `name` attribute.");
 
-			MartinOptions.TypeEntry entry = null;
+			MartinOptions.TypeEntry entry;
 			var action = GetAttribute (nav, "action");
 			if (!string.IsNullOrEmpty (action))
 				entry = AddTypeEntry (name, MartinOptions.MatchKind.Namespace, action, null, conditional);
+			else
+				entry = _context.MartinContext.Options.AddTypeEntry (name, MartinOptions.MatchKind.Namespace, MartinOptions.TypeAction.None, null, conditional);
 
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
 		}
@@ -171,10 +173,12 @@ namespace Mono.Linker
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
 
-			MartinOptions.TypeEntry entry = null;
+			MartinOptions.TypeEntry entry;
 			var action = GetAttribute (nav, "action");
 			if (!string.IsNullOrEmpty (action))
 				entry = AddTypeEntry (name, match, action, parent, conditional);
+			else
+				entry = _context.MartinContext.Options.AddTypeEntry (name, match, MartinOptions.TypeAction.None, parent, conditional);
 
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
 		}
