@@ -30,6 +30,7 @@ namespace Mono.Linker.Conditionals
 	// Keep in sync with corlib's version in System.Runtime.CompilerServices
 	public enum MonoLinkerFeature
 	{
+		Unknown, // keep this in first position, this is always false.
 		ReflectionEmit,
 		Remoting,
 		Globalization,

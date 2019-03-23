@@ -5,6 +5,7 @@ namespace System.Runtime.CompilerServices
 #endif
 	enum MonoLinkerFeature
 	{
+		Unknown, // keep this in first position, this is always false.
 		ReflectionEmit,
 		Remoting,
 		Globalization,

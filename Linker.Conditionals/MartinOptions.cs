@@ -71,6 +71,7 @@ namespace Mono.Linker.Conditionals
 			_type_actions = new List<TypeEntry> ();
 			_method_actions = new List<MethodEntry> ();
 			_enabled_features = new Dictionary<MonoLinkerFeature, bool> {
+				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Security] = false,
 				[MonoLinkerFeature.Martin] = false
 			};
@@ -85,6 +86,8 @@ namespace Mono.Linker.Conditionals
 
 		public void SetFeatureEnabled (MonoLinkerFeature feature, bool enabled)
 		{
+			if (feature == MonoLinkerFeature.Unknown)
+				throw new NotSupportedException ($"Cannot modify `{nameof (MonoLinkerFeature.Unknown)}`.");
 			_enabled_features [feature] = enabled;
 		}
 

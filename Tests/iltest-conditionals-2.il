@@ -21,7 +21,7 @@
 
 		.method private static hidebysig default void RunFeature1 ()  cil managed noinlining
 		{
-			ldc.i4 99
+			ldc.i4.0
 			call void class [TestHelpers]System.Runtime.CompilerServices.MonoLinkerSupport::RequireFeature(valuetype [TestHelpers]System.Runtime.CompilerServices.MonoLinkerFeature)
 			ret
 		}
