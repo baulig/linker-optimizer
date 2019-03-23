@@ -94,9 +94,7 @@ namespace Mono.Linker
 		{
 			var name = GetAttribute (nav, "feature");
 			if (string.IsNullOrEmpty (name) || !GetBoolAttribute (nav, "enabled", out var enabled))
-				ThrowError ("");
-				_context.MartinContext.LogMessage (MessageImportance.High, $"Invalid XML entry: `{nav.OuterXml}`.");
-				throw new NotSupportedException ($"Invalid XML entry: `{nav.OuterXml}`.");
+				throw ThrowError ("<conditional> needs both `feature` and `enabled` arguments.");
 
 			var feature = MartinOptions.FeatureByName (name);
 
@@ -185,21 +183,15 @@ namespace Mono.Linker
 
 		void OnMethodEntry (XPathNavigator nav, Func<MethodDefinition, bool> conditional = null)
 		{
-			if (!GetName (nav, out var name, out var match)) {
-				_context.MartinContext.LogMessage (MessageImportance.High, $"Ambiguous name in method entry `{nav.OuterXml}`.");
+			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in method entry `{nav.OuterXml}`.");
-			}
 
 			var action = GetAttribute (nav, "action");
-			if (string.IsNullOrEmpty (action)) {
-				_context.MartinContext.LogMessage (MessageImportance.High, $"Missing `action` attribute in {nav.OuterXml}.");
+			if (string.IsNullOrEmpty (action))
 				throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
-			}
 
-			if (!Enum.TryParse<MartinOptions.MethodAction> (action, true, out var methodAction)) {
-				_context.MartinContext.LogMessage (MessageImportance.High, $"Invalid `action` attribute in {nav.OuterXml}.");
+			if (!Enum.TryParse<MartinOptions.MethodAction> (action, true, out var methodAction))
 				throw ThrowError ($"Invalid `action` attribute in {nav.OuterXml}.");
-			}
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {match} {methodAction}");
 
