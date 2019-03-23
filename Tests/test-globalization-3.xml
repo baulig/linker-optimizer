@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<linker>
+	<martin>
+		<options all-modules="true" analyze-all="true" preprocess="true" report-size="true" />
+
+		<debug>
+			<type fullname="System.DateTimeParse" action="size" />
+			<type fullname="System.Globalization.DateTimeFormatInfo" action="size" />
+			<method substring="ProcessHebrewTerminalState" action="fail" />
+		</debug>
+
+		<features>
+			<feature name="remoting" enabled="false" />
+			<feature name="encoding" enabled="false" />
+			<feature name="globalization" enabled="false" />
+		</features>
+	</martin>
+</linker>

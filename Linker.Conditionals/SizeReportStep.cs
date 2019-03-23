@@ -124,6 +124,9 @@ namespace Mono.Linker.Conditionals
 			if (method_sizes.ContainsKey (method.FullName))
 				return;
 
+			if (Context.MartinContext.Options.HasTypeEntry (method.DeclaringType, MartinOptions.TypeAction.Size))
+				Context.MartinContext.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
+
 			method_sizes.Add (method.FullName, method.Body.CodeSize);
 
 			if (namespace_sizes.TryGetValue (method.DeclaringType.Namespace, out var ns))

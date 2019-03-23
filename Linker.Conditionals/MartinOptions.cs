@@ -252,7 +252,8 @@ namespace Mono.Linker.Conditionals
 			None,
 			Debug,
 			Fail,
-			Mark
+			Mark,
+			Size
 		}
 
 		public enum MethodAction
