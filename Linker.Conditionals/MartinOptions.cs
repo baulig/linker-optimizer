@@ -97,7 +97,7 @@ namespace Mono.Linker.Conditionals
 			_enabled_features [feature] = enabled;
 		}
 
-		static MonoLinkerFeature FeatureByName (string name)
+		internal static MonoLinkerFeature FeatureByName (string name)
 		{
 			switch (name.ToLowerInvariant ()) {
 			case "sre":
@@ -210,14 +210,14 @@ namespace Mono.Linker.Conditionals
 			throw new NotSupportedException (message);
 		}
 
-		public void AddTypeEntry (string name, MatchKind match, TypeAction action)
+		public void AddTypeEntry (string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
 		{
-			_type_actions.Add (new TypeEntry (name, match, action));
+			_type_actions.Add (new TypeEntry (name, match, action, conditional));
 		}
 
-		public void AddMethodEntry (string name, MatchKind match, MethodAction action)
+		public void AddMethodEntry (string name, MatchKind match, MethodAction action, Func<MethodDefinition, bool> conditional = null)
 		{
-			_method_actions.Add (new MethodEntry (name, match, action));
+			_method_actions.Add (new MethodEntry (name, match, action, conditional));
 		}
 
 		public bool HasTypeEntry (TypeDefinition type, TypeAction action)
@@ -289,8 +289,14 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
+			public Func<TypeDefinition, bool> Conditional {
+				get;
+			}
+
 			public bool Matches (TypeDefinition type)
 			{
+				if (Conditional != null && !Conditional (type))
+					return false;
 				switch (Match) {
 				case MatchKind.FullName:
 					return type.FullName == Name;
@@ -303,11 +309,12 @@ namespace Mono.Linker.Conditionals
 
 			public bool Matches (TypeDefinition type, TypeAction action) => Action == action && Matches (type);
 
-			public TypeEntry (string name, MatchKind match, TypeAction action)
+			public TypeEntry (string name, MatchKind match, TypeAction action, Func<TypeDefinition, bool> conditional = null)
 			{
 				Name = name;
 				Match = match;
 				Action = action;
+				Conditional = conditional;
 			}
 
 			public override string ToString ()
@@ -330,8 +337,14 @@ namespace Mono.Linker.Conditionals
 				get;
 			}
 
+			public Func<MethodDefinition, bool> Conditional {
+				get;
+			}
+
 			public bool Matches (MethodDefinition method)
 			{
+				if (Conditional != null && !Conditional (method))
+					return false;
 				switch (Match) {
 				case MatchKind.FullName:
 					return method.FullName == Name;
@@ -344,11 +357,12 @@ namespace Mono.Linker.Conditionals
 
 			public bool Matches (MethodDefinition method, MethodAction action) => Action == action && Matches (method);
 
-			public MethodEntry (string name, MatchKind match, MethodAction action)
+			public MethodEntry (string name, MatchKind match, MethodAction action, Func<MethodDefinition, bool> conditional = null)
 			{
 				Name = name;
 				Match = match;
 				Action = action;
+				Conditional = conditional;
 			}
 
 			public override string ToString ()

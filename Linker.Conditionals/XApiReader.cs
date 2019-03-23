@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Xml.XPath;
+using Mono.Cecil;
 using Mono.Linker.Conditionals;
 
 namespace Mono.Linker
@@ -47,9 +48,10 @@ namespace Mono.Linker
 				OnOptions (_context.MartinContext.Options, options);
 
 			ProcessChildren (root, "features/feature", OnFeature);
+			ProcessChildren (root, "conditional", OnConditional);
 
-			ProcessChildren (root, "debug/type", OnDebugType);
-			ProcessChildren (root, "debug/method", OnDebugMethod);
+			ProcessChildren (root, "debug/type", child => OnDebugType (child));
+			ProcessChildren (root, "debug/method", child => OnDebugMethod (child));
 		}
 
 		void OnOptions (MartinOptions options, XPathNavigator nav)
@@ -86,6 +88,24 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"FEATURE FROM XML: {name} {enabled}");
 			_context.MartinContext.Options.SetFeatureEnabled (name, enabled);
+		}
+
+		void OnConditional (XPathNavigator nav)
+		{
+			var name = GetAttribute (nav, "feature");
+			if (string.IsNullOrEmpty (name) || !GetBoolAttribute (nav, "enabled", out var enabled)) {
+				_context.MartinContext.LogMessage (MessageImportance.High, $"Invalid XML entry: `{nav.OuterXml}`.");
+				throw new NotSupportedException ($"Invalid XML entry: `{nav.OuterXml}`.");
+			}
+
+			var feature = MartinOptions.FeatureByName (name);
+
+			_context.MartinContext.LogMessage (MessageImportance.Low, $"CONDITIONAL FROM XML: {feature} {enabled}");
+
+			ProcessChildren (nav, "type", child => OnDebugType (child, t => Conditional ()));
+			ProcessChildren (nav, "method", child => OnDebugMethod (child, m => Conditional ()));
+
+			bool Conditional () => _context.MartinContext.Options.IsFeatureEnabled (feature) == enabled;
 		}
 
 		bool GetBoolAttribute (XPathNavigator nav, string name, out bool value)
@@ -138,7 +158,7 @@ namespace Mono.Linker
 			throw new NotSupportedException ($"Missing `action` attribute in {nav.OuterXml}.");
 		}
 
-		void OnDebugType (XPathNavigator nav)
+		void OnDebugType (XPathNavigator nav, Func<TypeDefinition, bool> conditional = null)
 		{
 			if (!GetName (nav, out var name, out var match)) {
 				_context.MartinContext.LogMessage (MessageImportance.High, $"Ambiguous name in type entry `{nav.OuterXml}`.");
@@ -158,10 +178,10 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {name} {match} {typeAction}");
 
-			_context.MartinContext.Options.AddTypeEntry (name, match, typeAction);
+			_context.MartinContext.Options.AddTypeEntry (name, match, typeAction,conditional);
 		}
 
-		void OnDebugMethod (XPathNavigator nav)
+		void OnDebugMethod (XPathNavigator nav, Func<MethodDefinition, bool> conditional = null)
 		{
 			if (!GetName (nav, out var name, out var match)) {
 				_context.MartinContext.LogMessage (MessageImportance.High, $"Ambiguous name in method entry `{nav.OuterXml}`.");
@@ -181,7 +201,7 @@ namespace Mono.Linker
 
 			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {match} {methodAction}");
 
-			_context.MartinContext.Options.AddMethodEntry (name, match, methodAction);
+			_context.MartinContext.Options.AddMethodEntry (name, match, methodAction, conditional);
 		}
 	}
 }
