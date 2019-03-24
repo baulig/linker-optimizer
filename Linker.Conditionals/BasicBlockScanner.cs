@@ -193,18 +193,6 @@ namespace Mono.Linker.Conditionals
 				return true;
 			}
 
-			//if (!Context.Options.AnalyzeAll || Body.HasExceptionHandlers)
-			//	return true;
-			//if (Method.DeclaringType.Namespace != "System.Globalization")
-			//	return true;
-			if (DebugLevel == 0)
-				return true;
-
-			DebugLevel = 3;
-
-			EliminateDeadBlocks (false);
-			DumpBlocks ();
-
 			return true;
 		}
 

@@ -115,7 +115,9 @@ namespace Mono.Linker.Conditionals
 			case "martin":
 				return MonoLinkerFeature.Martin;
 			default:
-				throw new NotSupportedException ($"Unknown linker feature `{name}`.");
+				if (!Enum.TryParse<MonoLinkerFeature> (name, true, out var feature))
+					throw new NotSupportedException ($"Unknown linker feature `{name}`.");
+				return feature;
 			}
 		}
 

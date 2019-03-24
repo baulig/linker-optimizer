@@ -38,5 +38,6 @@ namespace Mono.Linker.Conditionals
 		Globalization,
 		Encoding,
 		Security,
+		Crypto
 	}
 }

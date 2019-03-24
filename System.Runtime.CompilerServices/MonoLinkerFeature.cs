@@ -13,5 +13,6 @@ namespace System.Runtime.CompilerServices
 		Globalization,
 		Encoding,
 		Security,
+		Crypto
 	}
 }
