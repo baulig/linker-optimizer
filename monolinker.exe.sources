@@ -1,4 +1,5 @@
 Linker.Conditionals/*.cs
+../../class/corlib/System.Runtime.CompilerServices/MonoLinkerFeature.cs
 ../../../external/linker/linker/Linker/Annotations.cs
 ../../../external/linker/linker/Linker/AssemblyAction.cs
 ../../../external/linker/linker/Linker/AssemblyInfo.cs

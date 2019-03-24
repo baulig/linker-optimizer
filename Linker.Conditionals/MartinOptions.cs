@@ -26,6 +26,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Mono.Cecil;
 
 namespace Mono.Linker.Conditionals
@@ -102,16 +103,6 @@ namespace Mono.Linker.Conditionals
 			switch (name.ToLowerInvariant ()) {
 			case "sre":
 				return MonoLinkerFeature.ReflectionEmit;
-			case "serialization":
-				return MonoLinkerFeature.Serialization;
-			case "remoting":
-				return MonoLinkerFeature.Remoting;
-			case "globalization":
-				return MonoLinkerFeature.Globalization;
-			case "encoding":
-				return MonoLinkerFeature.Encoding;
-			case "security":
-				return MonoLinkerFeature.Security;
 			case "martin":
 				return MonoLinkerFeature.Martin;
 			default:

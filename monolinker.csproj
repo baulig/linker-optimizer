@@ -114,7 +114,6 @@
     <Compile Include="Linker.Conditionals\AsWeakInstanceOfConditional.cs" />
     <Compile Include="Linker.Conditionals\IsTypeAvailableConditional.cs" />
     <Compile Include="Linker.Conditionals\XApiReader.cs" />
-    <Compile Include="Linker.Conditionals\MonoLinkerFeature.cs" />
     <Compile Include="Linker.Conditionals\BasicBlockType.cs" />
     <Compile Include="Linker.Conditionals\MartinOptions.cs" />
     <Compile Include="Linker.Conditionals\JumpOrigin.cs" />
@@ -126,6 +125,9 @@
     <Compile Include="Linker.Conditionals\SizeReportStep.cs" />
     <Compile Include="Linker.Conditionals\ConstantCallConditional.cs" />
     <Compile Include="Linker.Conditionals\RequireFeatureConditional.cs" />
+    <Compile Include="..\..\class\corlib\System.Runtime.CompilerServices\MonoLinkerFeature.cs">
+      <Link>System.Runtime.CompilerServices\MonoLinkerFeature.cs</Link>
+    </Compile>
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->
