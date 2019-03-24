@@ -37,6 +37,9 @@
 			<type fullname="System.AppDomain">
 				<method name="get_DefaultPrincipal" action="throw" />
 			</type>
+
+			<type substring="System.Security.Claims.ClaimsIdentity" action="none" />
+			<type substring="System.Security.Principal" action="none" />
 		</conditional>
 
 		<features>
