@@ -54,9 +54,18 @@ namespace Mono.Linker.Conditionals
 					ProcessType (nested);
 			}
 
+			foreach (var method in type.Methods) {
+				ProcessMethod (method);
+			}
+
 			foreach (var property in type.Properties) {
 				ProcessProperty (property);
 			}
+		}
+
+		void ProcessMethod (MethodDefinition method)
+		{
+			Context.MartinContext.Options.ProcessMethodEntries (method, a => ProcessMethodActions (method, a));
 		}
 
 		void ProcessProperty (PropertyDefinition property)
@@ -98,6 +107,27 @@ namespace Mono.Linker.Conditionals
 
 			case MartinOptions.TypeAction.Mark:
 				Context.Annotations.Mark (type);
+				break;
+			}
+		}
+
+
+		void ProcessMethodActions (MethodDefinition method, MartinOptions.MethodAction action)
+		{
+			Context.MartinContext.LogMessage (MessageImportance.Normal, $"Method action: {method} {action}");
+
+			switch (action) {
+			case MartinOptions.MethodAction.Debug:
+				Context.MartinContext.LogMessage (MessageImportance.High, $"Debug method: {method} {action}");
+				Context.MartinContext.Debug ();
+				break;
+
+			case MartinOptions.MethodAction.Mark:
+				Context.Annotations.Mark (method);
+				break;
+
+			case MartinOptions.MethodAction.Throw:
+				Context.Annotations.SetAction (method, MethodAction.ConvertToThrow);
 				break;
 			}
 		}

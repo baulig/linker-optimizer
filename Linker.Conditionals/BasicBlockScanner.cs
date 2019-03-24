@@ -187,16 +187,16 @@ namespace Mono.Linker.Conditionals
 
 			DumpBlocks ();
 
-			if (FoundConditionals || DebugLevel > 3) {
+			if (Context.Options.AnalyzeAll || FoundConditionals || DebugLevel > 3) {
 				EliminateDeadBlocks ();
 				DumpBlocks ();
 				return true;
 			}
 
-			if (!Context.Options.AnalyzeAll || Body.HasExceptionHandlers)
-				return true;
-			if (Method.DeclaringType.Namespace != "System.Globalization")
-				return true;
+			//if (!Context.Options.AnalyzeAll || Body.HasExceptionHandlers)
+			//	return true;
+			//if (Method.DeclaringType.Namespace != "System.Globalization")
+			//	return true;
 			if (DebugLevel == 0)
 				return true;
 

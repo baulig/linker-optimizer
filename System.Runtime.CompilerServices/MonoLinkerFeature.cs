@@ -6,11 +6,12 @@ namespace System.Runtime.CompilerServices
 	enum MonoLinkerFeature
 	{
 		Unknown, // keep this in first position, this is always false.
+		Martin,
 		ReflectionEmit,
+		Serialization,
 		Remoting,
 		Globalization,
 		Encoding,
 		Security,
-		Martin
 	}
 }

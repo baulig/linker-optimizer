@@ -102,6 +102,8 @@ namespace Mono.Linker.Conditionals
 			switch (name.ToLowerInvariant ()) {
 			case "sre":
 				return MonoLinkerFeature.ReflectionEmit;
+			case "serialization":
+				return MonoLinkerFeature.Serialization;
 			case "remoting":
 				return MonoLinkerFeature.Remoting;
 			case "globalization":
@@ -269,6 +271,22 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
+		{
+			foreach (var entry in _method_actions) {
+				if (entry.Matches (method))
+					action (entry.Action);
+			}
+		}
+
+		public void ProcessMethodEntries (MethodDefinition method, MethodAction filter, Action action)
+		{
+			foreach (var entry in _method_actions) {
+				if (entry.Action == filter && entry.Matches (method))
+					action ();
+			}
+		}
+
 		public enum TypeAction
 		{
 			None,
@@ -283,7 +301,8 @@ namespace Mono.Linker.Conditionals
 			None,
 			Debug,
 			Fail,
-			Mark
+			Mark,
+			Throw
 		}
 
 		public enum MatchKind

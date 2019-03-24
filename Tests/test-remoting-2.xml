@@ -24,8 +24,25 @@
 			</namespace>
 		</conditional>
 
+		<conditional feature="serialization" enabled="false">
+			<namespace name="System.Runtime.Serialization.Formatters.Binary">
+				<type name="BinaryFormatter" action="fail" />
+			</namespace>
+
+			<type substring="System.Security.Claims.ClaimsIdentity" action="none" />
+			<type substring="System.Security.Principal" action="none" />
+		</conditional>
+
+		<conditional feature="security" enabled="false">
+			<type fullname="System.AppDomain">
+				<method name="get_DefaultPrincipal" action="throw" />
+			</type>
+		</conditional>
+
 		<features>
 			<feature name="remoting" enabled="false" />
+			<feature name="serialization" enabled="false" />
+			<feature name="security" enabled="false" />
 		</features>
 	</martin>
 </linker>
