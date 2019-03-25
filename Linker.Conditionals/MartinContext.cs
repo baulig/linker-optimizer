@@ -105,6 +105,8 @@ namespace Mono.Linker.Conditionals
 			_is_type_available = ResolveSupportMethod (IsTypeAvailableName, true);
 			_is_type_name_available = ResolveSupportMethod (IsTypeNameAvailableName, true);
 			_require_feature = ResolveSupportMethod ("RequireFeature");
+
+			Options.CheckEnvironmentOptions ();
 		}
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)

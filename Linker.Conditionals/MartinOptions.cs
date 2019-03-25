@@ -78,6 +78,53 @@ namespace Mono.Linker.Conditionals
 			};
 		}
 
+		internal void CheckEnvironmentOptions ()
+		{
+			var options = Environment.GetEnvironmentVariable ("MARTIN_LINKER_OPTIONS");
+			if (string.IsNullOrEmpty (options))
+				return;
+
+			var parts = options.Split (',');
+			for (int i = 0; i < parts.Length; i++) {
+				var part = parts [i];
+				bool? enabled = null;
+				if (part [0] == '+') {
+					part = part.Substring (1);
+					enabled = true;
+				} else if (part [1] == '-') {
+					part = part.Substring (1);
+					enabled = false;
+				}
+
+				switch (part) {
+				case "main-debug":
+					AutoDebugMain = enabled ?? true;
+					break;
+				case "all-modules":
+					ScanAllModules = enabled ?? true;
+					break;
+				case "analyze-all":
+					AnalyzeAll = enabled ?? true;
+					break;
+				case "preprocess":
+					Preprocess = enabled ?? true;
+					break;
+				case "no-conditional-redefinition":
+					NoConditionalRedefinition = enabled ?? true;
+					break;
+				case "ignore-resolution-errors":
+					IgnoreResolutionErrors = enabled ?? true;
+					break;
+				case "report-size":
+					ReportSize = enabled ?? true;
+					break;
+				default:
+					SetFeatureEnabled (part, enabled ?? false);
+					break;
+				}
+			}
+		}
+
 		public bool IsFeatureEnabled (MonoLinkerFeature feature)
 		{
 			if (_enabled_features.TryGetValue (feature, out var value))

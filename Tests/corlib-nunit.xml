@@ -36,8 +36,6 @@
 		</conditional>
 
 		<features>
-			<feature name="encoding" enabled="false" />
-			<feature name="globalization" enabled="false" />
 			<feature name="security" enabled="true" />
 		</features>
 	</martin>
