@@ -9,12 +9,13 @@ namespace Martin.LinkerTest
 	{
 		public static void Main ()
 		{
-			var sha = HashAlgorithm.Create ("SHA1");
-			var md5 = HashAlgorithm.Create ("MD5");
-			Console.WriteLine ($"TEST: {sha != null} {md5 != null}");
+			TestHelpers.AssertNotNull (HashAlgorithm.Create ("SHA1"), "SHA1");
+			TestHelpers.AssertNotNull (HashAlgorithm.Create ("MD5"), "MD5");
 
-			var test = CryptoConfig.CreateFromName ("SHA1");
-			Console.WriteLine ($"TEST #1: {test != null}");
+			TestHelpers.AssertNotNull (CryptoConfig.CreateFromName ("SHA1"), "`CryptoConfig.CreateFromName (\"SHA1\")`");
+
+			TestHelpers.AssertNotNull (Aes.Create (), "Aes.Create()");
+
 		}
 	}
 }

@@ -28,6 +28,13 @@ namespace Martin.LinkerTest
 			throw new AssertionException ($"Assertion failed (expected {expected}, got {actual}){(caller != null ? " at " + caller : "")}{(message != null ? ": " + message : "")}.");
 		}
 
+		public static void AssertNotNull (object instance, string message = null, [CallerMemberName] string caller = null)
+		{
+			if (instance != null)
+				return;
+			throw new AssertionException ($"Assertion failed (expected non-null instance){(caller != null ? " at " + caller : "")}{(message != null ? ": " + message : "")}.");
+		}
+
 		/*
 		 * We scan the generated output for any references to this method and make the test fail.
 		 */
