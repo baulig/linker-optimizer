@@ -38,6 +38,8 @@ namespace Mono.Linker.Conditionals
 
 		protected override void ProcessAssembly (AssemblyDefinition assembly)
 		{
+			Context.MartinContext.LogMessage (MessageImportance.Normal, $"Preprocess assembly: {assembly}");
+
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (type);
 			}
@@ -107,6 +109,7 @@ namespace Mono.Linker.Conditionals
 
 			case MartinOptions.TypeAction.Preserve:
 				Context.Annotations.SetPreserve (type, TypePreserve.All);
+				Context.Annotations.Mark (type);
 				break;
 			}
 		}

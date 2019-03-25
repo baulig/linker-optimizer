@@ -1,20 +1,29 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="true" analyze-all="true" preprocess="true" report-size="false" />
+		<options all-modules="true" analyze-all="true" ignore-resolution-errors="true" preprocess="true" main-debug="false" />
 
 		<type fullname="System.Globalization.GlobalizationSupport" action="preserve" />
 
-		<conditional feature="security" enabled="false">
-			<type fullname="System.AppDomain">
-				<method name="get_DefaultPrincipal" action="throw" />
-			</type>
+		<conditional feature="crypto" enabled="true">
+			<type fullname="System.Security.Cryptography.CryptoConfig" action="preserve" />
+		</conditional>
+
+		<conditional feature="crypto" enabled="true">
+			<namespace name="System.Security.Cryptography">
+				<type name="CryptoConfig" action="preserve" />
+				<type name="AesCryptoServiceProvider" action="preserve" />
+				<type name="DESCryptoServiceProvider" action="preserve" />
+				<type name="DSASignatureDescription" action="preserve" />
+				<type name="MD5CryptoServiceProvider" action="preserve" />
+				<type name="RSACryptoServiceProvider" action="preserve" />
+				<type name="SHA1CryptoServiceProvider" action="preserve" />
+			</namespace>
 		</conditional>
 
 		<features>
-			<feature name="remoting" enabled="false" />
-			<feature name="serialization" enabled="false" />
-			<feature name="security" enabled="false" />
+			<feature name="globalization" enabled="true" />
+			<feature name="security" enabled="true" />
 		</features>
 	</martin>
 </linker>

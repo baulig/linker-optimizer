@@ -12,6 +12,7 @@
 		<conditional feature="crypto" enabled="true">
 			<namespace name="System.Security.Cryptography">
 				<type name="CryptoConfig" action="preserve" />
+				<type name="AesCryptoServiceProvider" action="preserve" />
 				<type name="DESCryptoServiceProvider" action="preserve" />
 				<type name="DSASignatureDescription" action="preserve" />
 				<type name="MD5CryptoServiceProvider" action="preserve" />
