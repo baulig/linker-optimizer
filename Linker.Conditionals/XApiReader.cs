@@ -87,7 +87,6 @@ namespace Mono.Linker
 			if (string.IsNullOrEmpty (value) || !bool.TryParse (value, out var enabled))
 				enabled = true;
 
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"FEATURE FROM XML: {name} {enabled}");
 			_context.MartinContext.Options.SetFeatureEnabled (name, enabled);
 		}
 
@@ -98,8 +97,6 @@ namespace Mono.Linker
 				throw ThrowError ("<conditional> needs both `feature` and `enabled` arguments.");
 
 			var feature = MartinOptions.FeatureByName (name);
-
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"CONDITIONAL FROM XML: {feature} {enabled}");
 
 			ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, Conditional));
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
@@ -188,8 +185,6 @@ namespace Mono.Linker
 			if (!Enum.TryParse<MartinOptions.TypeAction> (action, true, out var typeAction))
 				throw ThrowError ($"Invalid `action` attribute: `{action}`.");
 
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {name} {match} {typeAction}");
-
 			return _context.MartinContext.Options.AddTypeEntry (name, match, typeAction, parent, conditional);
 		}
 
@@ -204,8 +199,6 @@ namespace Mono.Linker
 
 			if (!Enum.TryParse<MartinOptions.MethodAction> (action, true, out var methodAction))
 				throw ThrowError ($"Invalid `action` attribute in {nav.OuterXml}.");
-
-			_context.MartinContext.LogMessage (MessageImportance.Low, $"PREPROCESS FROM XML: {nav} {match} {methodAction}");
 
 			_context.MartinContext.Options.AddMethodEntry (name, match, methodAction, parent, conditional);
 		}

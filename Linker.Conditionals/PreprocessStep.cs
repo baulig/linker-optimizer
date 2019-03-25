@@ -38,8 +38,6 @@ namespace Mono.Linker.Conditionals
 
 		protected override void ProcessAssembly (AssemblyDefinition assembly)
 		{
-			Context.MartinContext.LogMessage (MessageImportance.Normal, $"Preprocess assembly: {assembly}");
-
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (type);
 			}
@@ -99,8 +97,6 @@ namespace Mono.Linker.Conditionals
 
 		void ProcessTypeActions (TypeDefinition type, MartinOptions.TypeAction action)
 		{
-			Context.MartinContext.LogMessage (MessageImportance.Normal, $"Type action: {type} {action}");
-
 			switch (action) {
 			case MartinOptions.TypeAction.Debug:
 				Context.MartinContext.LogMessage (MessageImportance.High, $"Debug type: {type} {action}");
@@ -117,8 +113,6 @@ namespace Mono.Linker.Conditionals
 
 		void ProcessMethodActions (MethodDefinition method, MartinOptions.MethodAction action)
 		{
-			Context.MartinContext.LogMessage (MessageImportance.Normal, $"Method action: {method} {action}");
-
 			switch (action) {
 			case MartinOptions.MethodAction.Debug:
 				Context.MartinContext.LogMessage (MessageImportance.High, $"Debug method: {method} {action}");
