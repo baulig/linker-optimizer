@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="true" analyze-all="true" preprocess="true" />
+		<options all-modules="true" analyze-all="true" ignore-resolution-errors="true" preprocess="true" />
 
-		<debug>
-			<type name="HebrewNumber" action="fail" />
-
-			<method substring="System.DateTimeParse::TryParse" action="debug"/>
-			<method substring="DateTimeParse::MatchHebrewDigits" action="debug"/>
-			<method substring="DateTimeFormatInfo::TryParseHebrewNumber" action="debug"/>
-		</debug>
+		<conditional feature="security" enabled="true">
+			<!-- Internal interface, needed by System.Security.Permission tests -->
+			<method fullname="System.Security.Permissions.IBuiltInPermission.GetTokenIndex" action="mark" />
+		</conditional>
 
 		<features>
-			<feature name="globalization" enabled="false" />
+			<feature name="globalization" enabled="true" />
+			<feature name="security" enabled="true" />
 		</features>
 	</martin>
 </linker>

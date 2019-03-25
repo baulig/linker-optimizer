@@ -177,17 +177,19 @@ namespace Mono.Linker.Conditionals
 			}
 
 			var fail = _type_actions.FirstOrDefault (e => e.Matches (type, TypeAction.Fail));
-			if (fail == null)
+			var warn = _type_actions.FirstOrDefault (e => e.Matches (type, TypeAction.Warn));
+			if (fail == null && warn == null)
 				return;
 
 			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
 			var message = $"Found fail-listed type `{type.FullName}";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, fail);
+			DumpFailEntry (context, fail ?? warn);
 			context.Context.Tracer.Dump ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			throw new NotSupportedException (message + original_message + ".");
+			if (fail != null)
+				throw new NotSupportedException (message + original_message + ".");
 		}
 
 		public void CheckFailList (MartinContext context, MethodDefinition method)
@@ -195,16 +197,18 @@ namespace Mono.Linker.Conditionals
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
 			var fail = _method_actions.FirstOrDefault (e => e.Matches (method, MethodAction.Fail));
-			if (fail == null)
+			var warn = _method_actions.FirstOrDefault (e => e.Matches (method, MethodAction.Warn));
+			if (fail == null && warn == null)
 				return;
 
 			var message = $"Found fail-listed method `{method.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, fail);
+			DumpFailEntry (context, fail ?? warn);
 			context.Context.Tracer.Dump ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			throw new NotSupportedException (message + ".");
+			if (fail != null)
+				throw new NotSupportedException (message + ".");
 		}
 
 		static void DumpFailEntry (MartinContext context, TypeEntry entry)
@@ -285,6 +289,7 @@ namespace Mono.Linker.Conditionals
 			None,
 			Debug,
 			Fail,
+			Warn,
 			Mark,
 			Size
 		}
@@ -294,6 +299,7 @@ namespace Mono.Linker.Conditionals
 			None,
 			Debug,
 			Fail,
+			Warn,
 			Mark,
 			Throw
 		}

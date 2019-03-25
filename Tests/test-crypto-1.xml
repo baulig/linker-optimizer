@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="true" analyze-all="true" preprocess="true" report-size="false" />
+		<options all-modules="true" analyze-all="true" preprocess="true" report-size="true" />
 
 		<conditional feature="security" enabled="false">
 			<type fullname="System.AppDomain">
 				<method name="get_DefaultPrincipal" action="throw" />
 			</type>
+		</conditional>
+
+		<conditional feature="crypto" enabled="false">
+			<type fullname="System.Security.Cryptography.CryptoConfig" action="warn" />
+			<type fullname="System.Security.Cryptography.CryptoConfigForwarder" action="warn" />
 		</conditional>
 
 		<features>

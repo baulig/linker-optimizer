@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Security.Cryptography;
 using System.Runtime.CompilerServices;
 
 namespace Martin.LinkerTest
@@ -8,7 +9,9 @@ namespace Martin.LinkerTest
 	{
 		public static void Main ()
 		{
-			Console.WriteLine ("Hello!");
+			var sha = HashAlgorithm.Create ("SHA1");
+			var md5 = HashAlgorithm.Create ("MD5");
+			Console.WriteLine ($"TEST: {sha != null} {md5 != null}");
 		}
 	}
 }
