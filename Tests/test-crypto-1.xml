@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="true" analyze-all="true" preprocess="true" report-size="true" />
+		<options all-modules="true" analyze-all="true" preprocess="true" report-size="false" main-debug="false" />
 
 		<type fullname="System.Globalization.GlobalizationSupport" action="preserve" />
 
@@ -12,7 +12,10 @@
 		</conditional>
 
 		<conditional feature="crypto" enabled="true">
-			<type fullname="System.Security.Cryptography.CryptoConfig" action="preserve" />
+			<namespace name="System.Security.Cryptography">
+				<type name="CryptoConfig" action="preserve" />
+				<type name="SHA1CryptoServiceProvider" action="preserve" />
+			</namespace>
 		</conditional>
 
 		<conditional feature="crypto" enabled="false">
@@ -21,10 +24,10 @@
 		</conditional>
 
 		<features>
-			<feature name="remoting" enabled="false" />
-			<feature name="globalization" enabled="false" />
-			<feature name="serialization" enabled="false" />
-			<feature name="security" enabled="false" />
+			<feature name="remoting" enabled="true" />
+			<feature name="globalization" enabled="true" />
+			<feature name="serialization" enabled="true" />
+			<feature name="security" enabled="true" />
 			<feature name="crypto" enabled="true" />
 		</features>
 	</martin>
