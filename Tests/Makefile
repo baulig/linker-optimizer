@@ -63,7 +63,12 @@ TEST_CASES := \
 	test-crypto-1.cs \
 	test-security-1.cs \
 	test-remoting-1.cs \
-	test-remoting-2.cs
+	test-remoting-2.cs \
+	test-size-check-1.cs \
+	test-size-check-2.cs \
+	test-size-check-3.cs \
+	test-size-check-4.cs \
+	test-size-check-5.cs
 
 BROKEN_TESTS :=
 
