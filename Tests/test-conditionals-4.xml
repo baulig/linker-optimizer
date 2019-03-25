@@ -3,9 +3,6 @@
 	<martin>
 		<options all-modules="false" analyze-all="false" />
 
-		<debug>
-		</debug>
-
 		<features>
 			<feature name="globalization" enabled="false" />
 		</features>

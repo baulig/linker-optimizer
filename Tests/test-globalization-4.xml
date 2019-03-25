@@ -3,8 +3,6 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" preprocess="true" report-size="true" main-debug="false" />
 
-		<debug>
-
 <!-- System.DateTimeParse (corefx/src/Common/src/CoreLib/System/Globalization/DateTimeParse.cs) is pulled in via:
 
 Found method `System.DateTime System.IConvertible::ToDateTime(System.IFormatProvider)`, which matches fail-list entry `[MethodEntry ToDateTime:Substring:Fail].
@@ -20,12 +18,11 @@ Dependency Stack:
 
 -->
 
-			<type fullname="System.DateTimeParse" action="none" />
-			<type fullname="System.TimeZoneInfo" action="fail" />
-			<method substring="TimeSpan::TryParse" action="fail" />
-			<type fullname="System.Globalization.TimeSpanParse" action="fail" />
-			<type fullname="System.Globalization.DateTimeFormatInfo" action="size" />
-		</debug>
+		<type fullname="System.DateTimeParse" action="none" />
+		<type fullname="System.TimeZoneInfo" action="fail" />
+		<method substring="TimeSpan::TryParse" action="fail" />
+		<type fullname="System.Globalization.TimeSpanParse" action="fail" />
+		<type fullname="System.Globalization.DateTimeFormatInfo" action="size" />
 
 		<features>
 			<feature name="remoting" enabled="false" />

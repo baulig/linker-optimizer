@@ -50,9 +50,9 @@ namespace Mono.Linker
 			ProcessChildren (root, "features/feature", OnFeature);
 			ProcessChildren (root, "conditional", OnConditional);
 
-			ProcessChildren (root, "debug/namespace", child => OnNamespaceEntry (child));
-			ProcessChildren (root, "debug/type", child => OnTypeEntry (child, null));
-			ProcessChildren (root, "debug/method", child => OnMethodEntry (child));
+			ProcessChildren (root, "namespace", child => OnNamespaceEntry (child));
+			ProcessChildren (root, "type", child => OnTypeEntry (child, null));
+			ProcessChildren (root, "method", child => OnMethodEntry (child));
 		}
 
 		void OnOptions (MartinOptions options, XPathNavigator nav)

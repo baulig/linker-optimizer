@@ -3,8 +3,6 @@
 	<martin>
 		<options all-modules="false" analyze-all="true" preprocess="false" />
 
-		<debug>
-			<method substring="ArrayElementsHaveSpace" action="debug"/>
-		</debug>
+		<method substring="ArrayElementsHaveSpace" action="debug"/>
 	</martin>
 </linker>

@@ -3,16 +3,14 @@
 	<martin>
 		<options all-modules="true" preprocess="true" report-size="true" />
 
-		<debug>
-			<type name="HebrewNumber" action="fail" />
-			<type name="EncodingTable" action="fail" />
+		<type name="HebrewNumber" action="fail" />
+		<type name="EncodingTable" action="fail" />
 
-			<type name="X509Helper" action="fail" />
-			<type name="X509Certificate" action="fail" />
-			<type name="DependencyInjector" action="fail" />
-			<type name="SystemDependencyProvider" action="fail" />
-			<method name="GetDefaultHostEvidence" action="fail" />
-		</debug>
+		<type name="X509Helper" action="fail" />
+		<type name="X509Certificate" action="fail" />
+		<type name="DependencyInjector" action="fail" />
+		<type name="SystemDependencyProvider" action="fail" />
+		<method name="GetDefaultHostEvidence" action="fail" />
 
 		<features>
 			<feature name="encoding" enabled="false" />
