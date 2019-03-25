@@ -3,9 +3,9 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" ignore-resolution-errors="true" preprocess="true" />
 
-		<type fullname="System.Globalization.GlobalizationSupport">
-			<method name="MartinTest" action="mark" />
-		</type>
+		<type fullname="System.Security.Permissions.UIPermission" action="preserve" />
+
+		<type fullname="System.Globalization.GlobalizationSupport" action="preserve" />
 
 		<conditional feature="security" enabled="true">
 			<!-- Internal interface, needed by System.Security.Permission tests -->

@@ -3,9 +3,7 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" preprocess="true" report-size="false" />
 
-		<type fullname="System.Globalization.GlobalizationSupport">
-			<method name="MartinTest" action="mark" />
-		</type>
+		<type fullname="System.Globalization.GlobalizationSupport" action="preserve" />
 
 		<conditional feature="security" enabled="false">
 			<type fullname="System.AppDomain">

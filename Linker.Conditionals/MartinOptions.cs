@@ -271,7 +271,7 @@ namespace Mono.Linker.Conditionals
 		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
 		{
 			foreach (var entry in _method_actions) {
-				if (entry.Action == MethodAction.None && entry.Matches (method))
+				if (entry.Action != MethodAction.None && entry.Matches (method))
 					action (entry.Action);
 			}
 		}
@@ -290,8 +290,8 @@ namespace Mono.Linker.Conditionals
 			Debug,
 			Fail,
 			Warn,
-			Mark,
-			Size
+			Size,
+			Preserve
 		}
 
 		public enum MethodAction
@@ -300,7 +300,6 @@ namespace Mono.Linker.Conditionals
 			Debug,
 			Fail,
 			Warn,
-			Mark,
 			Throw
 		}
 
