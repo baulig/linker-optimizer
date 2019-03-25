@@ -106,7 +106,7 @@ namespace Mono.Linker.Conditionals
 				break;
 
 			case MartinOptions.TypeAction.Preserve:
-				Context.Annotations.SetPreserve (type, TypePreserve.Methods);
+				Context.Annotations.SetPreserve (type, TypePreserve.All);
 				break;
 			}
 		}
@@ -121,10 +121,6 @@ namespace Mono.Linker.Conditionals
 				Context.MartinContext.LogMessage (MessageImportance.High, $"Debug method: {method} {action}");
 				Context.MartinContext.Debug ();
 				break;
-
-//			case MartinOptions.MethodAction.Mark:
-//				Context.Annotations.SetPreserve ();
-//				break;
 
 			case MartinOptions.MethodAction.Throw:
 				Context.Annotations.SetAction (method, MethodAction.ConvertToThrow);

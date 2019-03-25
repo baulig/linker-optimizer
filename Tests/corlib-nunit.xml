@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
 	<martin>
-		<options all-modules="true" analyze-all="true" ignore-resolution-errors="true" preprocess="true" />
-
-		<type fullname="System.Security.Permissions.UIPermission" action="preserve" />
+		<options all-modules="true" analyze-all="true" ignore-resolution-errors="true" preprocess="true" main-debug="false" />
 
 		<type fullname="System.Globalization.GlobalizationSupport" action="preserve" />
 
-		<conditional feature="security" enabled="true">
-			<!-- Internal interface, needed by System.Security.Permission tests -->
-			<method substring="System.Security.Permissions.IBuiltInPermission.GetTokenIndex" action="none" />
+		<conditional feature="crypto" enabled="true">
+			<type fullname="System.Security.Cryptography.CryptoConfig" action="preserve" />
 		</conditional>
 
 		<features>

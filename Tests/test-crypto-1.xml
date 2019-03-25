@@ -11,6 +11,10 @@
 			</type>
 		</conditional>
 
+		<conditional feature="crypto" enabled="true">
+			<type fullname="System.Security.Cryptography.CryptoConfig" action="preserve" />
+		</conditional>
+
 		<conditional feature="crypto" enabled="false">
 			<type fullname="System.Security.Cryptography.CryptoConfig" action="warn" />
 			<type fullname="System.Security.Cryptography.CryptoConfigForwarder" action="warn" />
@@ -21,7 +25,7 @@
 			<feature name="globalization" enabled="false" />
 			<feature name="serialization" enabled="false" />
 			<feature name="security" enabled="false" />
-			<feature name="crypto" enabled="false" />
+			<feature name="crypto" enabled="true" />
 		</features>
 	</martin>
 </linker>
