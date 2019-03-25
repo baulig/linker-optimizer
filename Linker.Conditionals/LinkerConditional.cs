@@ -77,6 +77,10 @@ namespace Mono.Linker.Conditionals
 			var reference = (MethodReference)instruction.Operand;
 			var target = reference.Resolve ();
 			if (target == null) {
+				if (reference.DeclaringType.Name.Contains ("...")) {
+					// FIXME: we don't support Ranges yet.
+					return false;
+				}
 				scanner.Context.LogMessage (MessageImportance.High, $"Cannot resolve call target: {CecilHelper.Format (instruction)}");
 				if (scanner.Context.Options.IgnoreResolutionErrors)
 					return false;

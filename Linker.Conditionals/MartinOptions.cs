@@ -251,7 +251,7 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 			foreach (var entry in _type_actions) {
-				if (entry.Matches (type))
+				if (entry.Action != TypeAction.None && entry.Matches (type))
 					action (entry.Action);
 			}
 		}
@@ -271,7 +271,7 @@ namespace Mono.Linker.Conditionals
 		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
 		{
 			foreach (var entry in _method_actions) {
-				if (entry.Matches (method))
+				if (entry.Action == MethodAction.None && entry.Matches (method))
 					action (entry.Action);
 			}
 		}

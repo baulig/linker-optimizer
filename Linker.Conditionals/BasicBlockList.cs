@@ -199,6 +199,9 @@ namespace Mono.Linker.Conditionals
 					EnsureExceptionBlock (BasicBlockType.Finally, handler.HandlerStart, handler);
 					EnsureExceptionBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
 					break;
+				case ExceptionHandlerType.Fault:
+					// FIXME: We don't support fault blocks yet.
+					return false;
 				default:
 					Scanner.Context.LogMessage (MessageImportance.High, $"Unknown exception type `{handler.HandlerType}` in `{Scanner.Method}`.");
 					return false;

@@ -3,9 +3,13 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" ignore-resolution-errors="true" preprocess="true" />
 
+		<type fullname="System.Globalization.GlobalizationSupport">
+			<method name="MartinTest" action="mark" />
+		</type>
+
 		<conditional feature="security" enabled="true">
 			<!-- Internal interface, needed by System.Security.Permission tests -->
-			<method fullname="System.Security.Permissions.IBuiltInPermission.GetTokenIndex" action="mark" />
+			<method substring="System.Security.Permissions.IBuiltInPermission.GetTokenIndex" action="none" />
 		</conditional>
 
 		<features>
