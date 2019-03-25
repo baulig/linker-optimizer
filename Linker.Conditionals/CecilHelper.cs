@@ -343,6 +343,18 @@ namespace Mono.Linker.Conditionals
 		public static bool IsConstantLoad (MethodBody body, out bool value)
 		{
 			value = false;
+			if (body.Instructions.Count == 4) {
+				if (body.Instructions [0].OpCode.Code != Code.Ldc_I4_0)
+					return false;
+				if (body.Instructions [1].OpCode.Code != Code.Ldc_I4_0)
+					return false;
+				if (body.Instructions [2].OpCode.Code != Code.Ceq)
+					return false;
+				if (body.Instructions [3].OpCode.Code != Code.Ret)
+					return false;
+				value = true;
+				return true;
+			}
 			if (body.Instructions.Count != 2)
 				return false;
 			if (body.Instructions [1].OpCode.Code != Code.Ret)

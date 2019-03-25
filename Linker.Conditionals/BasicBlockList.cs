@@ -405,14 +405,14 @@ namespace Mono.Linker.Conditionals
 			Body.Instructions [index] = instruction;
 			instruction.Offset = -1;
 
-			if (position == block.Count - 1) {
+			if (position == block.Count - 1)
 				CheckRemoveJumpOrigin (block);
-				CheckAddJumpOrigin (block);
-			}
 
 			if (position > 0) {
 				block.RemoveInstructionAt (position);
 				block.InsertAt (position, instruction);
+				if (position == block.Count - 1)
+					CheckAddJumpOrigin (block);
 				return;
 			}
 
@@ -425,6 +425,9 @@ namespace Mono.Linker.Conditionals
 			instructions [position] = instruction;
 
 			ReplaceBlock (ref block, instructions);
+
+			if (position == block.Count - 1)
+				CheckAddJumpOrigin (block);
 		}
 
 		public void DeleteBlock (ref BasicBlock block)

@@ -70,7 +70,6 @@ namespace Mono.Linker.Conditionals
 			}
 
 			Scanner.LogDebug (2, $"REMOVE DEAD BLOCKS #1: {Method.Name} {foundDeadBlocks}");
-			Scanner.DumpBlocks (2);
 
 			if (!foundDeadBlocks)
 				return false;
@@ -91,7 +90,8 @@ namespace Mono.Linker.Conditionals
 			if (removedDeadBlocks) {
 				BlockList.ComputeOffsets ();
 
-				Scanner.DumpBlocks ();
+				Scanner.LogDebug (2, $"REMOVE DEAD BLOCKS DONE: {Method.Name} {foundDeadBlocks}");
+				Scanner.DumpBlocks (2);
 			}
 
 			return removedDeadBlocks;
@@ -133,6 +133,9 @@ namespace Mono.Linker.Conditionals
 
 		public bool RemoveDeadJumps ()
 		{
+			Scanner.LogDebug (2, $"REMOVE DEAD JUMPS: {Method.Name}");
+			Scanner.DumpBlocks (2);
+
 			var removedDeadBlocks = false;
 
 			for (int i = 0; i < BlockList.Count - 1; i++) {
@@ -161,7 +164,8 @@ namespace Mono.Linker.Conditionals
 			if (removedDeadBlocks) {
 				BlockList.ComputeOffsets ();
 
-				Scanner.DumpBlocks ();
+				Scanner.LogDebug (2, $"REMOVE DEAD JUMPS DONE: {Method.Name}");
+				Scanner.DumpBlocks (2);
 			}
 
 			return removedDeadBlocks;
@@ -171,10 +175,8 @@ namespace Mono.Linker.Conditionals
 		{
 			var removedConstantJumps = false;
 
-			if (Scanner.DebugLevel > 0) {
-				Scanner.LogDebug (2, $"REMOVE CONSTANT JUMPS: {Method.Name}");
-				Scanner.Context.Debug ();
-			}
+			Scanner.LogDebug (2, $"REMOVE CONSTANT BLOCKS: {Method.Name}");
+			Scanner.DumpBlocks (2);
 
 			for (int i = 0; i < BlockList.Count - 1; i++) {
 				var block = BlockList [i];
@@ -184,7 +186,8 @@ namespace Mono.Linker.Conditionals
 			if (removedConstantJumps) {
 				BlockList.ComputeOffsets ();
 
-				Scanner.DumpBlocks ();
+				Scanner.LogDebug (2, $"REMOVE CONSTANT JUMPS DONE: {Method.Name}");
+				Scanner.DumpBlocks (2);
 			}
 
 			return removedConstantJumps;
@@ -332,10 +335,7 @@ namespace Mono.Linker.Conditionals
 					var position = variable.Block.IndexOf (variable.Instruction);
 					var block = variable.Block;
 					BlockList.RemoveInstructionAt (ref block, position + 1);
-					if (block.Count == 1)
-						BlockList.DeleteBlock (ref block);
-					else
-						BlockList.RemoveInstructionAt (ref block, position);
+					BlockList.RemoveInstructionAt (ref block, position);
 					RemoveVariable (variable);
 					Method.Body.Variables.RemoveAt (i);
 					removed = true;
@@ -343,12 +343,11 @@ namespace Mono.Linker.Conditionals
 				}
 			}
 
-			Scanner.LogDebug (1, $"REMOVE VARIABLES #2: {removed}");
-
 			if (removed) {
 				BlockList.ComputeOffsets ();
 
-				Scanner.DumpBlocks ();
+				Scanner.LogDebug (1, $"REMOVE VARIABLES DONE: {removed}");
+				Scanner.DumpBlocks (1);
 			}
 
 			return removed;
@@ -356,7 +355,12 @@ namespace Mono.Linker.Conditionals
 
 		void RemoveVariable (VariableEntry variable)
 		{
-			Scanner.DumpBlocks ();
+			if (Scanner.DebugLevel > 1) {
+				BlockList.ComputeOffsets ();
+				Scanner.LogDebug (2, $"DELETE VARIABLE: {Method.Name} {variable}");
+				Scanner.DumpBlocks (2);
+
+			}
 
 			for (int i = 0; i < BlockList.Count; i++) {
 				var block = BlockList [i];
@@ -409,6 +413,12 @@ namespace Mono.Linker.Conditionals
 						break;
 					}
 				}
+			}
+
+			if (Scanner.DebugLevel > 1) {
+				BlockList.ComputeOffsets ();
+				Scanner.LogDebug (2, $"DELETE VARIABLE DONE: {Method.Name} {variable}");
+				Scanner.DumpBlocks (2);
 			}
 		}
 

@@ -12,6 +12,9 @@ namespace Martin.LinkerTest
 
 			var now = DateTime.Now;
 			Console.WriteLine (DateTime.Now);
+
+			var local = now.ToLocalTime ();
+			Console.WriteLine (local);
 		}
 	}
 }
