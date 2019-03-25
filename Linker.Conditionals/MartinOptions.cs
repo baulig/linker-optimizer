@@ -73,7 +73,6 @@ namespace Mono.Linker.Conditionals
 			_method_actions = new List<MethodEntry> ();
 			_enabled_features = new Dictionary<MonoLinkerFeature, bool> {
 				[MonoLinkerFeature.Unknown] = false,
-				[MonoLinkerFeature.Security] = false,
 				[MonoLinkerFeature.Martin] = false
 			};
 		}
