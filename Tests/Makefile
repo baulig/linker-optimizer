@@ -84,7 +84,8 @@ ILTEST_CASES := \
 	iltest-flow-analysis-1.il
 
 AOTTEST_CASES := \
-	aottest-crypto-1.cs
+	aottest-crypto-1.cs \
+	aottest-remoting-1.cs
 
 TEST_HELPERS_LIBRARY := TestHelpers.dll
 
