@@ -5,10 +5,15 @@ include ../../../../build/rules.make
 abs_topdir := $(abspath $(topdir))
 LINKER_OUTPUT := output
 PROFILE_PATH := $(abspath $(topdir)/class/lib/$(PROFILE_DIRECTORY))
+AOTPROFILE_PATH := $(abspath $(topdir)/class/lib/testing_aot_full)
 XUNIT_PATH := $(abspath $(topdir)/..)/external/xunit-binaries
+
 LINKER = MONO_PATH=$(topdir)/class/lib/$(BUILD_TOOLS_PROFILE) $(RUNTIME) $(RUNTIME_FLAGS) --debug $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/monolinker.exe -out $(LINKER_OUTPUT) -b true -d $(PROFILE_PATH)
 LINKER_DEFAULT = $(LINKER) -c link -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre --exclude-feature security --exclude-feature globalization
 LINKER_CORLIB_TEST = $(LINKER) -c copy -p link mscorlib -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre
+AOTLINKER = MONO_PATH=$(topdir)/class/lib/$(BUILD_TOOLS_PROFILE) $(RUNTIME) $(RUNTIME_FLAGS) --debug $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/monolinker.exe -out $(LINKER_OUTPUT) -b true -d $(AOTPROFILE_PATH)
+AOTLINKER_DEFAULT = $(AOTLINKER) -c link -l none $(LINKER_PROFILE_OPTIONS) --exclude-feature sre --exclude-feature security --exclude-feature globalization
+
 TEST_EXEC = MONO_PATH=$(LINKER_OUTPUT) $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot
 NUNIT_ARGS := -exclude=NotOnMac,MacNotWorking,ReflectionEmit,NotWorking,CAS,LinkerNotWorking,$(EXTRA_NUNIT_EXCLUDES)
 XUNIT_ARGS := -noappdomain -noshadow -parallel none -notrait category=failing -notrait category=nonmonotests -notrait Benchmark=true -notrait category=outerloop -notrait category=nonosxtests
@@ -18,6 +23,7 @@ TESTNAME_ARG = -test=$(TESTNAME)
 endif
 
 TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(topdir)/class/lib/$(PROFILE_DIRECTORY)/mscorlib.dll
+AOTTESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(topdir)/class/lib/testing_aot_full/mscorlib.dll
 
 CLEAN_FILES += *.exe *.dll *.pdb
 
@@ -77,17 +83,23 @@ ILTEST_CASES := \
 	iltest-conditionals-2.il \
 	iltest-flow-analysis-1.il
 
+AOTTEST_CASES := \
+	aottest-crypto-1.cs
+
 TEST_HELPERS_LIBRARY := TestHelpers.dll
 
 $(TEST_HELPERS_LIBRARY): $(TEST_HELPER_SOURCES)
 	$(TESTS_COMPILER) /t:library /out:$@ $^
 
-compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY)
+compile-tests: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(AOTTEST_CASES:.cs=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY)
 
-run: $(TEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
+run: $(TEST_CASES:.cs=) $(AOTTEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 
 test-%.exe: test-%.cs $(TEST_HELPERS_LIBRARY)
 	$(TESTS_COMPILER) /optimize /out:$@ /r:$(TEST_HELPERS_LIBRARY) $(filter test-%.cs,$^)
+
+aottest-%.exe: aottest-%.cs $(TEST_HELPERS_LIBRARY)
+	$(AOTTESTS_COMPILER) /optimize /out:$@  $(filter aottest-%.cs,$^)
 
 iltest-%.exe: iltest-%.il $(TEST_HELPERS_LIBRARY)
 	$(ILASM) /out:$@ $(filter iltest-%.il,$^)
@@ -107,6 +119,7 @@ $(eval $(call RunTests,features))
 $(eval $(call RunTests,conditionals))
 $(eval $(call RunTests,flow-analysis))
 $(eval $(call RunTests,globalization))
+$(eval $(call RunTests,size-check))
 
 $(eval $(call RunIlTests,conditionals))
 $(eval $(call RunIlTests,flow-analysis))
@@ -120,6 +133,20 @@ test-%: test-%.exe build
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/$(@F).exe > $(LINKER_OUTPUT)/$(@F).il
 	MONO_PATH=$(PROFILE_PATH) monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
+	@! grep AssertRemoved $(LINKER_OUTPUT)/$(@F).il
+	@ls -lR $(LINKER_OUTPUT)
+	(cd $(LINKER_OUTPUT); MONO_PATH=. $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot ./$(@F).exe)
+	#@rm -rf $(LINKER_OUTPUT)
+
+aottest-%: aottest-%.exe build
+	@echo RUN TEST $@
+	@rm -rf $(LINKER_OUTPUT)
+	@mkdir $(LINKER_OUTPUT)
+	$(AOTLINKER_DEFAULT) --dump-dependencies --martin -a $@ $(if $(wildcard $(@F).xml), -i $(@F).xml)
+	#@gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
+	MONO_PATH=$(AOTPROFILE_PATH) monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
+	MONO_PATH=$(AOTPROFILE_PATH) monodis $(LINKER_OUTPUT)/$(@F).exe > $(LINKER_OUTPUT)/$(@F).il
+	MONO_PATH=$(AOTPROFILE_PATH) monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
 	@! grep AssertRemoved $(LINKER_OUTPUT)/$(@F).il
 	@ls -lR $(LINKER_OUTPUT)
 	(cd $(LINKER_OUTPUT); MONO_PATH=. $(RUNTIME) $(RUNTIME_FLAGS) --debug -O=-aot ./$(@F).exe)

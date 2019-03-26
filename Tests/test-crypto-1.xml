@@ -3,12 +3,6 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" ignore-resolution-errors="true" preprocess="true" main-debug="false" />
 
-		<type fullname="System.Globalization.GlobalizationSupport" action="preserve" />
-
-		<conditional feature="crypto" enabled="true">
-			<type fullname="System.Security.Cryptography.CryptoConfig" action="preserve" />
-		</conditional>
-
 		<conditional feature="crypto" enabled="true">
 			<namespace name="System.Security.Cryptography">
 				<type name="CryptoConfig" action="preserve" />
@@ -20,10 +14,5 @@
 				<type name="SHA1CryptoServiceProvider" action="preserve" />
 			</namespace>
 		</conditional>
-
-		<features>
-			<feature name="globalization" enabled="true" />
-			<feature name="security" enabled="true" />
-		</features>
 	</martin>
 </linker>

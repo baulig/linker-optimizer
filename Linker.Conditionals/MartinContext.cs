@@ -111,11 +111,11 @@ namespace Mono.Linker.Conditionals
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)
 		{
-			var corlib = _corlib_support_type.Methods.First (m => full ? m.FullName == name : m.Name == name);
+			var corlib = _corlib_support_type.Methods.FirstOrDefault (m => full ? m.FullName == name : m.Name == name);
 			if (corlib == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.{name}`.");
 
-			var helper = _test_helper_support_type?.Methods.First (m => full ? m.FullName == name : m.Name == name);
+			var helper = _test_helper_support_type?.Methods.FirstOrDefault (m => full ? m.FullName == name : m.Name == name);
 			return new SupportMethodRegistration (corlib, helper);
 		}
 

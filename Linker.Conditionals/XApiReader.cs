@@ -163,6 +163,7 @@ namespace Mono.Linker
 				entry = _context.MartinContext.Options.AddTypeEntry (name, MartinOptions.MatchKind.Namespace, MartinOptions.TypeAction.None, null, conditional);
 
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
+			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
 		}
 
 		void OnTypeEntry (XPathNavigator nav, MartinOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
