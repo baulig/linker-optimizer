@@ -71,7 +71,7 @@ The branch instruction will always be the last instruction of the block and for 
 
 For `try` or `catch` blocks, the flow analysis code assumes that each block that's not unreachable can possibly throw an exception.  Jump origins will be added accordingly.
 
-The scanner also looks at the target of each `call` instruction to resolve linker conditionals (see the section about Linker Conditionals for details).
+The scanner also looks at the target of each `call` instruction to resolve linker conditionals (see the section about Linker Conditionals for details).  All linker conditionals will be put into a basic block or their own.
 
 If no linker conditionals are found, then by default the scan result will be discarded and we continue with the normal linker's code-path by calling the `base.MarkMethodBody ()` method.
 
@@ -82,4 +82,121 @@ Scanning all method bodies is required to detect linker conditionals in them.  S
 If any linker conditionals have been found (or `analyze-all` has been given), then the additional steps will be enabled, which will be described in the following chapters.
 
 ## Linker Conditionals
+
+There are two kinds of linker conditionals:
+
+1. An explicit call to a static method in the `MonoLinkerSupport` class (currently in `System.Runtime.CompilerServices`, but we can move / rename it).  This class is detected in both corlib and a special assembly called `TestHelpers.dll`, which is used by the test suite.
+This does not need ot be the final solution, I just simply needed something that's easy to detect just by looking at the call instruction.
+2.  A call to an "implicit conditional method".  At the moment, this requires a special pre-scan step, which needs to be explicitly enabled via the `preprocess` option.  This was written _before_ the new XML code was in place; the plan is to replace it with XML-based registration.
+3.  (Planned) XML-based registration of "implicit conditional methods".
+
+### Explicit Conditional Methods
+
+We currently support the following conditionals.  Please note that some of these have become obsoleted by newer design philosophy and functionality (namely the new fully complete flow analysis and dead code elimination).
+
+This code was written before the dead code eliminator and with the old and obsoleted design philosophy in mind that "features" should be dynamically detectable at runtime - we now require all features to be explicitly declared with link-time options (either in XML or on the command-line).
+
+I believe that all of them except for `IsFeatureSupported ()` can now be safely removed.
+
+All of the following methods are `static` and have `[MethodImpl(MethodImplOptions.NoInlining)]`; I'll omit these in the following list for simplicity.
+
+The core part is:
+
+* `bool IsFeatureSupported (MonoLinkerFeature feature)`
+* `bool ConstantCall ()` (virtual, this method does not actually exist; see next section)
+
+The following are still in active use by the test suite (though we could remove them from corlib and only resolve from the test helper assembly):
+
+* `bool IsTypeAvailable (string type)` (we take a `string` argument to support internal types)
+* `bool IsFeatureSupported (MonoLinkerFeature feature)`
+* `void RequireFeature (MonoLinkerFeature feature)` (only used in one single test)
+
+And I belive all of those can go away:
+
+* `bool IsWeakInstanceOf<T> (object obj)`
+* `bool IsTypeAvailable<T> ()`
+* `bool AsWeakInstanceOf<T> (object obj, out T instance)`
+
+Since each of these conditionals lives in its own class, it is really easy to remove some of them.
+
+The enum `MonoLinkerFeature` is currently defined as
+
+```
+	enum MonoLinkerFeature
+	{
+		Unknown, // keep this in first position, this is always false.
+		Martin,
+		ReflectionEmit,
+		Serialization,
+		Remoting,
+		Globalization,
+		Encoding,
+		Security,
+		Crypto
+	}
+ ```
+
+We could in theory replace that enum with a non-enum based approach, but again this will make registration and looking a bit more complex and I wanted to keep it simple for the moment.
+
+Adding an additional enum value is one line of code and literally takes me one minute because those names are also automatically resolved from the XML options.
+
+We do not have to spew these all over the place, in fact they can all be contained to one single file.
+
+Each of these features can be disabled via either the XML or the command-line, for instance
+
+```
+<features>
+  <feature name="security" enabled="false" />
+  <feature name="remoting" enabled="false" />
+</features>
+```
+
+The `Unknown` feature is always disabled (this is used by the regression tests for flow analysis and dead code elimination).  There are also some IL tests containing `ldc.i4.0` and `ldc.i4.1` for `Unknown` and `Martin` respectively, that's why they're in first position.
+
+We can of course remove them from corlib, but should reserve some values for those regression tests (since you have to use constant loads like `ldc.i4.1` in IL, it's kinda cumbersome to modify those enum values).
+
+I didn't hook up any command-line options yet, but there's an environment variable `MARTIN_LINKER_OPTIONS`, so you could for instance say `MARTIN_LINKER_OPTIONS=security,remoting` to disable those two features (by default, all features are enabled).
+
+### Implicit Conditional Methods
+
+As I mentioned above, `bool ConditionalCall ()` does not actually exist - it is purely virtual and is used for what I call "implicit conditional methods".
+
+An "implicit conditional method" currently has the following requirements: it must be parameterless, return `bool`, contain an explicit linker conditional and resolve to a boolean constant after dead code elimination.
+
+Specifically, after all processing, the method body must be one of
+
+```
+ldc.i4.0
+ret
+```
+or
+```
+ldc.i4.1
+ret
+```
+or
+```
+ldc.i4.0
+ldc.i4.0
+ceq
+ret
+```
+
+We could of course hook up the XML and just "teach" the linker that an arbitrary method should be treated as such.
+
+If the `preprocess` step is enabled, then all property getters will be scanned.  It is really just a matter of how we're telling the linker which methods have such "magic" properties.
+
+The property does not need to be static and it may contain additional code besides the conditional, such as for instance
+
+```
+public bool IsReadOnly {
+    get {
+        return !MonoLinkerSupport.IsFeatureSupported(MonoLinkerFeature.Globalization) || _isReadOnly;
+    }
+}
+```
+
+You can really put arbitrary code into that property getter (which allows the conditional to be added to existing properties!) as long as the dead code elimination component (which is actually quite advanced) can resolve it all into a boolean constant.
+
+Once a method is identified to be such "magic" one, then all calls to it are treated as a linker conditional - the call will be put onto a basic block by itself with an instance of `ConstantCallConditional` assigned it it.
 
