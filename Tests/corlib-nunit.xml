@@ -5,6 +5,8 @@
 
 		<type fullname="System.Globalization.GlobalizationSupport" action="preserve" />
 
+		<type fullname="Mono.Runtime" action="preserve" />
+
 		<conditional feature="crypto" enabled="true">
 			<type fullname="System.Security.Cryptography.CryptoConfig" action="preserve" />
 		</conditional>
