@@ -36,6 +36,7 @@ namespace System.Runtime.CompilerServices
 		Serialization,
 		Remoting,
 		Globalization,
+		Collator,
 		Encoding,
 		Security,
 		Crypto
