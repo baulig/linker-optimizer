@@ -200,3 +200,26 @@ You can really put arbitrary code into that property getter (which allows the co
 
 Once a method is identified to be such "magic" one, then all calls to it are treated as a linker conditional - the call will be put onto a basic block by itself with an instance of `ConstantCallConditional` assigned it it.
 
+### Conditional Resolution
+
+After basic block scanning is comnplete, all linker conditionals will be resolved.
+
+Each such conditional will be in a basic block by itself and the `BasicBlock` will have an instance of the abstract `LinkerConditional` class assigned to it.
+
+During resolution, that block will be rewritten to resolve the conditional; the `call` instruction will be replaced with its direct boolean result.
+
+Since some of the conditional methods may have arguments and we're removing the `call`, we need to get rid of the arguments as well.  Here, we distinguish two situations:
+
+* if the instruction immediately preceding the `call` is a simple load (such as `ldloc.1`, `ldarg.2`, `ldc.i4.4`, `dup` etc.) we can just simply remove that load instruction.
+* otherwise, we insert a `pop` (as the argument it too complex for us to resolve).
+
+This mean that this mechanism will work with arbitrarily complex arguments, but only those which will use simple loads in IL will fully benefit from dead code elimination.  If you push something complex onto the stack, that something will stay - followed by a `pop`.
+
+The basic block scanner already does this distinction and will put such simple loads into the conditional's basic block.
+
+Similarly, the `call` instruction may also be optionally followed by a `brfalse`, `brtrue` or `ret`.  These will also be put into the conditional's basic block.  These two conditional branches will be directly resolved into either an unconditional `br` or no branch at all, depending on the condition.
+
+If anything else follows the `call`, then a boolean constant will be loaded onto the stack.
+
+So again, the IL can be arbitrarily complex, but only the simple cases will be treated specially.  If the IL is too complex, then worst case the linker won't be able to detect some basic blocks as being "dead" - but it won't break, you'd still get the correct boolean value, just that value won't say "Hey, I'm a constant!".
+
