@@ -24,6 +24,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.IO;
+using System.Xml;
+using System.Text;
+using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Linker.Steps;
 
@@ -43,6 +47,13 @@ namespace Mono.Linker.Conditionals
 			}
 
 			base.ProcessAssembly (assembly);
+		}
+
+		protected override void EndProcess ()
+		{
+			DumpConstantProperties ();
+
+			base.EndProcess ();
 		}
 
 		void ProcessType (TypeDefinition type)
@@ -122,6 +133,81 @@ namespace Mono.Linker.Conditionals
 			case MartinOptions.MethodAction.Throw:
 				Context.Annotations.SetAction (method, MethodAction.ConvertToThrow);
 				break;
+			}
+		}
+
+		void DumpConstantProperties ()
+		{
+			var settings = new XmlWriterSettings {
+				Indent = true,
+				OmitXmlDeclaration = true,
+				ConformanceLevel = ConformanceLevel.Fragment,
+				IndentChars = "\t"
+			};
+			var output = new StringBuilder ();
+			output.AppendLine ();
+			using (var xml = XmlWriter.Create (output, settings))
+				DumpConstantProperties (xml);
+			output.AppendLine ();
+			Context.MartinContext.LogMessage (MessageImportance.High, $"CONDITIONAL XML SECTION:");
+			Context.MartinContext.LogMessage (MessageImportance.High, output.ToString ());
+		}
+
+		void DumpConstantProperties (XmlWriter xml)
+		{
+			var properties = Context.MartinContext.GetConstantProperties ();
+			if (properties.Count == 0)
+				return;
+
+			var ns = new Dictionary<string, TypeEntry> ();
+
+			foreach (var property in properties) {
+				if (property.DeclaringType.DeclaringType != null)
+					throw new NotSupportedException ($"Conditionals in nested classes are not supported yet.");
+
+				if (!ns.TryGetValue (property.DeclaringType.Namespace, out var entry)) {
+					entry = new TypeEntry (property.DeclaringType.Namespace);
+					ns.Add (entry.Name, entry);
+				}
+
+				if (!entry.Children.TryGetValue (property.DeclaringType.Name, out var typeEntry)) {
+					typeEntry = new TypeEntry (property.DeclaringType.Name);
+					entry.Children.Add (typeEntry.Name, typeEntry);
+				}
+
+				typeEntry.Items.Add (property.Name);
+			}
+
+			foreach (var entry in ns.Values) {
+				xml.WriteStartElement ("namespace");
+				xml.WriteAttributeString ("name", entry.Name);
+
+				foreach (var type in entry.Children.Values) {
+					xml.WriteStartElement ("type");
+					xml.WriteAttributeString ("name", type.Name);
+					foreach (var item in type.Items) {
+						xml.WriteStartElement ("method");
+						xml.WriteAttributeString ("name", item);
+						xml.WriteAttributeString ("action", "scan");
+						xml.WriteEndElement ();
+					}
+					xml.WriteEndElement ();
+				}
+				xml.WriteEndElement ();
+			}
+		}
+
+		class TypeEntry
+		{
+			public readonly string Name;
+			public readonly Dictionary<string, TypeEntry> Children;
+			public readonly List<string> Items;
+
+			public TypeEntry (string name)
+			{
+				Name = name;
+				Children = new Dictionary<string, TypeEntry> ();
+				Items = new List<string> ();
 			}
 		}
 	}

@@ -180,6 +180,11 @@ namespace Mono.Linker.Conditionals
 			return constant_properties.TryGetValue (method, out value);
 		}
 
+		internal IList<MethodDefinition> GetConstantProperties ()
+		{
+			return constant_properties.Keys.ToList ();
+		}
+
 		class InitializeStep : BaseStep
 		{
 			protected override void Process ()
