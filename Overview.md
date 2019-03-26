@@ -223,3 +223,61 @@ If anything else follows the `call`, then a boolean constant will be loaded onto
 
 So again, the IL can be arbitrarily complex, but only the simple cases will be treated specially.  If the IL is too complex, then worst case the linker won't be able to detect some basic blocks as being "dead" - but it won't break, you'd still get the correct boolean value, just that value won't say "Hey, I'm a constant!".
 
+## Flow Analysis
+
+### Preliminary Thoughts
+
+After all linker conditionals are resolved, flow analysis will be performed.
+
+Just having those conditionals alone won't do us any good - sure, the code would be skipped at runtime, but as long as it's still in the IL, everything it references must be kept in the IL as well.  And you can easily pull in "the entire world" if you're not careful!
+
+The basic idea is that instead of explicitly declaring a bunch of types and methods as conditional either in XML or by some other means, we would like to have as much automation as possible.  And the end result should as closely resemble what you would get had the linker conditional been replaced by a hard `#if` that's been resolved by the compiler.
+
+Or in other words - if you replaced every single `MonoLinkerSupport.IsFeatureSupported ()` (and everything that calls it) with `#if` conditionals - the compiled output would be roughly equivalent to the linked output that you'd get from the automation.
+
+And those conditionals should be in as few places as possible to make most use of the automation.
+
+Ideally, this will also provide us with a fallback-option because should this linker research project either fail or not finish in time, then we could still easily go back to compiler-based hard-conditionals.
+
+The main advantage of the automation is that it will allow our customers to selectively enable certain features for some of their projects.  And the idea is to make this as easy as by the click of a button - you want globalization, non-western encodings, crypto, etc. - check this box and you got it.  You don't need any of those?  Well, here's your decreased code size.
+
+To do any of this, we need flow analysis.
+
+### The Code
+
+This is actually the second implementation of the flow analysis code, a complete rewrite over the first version.
+
+And quite surprisingly, the actual implementation is actually quite small - as of this writing, the entire class is actually less than 150 lines of code.
+
+This is because the Basic Block Scanner already takes care of most of the work by computing and keeping track of Branch Types and Jump Origins.
+
+The flow analysis code also does not distinguish between "definitely reachable" and "conditionally reachable" - it doesn't need to, all that matters is whether or not a basic block could possibly be reached.  And it also doesn't track variable assignments, lifetime or anything thelike.  Again, because it doesn't need to.
+
+### Deep Dive
+
+The algorithm is actually quite simple.
+
+We already have Branch Types and Jump Origins.  The Branch Type determines whether or not the next block will be reachable (like for instance if you encounter a `BranchType.Return`, control can never fall over from the current block to the next).
+
+> All `finally` blocks are assumed to be always reachable unless the entire exception block will be removed.
+
+One important thing I learned while playing around this this code is that for our set purposes, we can actually make one very important assumption - an assumption which will simplify the algorithm quite significatly!
+
+> Once a basic block has been marked as definitely reachable, it will never change that state.
+
+And, as mentioned above, the second and equally important optimization is
+
+> We do not distinguish between "definitely reachable" and "optionally reachable".
+
+So now let's dive into the algorithm.
+
+While iterating over all the basic blocks, we know whether or not control can flow over from the previous block.  We maintain a simple `reachable` status for that.
+
+Then, we have to look at our Jump Origins.  If we've already marked the origin block as reachable, then we can immediately mark the current block as reachable as well.  Otherwise, we remember that jump origin on an `unresolved` list.
+
+If the current block is considered to be reachable, then once we looked at all our Jump Origins, we also walk that list of `unresolved` origins.  Do _we_ jump _to_ any of those unresolved origins?  If we do, then (because we are reachable) that origin will be reachable as well.  So we mark it as reachable and then restart our block iteration at that block - since that block's status has just changed into "reachable", other blocks between it and our current block may do so as well.
+
+And that is already the entire algorithm.
+
+
+
