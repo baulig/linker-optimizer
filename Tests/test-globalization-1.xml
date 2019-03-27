@@ -9,8 +9,11 @@
 		<method substring="DateTimeParse::MatchHebrewDigits" action="debug"/>
 		<method substring="DateTimeFormatInfo::TryParseHebrewNumber" action="debug"/>
 
+		<type name="SimpleCollator" action="fail" />
+
 		<features>
 			<feature name="globalization" enabled="false" />
+			<feature name="collator" enabled="false" />
 		</features>
 	</martin>
 </linker>

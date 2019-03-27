@@ -16,6 +16,7 @@
 			<feature name="encoding" enabled="false" />
 			<feature name="collator" enabled="false" />
 			<feature name="globalization" enabled="false" />
+			<feature name="collator" enabled="false" />
 			<feature name="crypto" enabled="false" />
 		</features>
 	</martin>

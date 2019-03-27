@@ -53,7 +53,12 @@ namespace Mono.Linker.Conditionals
 
 		bool EvaluateConditional ()
 		{
-			var type = ConditionalType ?? Context.Context.GetType (ConditionalTypeName);
+			if (ConditionalType != null) {
+				Context.MarkConditionalType (ConditionalType);
+				return Context.Annotations.IsMarked (ConditionalType);
+			}
+
+			var type = Context.Context.GetType (ConditionalTypeName);
 			// It is legal to use MonoLinkerSupport.IsTypeAvailable(string) with undefined types.
 			if (type == null)
 				return false;
@@ -66,7 +71,7 @@ namespace Mono.Linker.Conditionals
 		{
 			var evaluated = EvaluateConditional ();
 
-			Scanner.LogDebug (1, $"REWRITE CONDITIONAL: {this} {evaluated}");
+			Scanner.LogDebug (0, $"REWRITE TYPE AVAILABLE CONDITIONAL: {this} {evaluated}");
 
 			RewriteConditional (ref block, 0, evaluated ? ConstantValue.True : ConstantValue.False);
 		}
