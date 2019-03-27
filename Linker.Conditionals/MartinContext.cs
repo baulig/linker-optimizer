@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Linq;
+using System.Diagnostics;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -55,6 +56,12 @@ namespace Mono.Linker.Conditionals
 			Context.Logger.LogMessage (importance, message);
 		}
 
+		[Conditional ("DEBUG")]
+		public void LogDebug (string message)
+		{
+			Context.Logger.LogMessage (MessageImportance.Low, message);
+		}
+
 		public static void InitializePipeline (LinkContext context)
 		{
 			context.Logger.LogMessage (MessageImportance.Normal, "Enabling Martin's Playground");
@@ -63,7 +70,6 @@ namespace Mono.Linker.Conditionals
 
 			context.Pipeline.AddStepAfter (typeof (TypeMapStep), new InitializeStep ());
 			context.Pipeline.AddStepAfter (typeof (InitializeStep), new PreprocessStep ());
-			context.Pipeline.AddStepBefore (typeof (MarkStep), new MartinTestStep ());
 			context.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep ());
 			context.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep ());
 		}

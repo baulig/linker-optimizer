@@ -89,25 +89,19 @@ namespace Mono.Linker.Conditionals
 			}
 
 			var scanner = BasicBlockScanner.Scan (MartinContext, body.Method);
-			if (scanner == null)
-				MartinContext.LogMessage (MessageImportance.High, $"BB SCAN FAILED: {body.Method}");
+			if (scanner == null) {
+				MartinContext.LogDebug ($"BB SCAN FAILED: {body.Method}");
+				base.MarkMethodBody (body);
+				return;
+			}
 
 			if (scanner == null || !scanner.FoundConditionals) {
 				base.MarkMethodBody (body);
 				return;
 			}
 
-			if (debug > 0) {
-				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY - CONDITIONAL: {body.Method}");
-				MartinContext.Debug ();
-			}
-
-			scanner.RewriteConditionals ();
-
-			if (debug > 0) {
-				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY - CONDITIONAL DONE: {body.Method}");
-				MartinContext.Debug ();
-			}
+			if (debug > 0)
+				MartinContext.LogDebug ($"MARK BODY - CONDITIONAL: {body.Method}");
 
 			base.MarkMethodBody (body);
 		}

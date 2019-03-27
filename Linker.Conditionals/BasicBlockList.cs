@@ -200,7 +200,7 @@ namespace Mono.Linker.Conditionals
 					EnsureExceptionBlock (BasicBlockType.Normal, handler.HandlerEnd, handler);
 					break;
 				default:
-					Scanner.Context.LogMessage (MessageImportance.High, $"Unknown exception type `{handler.HandlerType}` in `{Scanner.Method}`.");
+					Scanner.LogDebug (1, $"Unknown exception type `{handler.HandlerType}` in `{Scanner.Method}`.");
 					return false;
 				}
 			}

@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Linq;
+using System.Diagnostics;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -83,17 +84,20 @@ namespace Mono.Linker.Conditionals
 
 		public IReadOnlyCollection<BasicBlock> BasicBlocks => BlockList.Blocks;
 
+		[Conditional ("Debug")]
 		internal void LogDebug (int level, string message)
 		{
 			if (DebugLevel >= level)
 				Context.LogMessage (MessageImportance.Low, message);
 		}
 
+		[Conditional ("Debug")]
 		internal void LogDebug (int level, string indent, string message, IReadOnlyCollection<Instruction> collection)
 		{
 			LogDebug (level, indent, message, collection, i => CecilHelper.Format (i));
 		}
 
+		[Conditional ("Debug")]
 		internal void LogDebug<T> (int level, string indent, string message, IReadOnlyCollection<T> collection, Func<T, string> formatter = null)
 		{
 			if (DebugLevel < level || collection.Count == 0)
@@ -106,12 +110,14 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		[Conditional ("Debug")]
 		internal void DumpBlocks (int level = 1)
 		{
 			if (DebugLevel >= level)
 				BlockList.Dump ();
 		}
 
+		[Conditional ("Debug")]
 		internal void DumpBlock (int level, BasicBlock block)
 		{
 			if (DebugLevel >= level)
