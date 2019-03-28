@@ -132,15 +132,13 @@ namespace Mono.Linker.Conditionals
 
 			case MartinOptions.MethodAction.Throw:
 				CodeRewriter.ReplaceWithPlatformNotSupportedException (Context.MartinContext, method);
-				Context.MartinContext.MarkAsConstantMethod (method, ConstantValue.Throw);
 				break;
 
 			case MartinOptions.MethodAction.ReturnFalse:
-				Context.Annotations.SetAction (method, MethodAction.ConvertToFalse);
-				break;
+				throw new NotImplementedException ();
 
 			case MartinOptions.MethodAction.ReturnNull:
-				Context.Annotations.SetAction (method, MethodAction.ConvertToStub);
+				Context.MartinContext.MarkAsConstantMethod (method, ConstantValue.Null);
 				break;
 			}
 		}

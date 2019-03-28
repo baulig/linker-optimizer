@@ -250,9 +250,38 @@ namespace Mono.Linker.Conditionals
 		 */
 		public static void ReplaceWithPlatformNotSupportedException (MartinContext context, MethodDefinition method)
 		{
+			if (method.IsAbstract || method.IsVirtual || method.IsConstructor || !method.IsIL)
+				throw ThrowUnsupported (method, "Cannot rewrite method of this type into throwing an exception.");
+			if (method.HasParameters)
+				throw ThrowUnsupported (method, "Can only rewrite parameterless methods into throwing an exception.");
 			method.Body.Instructions.Clear ();
 			method.Body.Instructions.Add (context.CreateNewPlatformNotSupportedException (method));
 			method.Body.Instructions.Add (Instruction.Create (OpCodes.Throw));
+			context.MarkAsConstantMethod (method, ConstantValue.Throw);
+		}
+
+		/*
+		 * Replace the entire method body with `return null`, optionally changing the return type to object.
+		 */
+		public static void ReplaceWithReturnNull (MartinContext context, MethodDefinition method, bool changeReturnType)
+		{
+			if (method.IsAbstract || method.IsVirtual || method.IsConstructor || !method.IsIL)
+				throw ThrowUnsupported (method, "Cannot rewrite method of this type into returning null.");
+			if (method.HasParameters)
+				throw ThrowUnsupported (method, "Can only rewrite parameterless methods into returning null.");
+
+			if (method.ReturnType.MetadataType != MetadataType.Class && method.ReturnType.MetadataType != MetadataType.Object)
+				throw ThrowUnsupported (method, "Can only rewrite methods returning class or object into returning null.");
+
+			method.Body.Instructions.Clear ();
+			method.Body.Instructions.Add (Instruction.Create (OpCodes.Ldnull));
+			method.Body.Instructions.Add (Instruction.Create (OpCodes.Ret));
+			context.MarkAsConstantMethod (method, ConstantValue.Null);
+		}
+
+		static Exception ThrowUnsupported (MethodDefinition method, string message)
+		{
+			throw new NotSupportedException ($"Code refactoring error in `{method}`: {message}");
 		}
 	}
 }

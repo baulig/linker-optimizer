@@ -84,6 +84,19 @@ namespace Mono.Linker.Conditionals
 			case ConstantValue.Throw:
 				Scanner.Rewriter.ReplaceWithThrow (ref block, stackDepth);
 				break;
+			case ConstantValue.Null:
+				switch (block.BranchType) {
+				case BranchType.False:
+					Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, true);
+					break;
+				case BranchType.True:
+					Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, false);
+					break;
+				default:
+					throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
+
+				}
+				break;
 			default:
 				throw DebugHelpers.AssertFailUnexpected (Method, block, condition);
 			}
