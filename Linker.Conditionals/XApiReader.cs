@@ -183,7 +183,7 @@ namespace Mono.Linker
 
 		MartinOptions.TypeEntry AddTypeEntry (string name, MartinOptions.MatchKind match, string action, MartinOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
-			if (!Enum.TryParse<MartinOptions.TypeAction> (action, true, out var typeAction))
+			if (!MartinOptions.TryParseTypeAction (action, out var typeAction))
 				throw ThrowError ($"Invalid `action` attribute: `{action}`.");
 
 			return _context.MartinContext.Options.AddTypeEntry (name, match, typeAction, parent, conditional);
@@ -198,7 +198,7 @@ namespace Mono.Linker
 			if (string.IsNullOrEmpty (action))
 				throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
 
-			if (!Enum.TryParse<MartinOptions.MethodAction> (action, true, out var methodAction))
+			if (!MartinOptions.TryParseMethodAction (action, out var methodAction))
 				throw ThrowError ($"Invalid `action` attribute in {nav.OuterXml}.");
 
 			_context.MartinContext.Options.AddMethodEntry (name, match, methodAction, parent, conditional);

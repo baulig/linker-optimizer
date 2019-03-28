@@ -104,19 +104,12 @@ namespace Mono.Linker.Conditionals
 
 			scanner.RewriteConditionals ();
 
-			MartinContext.Options.ProcessMethodEntries (body.Method, MartinOptions.MethodAction.Constant, () => {
-				throw new NotSupportedException ("I LIVE ON THE MOON!");
-				if (MartinContext.TryGetConstantMethod (body.Method, out var value))
-					return;
-				MartinContext.LogMessage (MessageImportance.High, $"MARK BODY - NOT A CONSTANT: {body.Method}");
-				throw new NotSupportedException ("I LIVE ON THE MOON!");
-			});
+			if (debug > 0) {
+				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY - CONDITIONAL DONE: {body.Method}");
+				MartinContext.Debug ();
+			}
 
 			base.MarkMethodBody (body);
-			return;
-
-			_conditional_methods.Enqueue (body.Method);
-			_block_scanner_by_method.Add (body.Method, scanner);
 		}
 
 		protected override TypeDefinition MarkType (TypeReference reference)

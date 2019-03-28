@@ -3,19 +3,21 @@
 	<martin>
 		<options all-modules="true" analyze-all="true" preprocess="true" />
 
-		<type name="HebrewNumber" action="fail" />
+		<type name="HebrewNumber" action="warn" />
 
 		<method substring="System.DateTimeParse::TryParse" action="debug"/>
 		<method substring="DateTimeParse::MatchHebrewDigits" action="debug"/>
 		<method substring="DateTimeFormatInfo::TryParseHebrewNumber" action="debug"/>
-		
-		<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
 
-		<namespace name="System.Globalization">
-			<type name="CompareInfo">
-				<method name="get_UseManagedCollation" action="constant" />
-			</type>
-		</namespace>
+		<conditional feature="collator" enabled="false">
+			<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
+			<namespace name="System.Globalization">
+				<type name="CompareInfo">
+					<method name="GetCollator" action="return-null" />
+					<method name="get_UseManagedCollation" action="return-false" />
+				</type>
+			</namespace>
+		</conditional>
 
 		<features>
 			<feature name="globalization" enabled="false" />

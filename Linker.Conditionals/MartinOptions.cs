@@ -158,6 +158,25 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		internal static bool TryParseTypeAction (string name, out TypeAction action)
+		{
+			return Enum.TryParse (name, true, out action);
+		}
+
+		internal static bool TryParseMethodAction (string name, out MethodAction action)
+		{
+			switch (name.ToLowerInvariant ()) {
+			case "return-null":
+				action = MethodAction.ReturnNull;
+				return true;
+			case "return-false":
+				action = MethodAction.ReturnFalse;
+				return true;
+			default:
+				return Enum.TryParse (name, true, out action);
+			}
+		}
+
 		bool DontDebugThis (TypeDefinition type)
 		{
 			if (type.DeclaringType != null)
@@ -347,7 +366,8 @@ namespace Mono.Linker.Conditionals
 			Fail,
 			Warn,
 			Throw,
-			Constant
+			ReturnFalse,
+			ReturnNull
 		}
 
 		public enum MatchKind
