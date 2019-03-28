@@ -11,6 +11,12 @@
 		
 		<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
 
+		<namespace name="System.Globalization">
+			<type name="CompareInfo">
+				<method name="get_UseManagedCollation" action="constant" />
+			</type>
+		</namespace>
+
 		<features>
 			<feature name="globalization" enabled="false" />
 			<feature name="collator" enabled="false" />

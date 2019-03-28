@@ -128,6 +128,7 @@
     <Compile Include="..\..\class\corlib\System.Runtime.CompilerServices\MonoLinkerFeature.cs">
       <Link>System.Runtime.CompilerServices\MonoLinkerFeature.cs</Link>
     </Compile>
+    <Compile Include="Linker.Conditionals\XmlConfigurationWriter.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

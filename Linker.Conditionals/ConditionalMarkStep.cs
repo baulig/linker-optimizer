@@ -89,19 +89,31 @@ namespace Mono.Linker.Conditionals
 			}
 
 			var scanner = BasicBlockScanner.Scan (MartinContext, body.Method);
-			if (scanner == null) {
+			if (scanner == null)
 				MartinContext.LogMessage (MessageImportance.High, $"BB SCAN FAILED: {body.Method}");
+
+			if (scanner == null || !scanner.FoundConditionals) {
 				base.MarkMethodBody (body);
 				return;
 			}
 
-			if (!scanner.FoundConditionals) {
-				base.MarkMethodBody (body);
-				return;
-			}
-
-			if (debug > 0)
+			if (debug > 0) {
 				MartinContext.LogMessage (MessageImportance.Normal, $"MARK BODY - CONDITIONAL: {body.Method}");
+				MartinContext.Debug ();
+			}
+
+			scanner.RewriteConditionals ();
+
+			MartinContext.Options.ProcessMethodEntries (body.Method, MartinOptions.MethodAction.Constant, () => {
+				throw new NotSupportedException ("I LIVE ON THE MOON!");
+				if (MartinContext.TryGetConstantMethod (body.Method, out var value))
+					return;
+				MartinContext.LogMessage (MessageImportance.High, $"MARK BODY - NOT A CONSTANT: {body.Method}");
+				throw new NotSupportedException ("I LIVE ON THE MOON!");
+			});
+
+			base.MarkMethodBody (body);
+			return;
 
 			_conditional_methods.Enqueue (body.Method);
 			_block_scanner_by_method.Add (body.Method, scanner);

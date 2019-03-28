@@ -346,7 +346,8 @@ namespace Mono.Linker.Conditionals
 			Debug,
 			Fail,
 			Warn,
-			Throw
+			Throw,
+			Constant
 		}
 
 		public enum MatchKind

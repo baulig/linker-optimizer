@@ -15,6 +15,9 @@ namespace Martin.LinkerTest
 			if (now.ToString () != parsed.ToString ())
 				throw new AssertionException ();
 
+			var result = String.Compare ("A", "a");
+			Console.WriteLine (result);
+
 			Test ();
 		}
 
