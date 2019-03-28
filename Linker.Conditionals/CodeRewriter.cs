@@ -230,7 +230,6 @@ namespace Mono.Linker.Conditionals
 
 		void ReplaceWithInstructions (ref BasicBlock block, List<Instruction> instructions, bool merge = false)
 		{
-
 			Scanner.LogDebug (1, $"REPLACE INSTRUCTION: {block}");
 			Scanner.DumpBlock (1, block);
 

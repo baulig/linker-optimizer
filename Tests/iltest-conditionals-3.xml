@@ -3,8 +3,10 @@
 	<martin>
 		<options all-modules="false" analyze-all="false" preprocess="true" />
 
+		<type name="Foo" action="fail" />
+
 		<method name="ConvertToThrow" action="throw" />
 		<method name="ConvertToInstanceThrow" action="throw" />
-
+		<method name="ConvertToFooThrow" action="throw" />
 	</martin>
 </linker>
