@@ -30,10 +30,27 @@
 			brtrue label1
 
 		label3:
+			newobj instance void class Martin.LinkerTest.TestConditionals::'.ctor' ()
+			stloc.0
+
+			ldloc.0
+			callvirt instance class Martin.LinkerTest.TestConditionals class Martin.LinkerTest.TestConditionals::GetInstance ()
+			call instance object class Martin.LinkerTest.TestConditionals::ConvertToInstanceReturnNull ()
+			brtrue label1
+
+		label4:
 			ret
 		}
 
 		.method public hidebysig static default class Martin.LinkerTest.Foo ConvertToReturnNull () cil managed noinlining
+		{
+			newobj instance void class Martin.LinkerTest.Foo::'.ctor' ()
+			dup
+			call instance void class Martin.LinkerTest.Foo::Hello ()
+			ret
+		}
+
+		.method public hidebysig instance default object ConvertToInstanceReturnNull () cil managed noinlining
 		{
 			newobj instance void class Martin.LinkerTest.Foo::'.ctor' ()
 			dup

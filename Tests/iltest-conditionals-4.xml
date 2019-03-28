@@ -6,5 +6,6 @@
 		<type name="Foo" action="fail" />
 
 		<method name="ConvertToReturnNull" action="return-null" />
+		<method name="ConvertToInstanceReturnNull" action="return-null" />
 	</martin>
 </linker>
