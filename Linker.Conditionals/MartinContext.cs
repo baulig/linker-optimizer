@@ -150,7 +150,7 @@ namespace Mono.Linker.Conditionals
 		{ }
 
 		readonly HashSet<TypeDefinition> conditional_types = new HashSet<TypeDefinition> ();
-		readonly Dictionary<MethodDefinition, bool> constant_properties = new Dictionary<MethodDefinition, bool> ();
+		readonly Dictionary<MethodDefinition, ConstantValue> constant_methods = new Dictionary<MethodDefinition, ConstantValue> ();
 
 		public bool IsConditionalTypeMarked (TypeDefinition type)
 		{
@@ -170,19 +170,19 @@ namespace Mono.Linker.Conditionals
 				throw new NotSupportedException (message);
 		}
 
-		internal void MarkAsConstantProperty (PropertyDefinition property, bool value)
+		internal void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
 		{
-			constant_properties.Add (property.GetMethod, value);
+			constant_methods.Add (method, value);
 		}
 
-		internal bool TryGetConstantMethod (MethodDefinition method, out bool value)
+		internal bool TryGetConstantMethod (MethodDefinition method, out ConstantValue value)
 		{
-			return constant_properties.TryGetValue (method, out value);
+			return constant_methods.TryGetValue (method, out value);
 		}
 
-		internal IList<MethodDefinition> GetConstantProperties ()
+		internal IList<MethodDefinition> GetConstantMethods ()
 		{
-			return constant_properties.Keys.ToList ();
+			return constant_methods.Keys.ToList ();
 		}
 
 		class InitializeStep : BaseStep

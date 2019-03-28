@@ -129,6 +129,7 @@
       <Link>System.Runtime.CompilerServices\MonoLinkerFeature.cs</Link>
     </Compile>
     <Compile Include="Linker.Conditionals\XmlConfigurationWriter.cs" />
+    <Compile Include="Linker.Conditionals\ConstantValue.cs" />
   </ItemGroup>
   <!--End of common files-->
   <!-- @ALL_SOURCES@ -->

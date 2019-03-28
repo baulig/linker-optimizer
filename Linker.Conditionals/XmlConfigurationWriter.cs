@@ -60,27 +60,27 @@ namespace Mono.Linker.Conditionals
 
 		void DumpConstantProperties (XmlWriter xml)
 		{
-			var properties = Context.GetConstantProperties ();
-			if (properties.Count == 0)
+			var methods = Context.GetConstantMethods ();
+			if (methods.Count == 0)
 				return;
 
 			var ns = new Dictionary<string, TypeEntry> ();
 
-			foreach (var property in properties) {
-				if (property.DeclaringType.DeclaringType != null)
+			foreach (var method in methods) {
+				if (method.DeclaringType.DeclaringType != null)
 					throw new NotSupportedException ($"Conditionals in nested classes are not supported yet.");
 
-				if (!ns.TryGetValue (property.DeclaringType.Namespace, out var entry)) {
-					entry = new TypeEntry (property.DeclaringType.Namespace);
+				if (!ns.TryGetValue (method.DeclaringType.Namespace, out var entry)) {
+					entry = new TypeEntry (method.DeclaringType.Namespace);
 					ns.Add (entry.Name, entry);
 				}
 
-				if (!entry.Children.TryGetValue (property.DeclaringType.Name, out var typeEntry)) {
-					typeEntry = new TypeEntry (property.DeclaringType.Name);
+				if (!entry.Children.TryGetValue (method.DeclaringType.Name, out var typeEntry)) {
+					typeEntry = new TypeEntry (method.DeclaringType.Name);
 					entry.Children.Add (typeEntry.Name, typeEntry);
 				}
 
-				typeEntry.Items.Add (property.Name);
+				typeEntry.Items.Add (method.Name);
 			}
 
 			foreach (var entry in ns.Values) {

@@ -101,7 +101,7 @@ namespace Mono.Linker.Conditionals
 				return;
 			}
 
-			Context.MartinContext.MarkAsConstantProperty (property, value);
+			Context.MartinContext.MarkAsConstantMethod (property.GetMethod, value ? ConstantValue.True : ConstantValue.False);
 
 			Context.MartinContext.Debug ();
 		}
@@ -131,7 +131,15 @@ namespace Mono.Linker.Conditionals
 				break;
 
 			case MartinOptions.MethodAction.Throw:
-				Context.Annotations.SetAction (method, MethodAction.ConvertToThrow);
+				CodeRewriter.ReplaceWithPlatformNotSupportedException (Context.MartinContext, method);
+				break;
+
+			case MartinOptions.MethodAction.ReturnFalse:
+				Context.Annotations.SetAction (method, MethodAction.ConvertToFalse);
+				break;
+
+			case MartinOptions.MethodAction.ReturnNull:
+				Context.Annotations.SetAction (method, MethodAction.ConvertToStub);
 				break;
 			}
 		}

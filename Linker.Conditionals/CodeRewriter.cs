@@ -37,6 +37,8 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
+		public MartinContext Context => Scanner.Context;
+
 		public BasicBlockList BlockList => Scanner.BlockList;
 
 		public MethodDefinition Method => Scanner.Method;
@@ -190,6 +192,23 @@ namespace Mono.Linker.Conditionals
 
 			if (merge)
 				BlockList.TryMergeBlock (ref block);
+		}
+
+		/*
+		 * Replace the entire method body with `throw new PlatformNotSupportedException ()`.
+		 */
+		public static void ReplaceWithPlatformNotSupportedException (MartinContext context, MethodDefinition method)
+		{
+			var pns = context.Context.GetType ("System.PlatformNotSupportedException");
+			var ctor = pns?.Methods.FirstOrDefault (m => m.Name == ".ctor");
+			if (ctor == null)
+				throw new NotSupportedException ($"Can't find `System.PlatformNotSupportedException`.");
+
+			var reference = method.DeclaringType.Module.ImportReference (ctor);
+
+			method.Body.Instructions.Clear ();
+			method.Body.Instructions.Add (Instruction.Create (OpCodes.Newobj, reference));
+			method.Body.Instructions.Add (Instruction.Create (OpCodes.Throw));
 		}
 	}
 }
