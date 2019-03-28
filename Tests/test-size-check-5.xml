@@ -14,6 +14,7 @@
 			<feature name="remoting" enabled="false" />
 			<feature name="serialization" enabled="false" />
 			<feature name="encoding" enabled="false" />
+			<feature name="collator" enabled="false" />
 			<feature name="globalization" enabled="false" />
 			<feature name="crypto" enabled="false" />
 		</features>

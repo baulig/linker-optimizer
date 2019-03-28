@@ -9,6 +9,7 @@
 		<features>
 			<feature name="encoding" enabled="false" />
 			<feature name="globalization" enabled="false" />
+			<feature name="collator" enabled="false" />
 		</features>
 	</martin>
 </linker>

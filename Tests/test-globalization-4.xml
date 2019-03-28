@@ -28,6 +28,7 @@ Dependency Stack:
 			<feature name="remoting" enabled="false" />
 			<feature name="encoding" enabled="false" />
 			<feature name="security" enabled="false" />
+			<feature name="collator" enabled="false" />
 			<feature name="globalization" enabled="false" />
 		</features>
 	</martin>

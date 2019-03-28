@@ -11,6 +11,7 @@
 
 		<features>
 			<feature name="globalization" enabled="false" />
+			<feature name="collator" enabled="false" />
 		</features>
 	</martin>
 </linker>

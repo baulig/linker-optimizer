@@ -4,6 +4,7 @@
 		<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" />
 
 		<features>
+			<feature name="collator" enabled="false" />
 			<feature name="globalization" enabled="false" />
 		</features>
 	</martin>
