@@ -81,6 +81,7 @@ BROKEN_TESTS :=
 ILTEST_CASES := \
 	iltest-conditionals-1.il \
 	iltest-conditionals-2.il \
+	iltest-conditionals-3.il \
 	iltest-flow-analysis-1.il
 
 AOTTEST_CASES := \

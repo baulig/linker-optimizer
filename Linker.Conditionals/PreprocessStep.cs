@@ -132,6 +132,7 @@ namespace Mono.Linker.Conditionals
 
 			case MartinOptions.MethodAction.Throw:
 				CodeRewriter.ReplaceWithPlatformNotSupportedException (Context.MartinContext, method);
+				Context.MartinContext.MarkAsConstantMethod (method, ConstantValue.Throw);
 				break;
 
 			case MartinOptions.MethodAction.ReturnFalse:

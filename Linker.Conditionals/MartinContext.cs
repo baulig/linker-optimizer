@@ -27,6 +27,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Mono.Linker.Steps;
 
 namespace Mono.Linker.Conditionals
@@ -79,6 +80,8 @@ namespace Mono.Linker.Conditionals
 		SupportMethodRegistration _is_type_available;
 		SupportMethodRegistration _is_type_name_available;
 		SupportMethodRegistration _require_feature;
+		Lazy<TypeDefinition> _platform_not_support_exception;
+		Lazy<MethodDefinition> _platform_not_supported_exception_ctor;
 
 		void Initialize ()
 		{
@@ -105,6 +108,11 @@ namespace Mono.Linker.Conditionals
 			_is_type_available = ResolveSupportMethod (IsTypeAvailableName, true);
 			_is_type_name_available = ResolveSupportMethod (IsTypeNameAvailableName, true);
 			_require_feature = ResolveSupportMethod ("RequireFeature");
+
+			_platform_not_support_exception = new Lazy<TypeDefinition> (
+				() => Context.GetType ("System.PlatformNotSupportedException") ?? throw new NotSupportedException ($"Can't find `System.PlatformNotSupportedException`."));
+			_platform_not_supported_exception_ctor = new Lazy<MethodDefinition> (
+				() => _platform_not_support_exception.Value.Methods.FirstOrDefault (m => m.Name == ".ctor") ?? throw new NotSupportedException ($"Can't find `System.PlatformNotSupportedException`."));
 
 			Options.CheckEnvironmentOptions ();
 		}
@@ -183,6 +191,12 @@ namespace Mono.Linker.Conditionals
 		internal IList<MethodDefinition> GetConstantMethods ()
 		{
 			return constant_methods.Keys.ToList ();
+		}
+
+		internal Instruction CreateNewPlatformNotSupportedException (MethodDefinition method)
+		{
+			var reference = method.DeclaringType.Module.ImportReference (_platform_not_supported_exception_ctor.Value);
+			return Instruction.Create (OpCodes.Newobj, reference);
 		}
 
 		class InitializeStep : BaseStep

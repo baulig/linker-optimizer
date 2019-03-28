@@ -55,16 +55,7 @@ namespace Mono.Linker.Conditionals
 		{
 			Scanner.LogDebug (1, $"REWRITE CONSTANT CALL: {this}");
 
-			switch (Constant) {
-			case ConstantValue.True:
-				RewriteConditional (ref block, StackDepth, true);
-				break;
-			case ConstantValue.False:
-				RewriteConditional (ref block, StackDepth, false);
-				break;
-			default:
-				throw new MartinTestException ();
-			}
+			RewriteConditional (ref block, StackDepth, Constant);
 		}
 
 		public static ConstantCallConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, MethodDefinition target, ConstantValue constant)

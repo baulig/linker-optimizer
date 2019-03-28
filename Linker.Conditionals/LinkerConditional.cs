@@ -72,6 +72,23 @@ namespace Mono.Linker.Conditionals
 			}
 		}
 
+		protected void RewriteConditional (ref BasicBlock block, int stackDepth, ConstantValue condition)
+		{
+			switch (condition) {
+			case ConstantValue.False:
+				RewriteConditional (ref block, stackDepth, false);
+				break;
+			case ConstantValue.True:
+				RewriteConditional (ref block, stackDepth, true);
+				break;
+			case ConstantValue.Throw:
+				Scanner.Rewriter.ReplaceWithThrow (ref block, stackDepth);
+				break;
+			default:
+				throw DebugHelpers.AssertFailUnexpected (Method, block, condition);
+			}
+		}
+
 		public static bool Scan (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, Instruction instruction)
 		{
 			var reference = (MethodReference)instruction.Operand;

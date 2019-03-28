@@ -156,6 +156,24 @@ namespace Mono.Linker.Conditionals
 		}
 
 		/*
+		 * Replace block @block with a `throw new PlatformNotSupportedException ()`.
+		 *
+		 */
+		public void ReplaceWithThrow (ref BasicBlock block, int stackDepth)
+		{
+			if (block.LastInstruction.OpCode.Code != Code.Call && block.LastInstruction.OpCode.Code != Code.Callvirt)
+				DebugHelpers.AssertFailUnexpected (Method, block, block.LastInstruction);
+
+			var list = new List<Instruction> {
+				Context.CreateNewPlatformNotSupportedException (Method),
+				Instruction.Create (OpCodes.Throw)
+			};
+
+			ReplaceWithInstructions (ref block, stackDepth, list);
+		}
+
+
+		/*
 		 * Replace the entire block with the following:
 		 *
 		 * - pop @stackDepth values from the stack
@@ -195,19 +213,46 @@ namespace Mono.Linker.Conditionals
 		}
 
 		/*
+		 * Replace the entire block with the following:
+		 *
+		 * - pop @stackDepth values from the stack
+		 * - (optional) instructions @instructions
+		 *
+		 * The block will be deleted if this would result in an empty block.
+		 *
+		 */
+		void ReplaceWithInstructions (ref BasicBlock block, int stackDepth, List<Instruction> instructions, bool merge = false)
+		{
+			for (int i = 0; i < stackDepth; i++)
+				instructions.Insert (0, Instruction.Create (OpCodes.Pop));
+			ReplaceWithInstructions (ref block, instructions, merge);
+		}
+
+		void ReplaceWithInstructions (ref BasicBlock block, List<Instruction> instructions, bool merge = false)
+		{
+
+			Scanner.LogDebug (1, $"REPLACE INSTRUCTION: {block}");
+			Scanner.DumpBlock (1, block);
+
+			// Remove everything except the first instruction.
+			while (block.Count > 1)
+				BlockList.RemoveInstructionAt (ref block, 1);
+
+			BlockList.ReplaceInstructionAt (ref block, 0, instructions [0]);
+			for (int index = 1; index < instructions.Count; index++)
+				BlockList.InsertInstructionAt (ref block, index, instructions [index]);
+
+			if (merge)
+				BlockList.TryMergeBlock (ref block);
+		}
+
+		/*
 		 * Replace the entire method body with `throw new PlatformNotSupportedException ()`.
 		 */
 		public static void ReplaceWithPlatformNotSupportedException (MartinContext context, MethodDefinition method)
 		{
-			var pns = context.Context.GetType ("System.PlatformNotSupportedException");
-			var ctor = pns?.Methods.FirstOrDefault (m => m.Name == ".ctor");
-			if (ctor == null)
-				throw new NotSupportedException ($"Can't find `System.PlatformNotSupportedException`.");
-
-			var reference = method.DeclaringType.Module.ImportReference (ctor);
-
 			method.Body.Instructions.Clear ();
-			method.Body.Instructions.Add (Instruction.Create (OpCodes.Newobj, reference));
+			method.Body.Instructions.Add (context.CreateNewPlatformNotSupportedException (method));
 			method.Body.Instructions.Add (Instruction.Create (OpCodes.Throw));
 		}
 	}
