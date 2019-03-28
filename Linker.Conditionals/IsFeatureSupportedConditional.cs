@@ -45,7 +45,7 @@ namespace Mono.Linker.Conditionals
 			var evaluated = Context.Options.IsFeatureEnabled (Feature);
 			Scanner.LogDebug (1, $"REWRITE FEATURE CONDITIONAL: {Feature} {evaluated}");
 
-			RewriteConditional (ref block, 0, evaluated);
+			RewriteConditional (ref block, 0, evaluated ? ConstantValue.True : ConstantValue.False);
 		}
 
 		public static IsFeatureSupportedConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index)

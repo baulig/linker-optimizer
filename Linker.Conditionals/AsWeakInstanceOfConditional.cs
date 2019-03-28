@@ -54,7 +54,7 @@ namespace Mono.Linker.Conditionals
 			Context.MarkConditionalType (InstanceType);
 
 			if (!evaluated)
-				RewriteConditional (ref block, 0, false);
+				RewriteConditional (ref block, 0, ConstantValue.False);
 			else
 				RewriteAsIsInst (ref block);
 		}

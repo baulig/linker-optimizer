@@ -54,7 +54,7 @@ namespace Mono.Linker.Conditionals
 			Context.MarkConditionalType (InstanceType);
 
 			if (!evaluated)
-				RewriteConditional (ref block, HasLoadInstruction ? 0 : 1, false);
+				RewriteConditional (ref block, HasLoadInstruction ? 0 : 1, ConstantValue.False);
 			else
 				Scanner.Rewriter.ReplaceWithIsInst (ref block, HasLoadInstruction ? 1 : 0, InstanceType);
 		}

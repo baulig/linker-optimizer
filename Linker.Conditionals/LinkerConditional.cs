@@ -50,46 +50,25 @@ namespace Mono.Linker.Conditionals
 
 		public abstract void RewriteConditional (ref BasicBlock block);
 
-		protected void RewriteConditional (ref BasicBlock block, int stackDepth, bool condition)
+		protected void RewriteConditional (ref BasicBlock block, int stackDepth, ConstantValue constant)
 		{
+			if (constant == ConstantValue.Throw) {
+				Scanner.Rewriter.ReplaceWithThrow (ref block, stackDepth);
+				return;
+			}
+
 			/*
 			 * The conditional call can be replaced with a constant.
 			 */
 
 			switch (block.BranchType) {
 			case BranchType.False:
-				Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, !condition);
-				break;
-			case BranchType.True:
-				Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, condition);
-				break;
-			case BranchType.None:
-			case BranchType.Return:
-				Scanner.Rewriter.ReplaceWithConstant (ref block, stackDepth, condition);
-				break;
-			default:
-				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
-			}
-		}
-
-		protected void RewriteConditional (ref BasicBlock block, int stackDepth, ConstantValue condition)
-		{
-			switch (condition) {
-			case ConstantValue.False:
-				RewriteConditional (ref block, stackDepth, false);
-				break;
-			case ConstantValue.True:
-				RewriteConditional (ref block, stackDepth, true);
-				break;
-			case ConstantValue.Throw:
-				Scanner.Rewriter.ReplaceWithThrow (ref block, stackDepth);
-				break;
-			case ConstantValue.Null:
-				switch (block.BranchType) {
-				case BranchType.False:
+				switch (constant) {
+				case ConstantValue.False:
+				case ConstantValue.Null:
 					Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, true);
 					break;
-				case BranchType.True:
+				case ConstantValue.True:
 					Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, false);
 					break;
 				default:
@@ -97,8 +76,29 @@ namespace Mono.Linker.Conditionals
 
 				}
 				break;
+
+			case BranchType.True:
+				switch (constant) {
+				case ConstantValue.False:
+				case ConstantValue.Null:
+					Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, false);
+					break;
+				case ConstantValue.True:
+					Scanner.Rewriter.ReplaceWithBranch (ref block, stackDepth, true);
+					break;
+				default:
+					throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
+
+				}
+				break;
+
+			case BranchType.None:
+			case BranchType.Return:
+				Scanner.Rewriter.ReplaceWithConstant (ref block, stackDepth, constant);
+				break;
+
 			default:
-				throw DebugHelpers.AssertFailUnexpected (Method, block, condition);
+				throw DebugHelpers.AssertFailUnexpected (Method, block, block.BranchType);
 			}
 		}
 

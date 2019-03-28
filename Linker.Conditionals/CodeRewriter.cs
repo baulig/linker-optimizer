@@ -63,7 +63,6 @@ namespace Mono.Linker.Conditionals
 		 * off the stack.
 		 *
 		 */
-
 		public void ReplaceWithBranch (ref BasicBlock block, int stackDepth, bool condition)
 		{
 			if (!CecilHelper.IsBranch (block.BranchType))
@@ -77,12 +76,26 @@ namespace Mono.Linker.Conditionals
 		}
 
 		/*
-		 * Replace block @block with a boolean constant @constant, optionally popping
+		 * Replace block @block with a constant @constant, optionally popping
 		 * @stackDepth extra values off the stack.
 		 */
-		public void ReplaceWithConstant (ref BasicBlock block, int stackDepth, bool constant)
+		public void ReplaceWithConstant (ref BasicBlock block, int stackDepth, ConstantValue constant)
 		{
-			var instruction = Instruction.Create (constant ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+			Instruction instruction;
+			switch (constant) {
+			case ConstantValue.False:
+				instruction = Instruction.Create (OpCodes.Ldc_I4_0);
+				break;
+			case ConstantValue.True:
+				instruction = Instruction.Create (OpCodes.Ldc_I4_1);
+				break;
+			case ConstantValue.Null:
+				instruction = Instruction.Create (OpCodes.Ldnull);
+				break;
+			default:
+				throw DebugHelpers.AssertFailUnexpected (Method, block, constant);
+
+			}
 
 			switch (block.BranchType) {
 			case BranchType.None:

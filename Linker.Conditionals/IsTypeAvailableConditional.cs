@@ -68,7 +68,7 @@ namespace Mono.Linker.Conditionals
 
 			Scanner.LogDebug (1, $"REWRITE CONDITIONAL: {this} {evaluated}");
 
-			RewriteConditional (ref block, 0, evaluated);
+			RewriteConditional (ref block, 0, evaluated ? ConstantValue.True : ConstantValue.False);
 		}
 
 		public static IsTypeAvailableConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index)
