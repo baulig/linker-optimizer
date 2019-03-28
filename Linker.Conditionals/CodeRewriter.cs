@@ -274,9 +274,9 @@ namespace Mono.Linker.Conditionals
 		}
 
 		/*
-		 * Replace the entire method body with `return null`, optionally changing the return type to object.
+		 * Replace the entire method body with `return null`.
 		 */
-		public static void ReplaceWithReturnNull (MartinContext context, MethodDefinition method, bool changeReturnType)
+		public static void ReplaceWithReturnNull (MartinContext context, MethodDefinition method)
 		{
 			if (method.IsAbstract || method.IsVirtual || method.IsConstructor || !method.IsIL)
 				throw ThrowUnsupported (method, "Cannot rewrite method of this type into returning null.");
@@ -290,6 +290,25 @@ namespace Mono.Linker.Conditionals
 			method.Body.Instructions.Add (Instruction.Create (OpCodes.Ldnull));
 			method.Body.Instructions.Add (Instruction.Create (OpCodes.Ret));
 			context.MarkAsConstantMethod (method, ConstantValue.Null);
+		}
+
+		/*
+		 * Replace the entire method body with `return false`.
+		 */
+		public static void ReplaceWithReturnFalse (MartinContext context, MethodDefinition method)
+		{
+			if (method.IsAbstract || method.IsVirtual || method.IsConstructor || !method.IsIL)
+				throw ThrowUnsupported (method, "Cannot rewrite method of this type into returning false.");
+			if (method.HasParameters)
+				throw ThrowUnsupported (method, "Can only rewrite parameterless methods into returning false.");
+
+			if (method.ReturnType.MetadataType != MetadataType.Boolean)
+				throw ThrowUnsupported (method, "Can only rewrite methods returning bool into returning false.");
+
+			method.Body.Instructions.Clear ();
+			method.Body.Instructions.Add (Instruction.Create (OpCodes.Ldc_I4_0));
+			method.Body.Instructions.Add (Instruction.Create (OpCodes.Ret));
+			context.MarkAsConstantMethod (method, ConstantValue.False);
 		}
 
 		static Exception ThrowUnsupported (MethodDefinition method, string message)

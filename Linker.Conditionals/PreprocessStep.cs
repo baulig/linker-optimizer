@@ -135,10 +135,11 @@ namespace Mono.Linker.Conditionals
 				break;
 
 			case MartinOptions.MethodAction.ReturnFalse:
-				throw new NotImplementedException ();
+				CodeRewriter.ReplaceWithReturnFalse (Context.MartinContext, method);
+				break;
 
 			case MartinOptions.MethodAction.ReturnNull:
-				Context.MartinContext.MarkAsConstantMethod (method, ConstantValue.Null);
+				CodeRewriter.ReplaceWithReturnNull (Context.MartinContext, method);
 				break;
 			}
 		}
