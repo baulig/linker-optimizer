@@ -8,6 +8,8 @@
 		<method substring="System.DateTimeParse::TryParse" action="debug"/>
 		<method substring="DateTimeParse::MatchHebrewDigits" action="debug"/>
 		<method substring="DateTimeFormatInfo::TryParseHebrewNumber" action="debug"/>
+		
+		<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
 
 		<features>
 			<feature name="globalization" enabled="false" />

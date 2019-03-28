@@ -228,7 +228,7 @@ namespace Mono.Linker.Conditionals
 				return;
 
 			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
-			var message = $"Found fail-listed type `{type.FullName}";
+			var message = $"Found fail-listed type `{type.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, fail ?? warn);
