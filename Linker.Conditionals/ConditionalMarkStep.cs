@@ -103,6 +103,8 @@ namespace Mono.Linker.Conditionals
 			if (debug > 0)
 				MartinContext.LogDebug ($"MARK BODY - CONDITIONAL: {body.Method}");
 
+			scanner.RewriteConditionals ();
+
 			base.MarkMethodBody (body);
 		}
 
