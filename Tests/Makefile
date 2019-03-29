@@ -1,4 +1,4 @@
-thisdir = tools/linker/Tests/Martin
+thisdir = tools/linker/Martin/Tests
 SUBDIRS =
 include ../../../../build/rules.make
 
