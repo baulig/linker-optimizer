@@ -45,10 +45,10 @@ namespace Mono.Linker.Conditionals
 
 		public AnnotationStore Annotations => Context.Annotations;
 
-		MartinContext (LinkContext context)
+		MartinContext (LinkContext context, MartinOptions options)
 		{
 			Context = context;
-			Options = new MartinOptions ();
+			Options = options;
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
@@ -62,18 +62,18 @@ namespace Mono.Linker.Conditionals
 			Context.Logger.LogMessage (MessageImportance.Low, message);
 		}
 
-		public static void InitializePipeline (LinkContext linkContext)
+		public static void Initialize (LinkContext linkContext, MartinOptions options)
 		{
 			linkContext.Logger.LogMessage (MessageImportance.Normal, "Enabling Martin's Playground");
 
-			var context = new MartinContext (linkContext);
+			var context = new MartinContext (linkContext, options);
 
 			context.Initialize ();
 
-			if (context.Options.Preprocess)
+			if (options.Preprocess)
 				linkContext.Pipeline.AddStepAfter (typeof (TypeMapStep), new PreprocessStep (context));
 			linkContext.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (context));
-			if (context.Options.ReportSize)
+			if (options.ReportSize)
 				linkContext.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep (context));
 		}
 

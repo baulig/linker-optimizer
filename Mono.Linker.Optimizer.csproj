@@ -59,7 +59,7 @@
     <Compile Include="Linker.Conditionals\PreprocessStep.cs" />
     <Compile Include="Linker.Conditionals\RequireFeatureConditional.cs" />
     <Compile Include="Linker.Conditionals\SizeReportStep.cs" />
-    <Compile Include="Linker.Conditionals\XApiReader.cs" />
+    <Compile Include="Linker.Conditionals\OptionsReader.cs" />
     <Compile Include="Linker.Conditionals\XmlConfigurationWriter.cs" />
     <Compile Include="Linker.Conditionals\ConditionalBaseStep.cs" />
     <Compile Include="System.Runtime.CompilerServices\MonoLinkerFeature.cs" />

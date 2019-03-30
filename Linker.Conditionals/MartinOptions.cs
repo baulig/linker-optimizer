@@ -83,6 +83,11 @@ namespace Mono.Linker.Conditionals
 			if (string.IsNullOrEmpty (options))
 				return;
 
+			ParseOptions (options);
+		}
+
+		internal void ParseOptions (string options)
+		{
 			var parts = options.Split (',');
 			for (int i = 0; i < parts.Length; i++) {
 				var part = parts [i];

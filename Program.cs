@@ -28,12 +28,15 @@ using System.IO;
 using System.Linq;
 using System.Xml.XPath;
 using System.Collections.Generic;
+using Mono.Linker.Conditionals;
 using Mono.Linker.Steps;
 
 namespace Mono.Linker.Optimizer
 {
 	public static class Program
 	{
+		static readonly MartinOptions options = new MartinOptions ();
+
 		public static int Main (string[] args)
 		{
 			if (args.Length == 0) {
@@ -72,8 +75,6 @@ namespace Mono.Linker.Optimizer
 		static void ParseArguments (List<string> arguments)
 		{
 			var martinsPlayground = false;
-			var documents = new List<XPathDocument> ();
-			var options = new List<string> ();
 
 			while (arguments.Count > 0) {
 				var token = arguments[0];
@@ -88,35 +89,29 @@ namespace Mono.Linker.Optimizer
 				case "--martin-xml":
 					var filename = arguments[0];
 					arguments.RemoveAt (0);
-					documents.Insert (0, new XPathDocument (filename));
+					OptionsReader.Read (options, filename);
+					martinsPlayground = true;
 					break;
 				case "--martin-args":
-					options.Add (arguments[0]);
+					options.ParseOptions (arguments[0]);
 					arguments.RemoveAt (0);
+					martinsPlayground = true;
 					break;
 				}
 			}
 
+			if (!martinsPlayground)
+				return;
+
 			arguments.Insert (0, "--custom-step");
-			arguments.Insert (1, $"{typeof (InitializeStep).AssemblyQualifiedName}:MarkStep");
-
-			Console.Error.WriteLine ($"PARSE ARGS: {martinsPlayground} {arguments.Count}");
-
-			foreach (var arg in arguments) {
-				Console.Error.WriteLine ($"ARGUMENT: {arg}");
-			}
-		}
-
-		static void Initialize (LinkContext context)
-		{
-			context.Pipeline.RemoveStep (typeof (MarkStep));
+			arguments.Insert (1, $"TypeMapStep:{typeof (InitializeStep).AssemblyQualifiedName}");
 		}
 
 		class InitializeStep : IStep
 		{
 			public void Process (LinkContext context)
 			{
-				Initialize (context);
+				MartinContext.Initialize (context, options);
 			}
 		}
 	}

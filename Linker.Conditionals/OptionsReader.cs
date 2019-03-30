@@ -1,5 +1,5 @@
 ﻿//
-// XApiReader.cs
+// OptionsReader.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -29,25 +29,40 @@ using Mono.Cecil;
 
 namespace Mono.Linker.Conditionals
 {
-	class XApiReader
+	class OptionsReader
 	{
-		public MartinContext Context {
+		public MartinOptions Options {
 			get;
 		}
 
-		public XApiReader (MartinContext context, XPathDocument document)
+		public static void Read (MartinOptions options, XPathDocument document)
 		{
-			Context = context;
+			var reader = new OptionsReader (options);
+			reader.Read (document);
+		}
 
+		public static void Read (MartinOptions options, string filename)
+		{
+			var reader = new OptionsReader (options);
+			reader.Read (new XPathDocument (filename));
+		}
+
+		OptionsReader (MartinOptions options)
+		{
+			Options = options;
+		}
+
+		void Read (XPathDocument document)
+		{
 			var nav = document.CreateNavigator ();
 
 			var root = nav.SelectSingleNode ("/linker/martin");
 			if (root == null)
 				return;
 
-			var options = root.SelectSingleNode ("options");
-			if (options != null)
-				OnOptions (Context.Options, options);
+			var node = root.SelectSingleNode ("options");
+			if (node != null)
+				OnOptions (node);
 
 			ProcessChildren (root, "features/feature", OnFeature);
 			ProcessChildren (root, "conditional", OnConditional);
@@ -57,28 +72,28 @@ namespace Mono.Linker.Conditionals
 			ProcessChildren (root, "method", child => OnMethodEntry (child));
 		}
 
-		void OnOptions (MartinOptions options, XPathNavigator nav)
+		void OnOptions (XPathNavigator nav)
 		{
 			if (GetBoolAttribute (nav, "main-debug", out var value))
-				options.AutoDebugMain = value;
+				Options.AutoDebugMain = value;
 
 			if (GetBoolAttribute (nav, "all-modules", out value))
-				options.ScanAllModules = value;
+				Options.ScanAllModules = value;
 
 			if (GetBoolAttribute (nav, "analyze-all", out value))
-				options.AnalyzeAll = value;
+				Options.AnalyzeAll = value;
 
 			if (GetBoolAttribute (nav, "preprocess", out value))
-				options.Preprocess = value;
+				Options.Preprocess = value;
 
 			if (GetBoolAttribute (nav, "no-conditional-redefinition", out value))
-				options.NoConditionalRedefinition = value;
+				Options.NoConditionalRedefinition = value;
 
 			if (GetBoolAttribute (nav, "ignore-resolution-errors", out value))
-				options.IgnoreResolutionErrors = value;
+				Options.IgnoreResolutionErrors = value;
 
 			if (GetBoolAttribute (nav, "report-size", out value))
-				options.ReportSize = value;
+				Options.ReportSize = value;
 		}
 
 		void OnFeature (XPathNavigator nav)
@@ -89,7 +104,7 @@ namespace Mono.Linker.Conditionals
 			if (string.IsNullOrEmpty (value) || !bool.TryParse (value, out var enabled))
 				enabled = true;
 
-			Context.Options.SetFeatureEnabled (name, enabled);
+			Options.SetFeatureEnabled (name, enabled);
 		}
 
 		void OnConditional (XPathNavigator nav)
@@ -104,7 +119,7 @@ namespace Mono.Linker.Conditionals
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, null, Conditional));
 
-			bool Conditional (MemberReference reference) => Context.Options.IsFeatureEnabled (feature) == enabled;
+			bool Conditional (MemberReference reference) => Options.IsFeatureEnabled (feature) == enabled;
 		}
 
 		bool GetBoolAttribute (XPathNavigator nav, string name, out bool value)
@@ -155,7 +170,7 @@ namespace Mono.Linker.Conditionals
 			if (!string.IsNullOrEmpty (action))
 				entry = AddTypeEntry (name, MartinOptions.MatchKind.Namespace, action, null, conditional);
 			else
-				entry = Context.Options.AddTypeEntry (name, MartinOptions.MatchKind.Namespace, MartinOptions.TypeAction.None, null, conditional);
+				entry = Options.AddTypeEntry (name, MartinOptions.MatchKind.Namespace, MartinOptions.TypeAction.None, null, conditional);
 
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
@@ -171,7 +186,7 @@ namespace Mono.Linker.Conditionals
 			if (!string.IsNullOrEmpty (action))
 				entry = AddTypeEntry (name, match, action, parent, conditional);
 			else
-				entry = Context.Options.AddTypeEntry (name, match, MartinOptions.TypeAction.None, parent, conditional);
+				entry = Options.AddTypeEntry (name, match, MartinOptions.TypeAction.None, parent, conditional);
 
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
 		}
@@ -181,7 +196,7 @@ namespace Mono.Linker.Conditionals
 			if (!MartinOptions.TryParseTypeAction (action, out var typeAction))
 				throw ThrowError ($"Invalid `action` attribute: `{action}`.");
 
-			return Context.Options.AddTypeEntry (name, match, typeAction, parent, conditional);
+			return Options.AddTypeEntry (name, match, typeAction, parent, conditional);
 		}
 
 		void OnMethodEntry (XPathNavigator nav, MartinOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
@@ -196,23 +211,20 @@ namespace Mono.Linker.Conditionals
 			if (!MartinOptions.TryParseMethodAction (action, out var methodAction))
 				throw ThrowError ($"Invalid `action` attribute in {nav.OuterXml}.");
 
-			Context.Options.AddMethodEntry (name, match, methodAction, parent, conditional);
+			Options.AddMethodEntry (name, match, methodAction, parent, conditional);
 		}
 
 		Exception ThrowError (string message)
 		{
-			Context.LogMessage (MessageImportance.High, $"Invalid XML: {message}");
 			throw new NotSupportedException ($"Invalid XML: {message}");
 		}
 
-		static void ProcessChildren (XPathNavigator nav, string children, OnChildren action)
+		static void ProcessChildren (XPathNavigator nav, string children, Action<XPathNavigator> action)
 		{
-			XPathNodeIterator iterator = nav.Select (children);
+			var iterator = nav.Select (children);
 			while (iterator.MoveNext ())
 				action (iterator.Current);
 		}
-
-		delegate void OnChildren (XPathNavigator nav);
 
 		static string GetAttribute (XPathNavigator nav, string attribute)
 		{
