@@ -28,10 +28,11 @@ using System.IO;
 using System.Linq;
 using System.Xml.XPath;
 using System.Collections.Generic;
+using Mono.Linker.Steps;
 
 namespace Mono.Linker.Optimizer
 {
-	public class Program
+	public static class Program
 	{
 		public static int Main (string[] args)
 		{
@@ -41,7 +42,7 @@ namespace Mono.Linker.Optimizer
 			}
 
 			var arguments = ProcessResponseFile (args);
-			var program = new Program (arguments);
+			ParseArguments (arguments);
 
 			Driver.Execute (arguments.ToArray ());
 
@@ -68,12 +69,7 @@ namespace Mono.Linker.Optimizer
 			return result.ToList ();
 		}
 
-		Program (List<string> arguments)
-		{
-			ParseArguments (arguments);
-		}
-
-		void ParseArguments (List<string> arguments)
+		static void ParseArguments (List<string> arguments)
 		{
 			var martinsPlayground = false;
 			var documents = new List<XPathDocument> ();
@@ -101,10 +97,26 @@ namespace Mono.Linker.Optimizer
 				}
 			}
 
+			arguments.Insert (0, "--custom-step");
+			arguments.Insert (1, $"{typeof (InitializeStep).AssemblyQualifiedName}:MarkStep");
+
 			Console.Error.WriteLine ($"PARSE ARGS: {martinsPlayground} {arguments.Count}");
 
 			foreach (var arg in arguments) {
 				Console.Error.WriteLine ($"ARGUMENT: {arg}");
+			}
+		}
+
+		static void Initialize (LinkContext context)
+		{
+			context.Pipeline.RemoveStep (typeof (MarkStep));
+		}
+
+		class InitializeStep : IStep
+		{
+			public void Process (LinkContext context)
+			{
+				Initialize (context);
 			}
 		}
 	}
