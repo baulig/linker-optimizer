@@ -23,30 +23,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using System.IO;
-using System.Xml;
-using System.Text;
-using System.Collections.Generic;
 using Mono.Cecil;
-using Mono.Linker.Steps;
 
 namespace Mono.Linker.Conditionals
 {
-	public class PreprocessStep : BaseStep
+	public class PreprocessStep : ConditionalBaseStep
 	{
-		public MartinContext Context {
-			get;
-		}
-
 		public PreprocessStep (MartinContext context)
+			: base (context)
 		{
-			Context = context;
-		}
-
-		protected override bool ConditionToProcess ()
-		{
-			return Context.Options.Preprocess;
 		}
 
 		protected override void ProcessAssembly (AssemblyDefinition assembly)
@@ -54,15 +39,11 @@ namespace Mono.Linker.Conditionals
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (type);
 			}
-
-			base.ProcessAssembly (assembly);
 		}
 
 		protected override void EndProcess ()
 		{
 			DumpConstantProperties ();
-
-			base.EndProcess ();
 		}
 
 		void ProcessType (TypeDefinition type)
@@ -129,7 +110,6 @@ namespace Mono.Linker.Conditionals
 				break;
 			}
 		}
-
 
 		void ProcessMethodActions (MethodDefinition method, MartinOptions.MethodAction action)
 		{

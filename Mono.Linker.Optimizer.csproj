@@ -34,93 +34,38 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\Linker.Conditionals\AsWeakInstanceOfConditional.cs">
-      <Link>Linker.Conditionals\AsWeakInstanceOfConditional.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\BasicBlock.cs">
-      <Link>Linker.Conditionals\BasicBlock.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\BasicBlockList.cs">
-      <Link>Linker.Conditionals\BasicBlockList.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\BasicBlockScanner.cs">
-      <Link>Linker.Conditionals\BasicBlockScanner.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\BasicBlockType.cs">
-      <Link>Linker.Conditionals\BasicBlockType.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\BranchType.cs">
-      <Link>Linker.Conditionals\BranchType.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\CecilHelper.cs">
-      <Link>Linker.Conditionals\CecilHelper.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\CodeRewriter.cs">
-      <Link>Linker.Conditionals\CodeRewriter.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\ConditionalMarkStep.cs">
-      <Link>Linker.Conditionals\ConditionalMarkStep.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\ConstantCallConditional.cs">
-      <Link>Linker.Conditionals\ConstantCallConditional.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\ConstantValue.cs">
-      <Link>Linker.Conditionals\ConstantValue.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\DeadCodeEliminator.cs">
-      <Link>Linker.Conditionals\DeadCodeEliminator.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\DebugHelpers.cs">
-      <Link>Linker.Conditionals\DebugHelpers.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\FlowAnalysis.cs">
-      <Link>Linker.Conditionals\FlowAnalysis.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\IsFeatureSupportedConditional.cs">
-      <Link>Linker.Conditionals\IsFeatureSupportedConditional.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\IsTypeAvailableConditional.cs">
-      <Link>Linker.Conditionals\IsTypeAvailableConditional.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\IsWeakInstanceOfConditional.cs">
-      <Link>Linker.Conditionals\IsWeakInstanceOfConditional.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\JumpOrigin.cs">
-      <Link>Linker.Conditionals\JumpOrigin.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\LinkerConditional.cs">
-      <Link>Linker.Conditionals\LinkerConditional.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\MartinAssertException.cs">
-      <Link>Linker.Conditionals\MartinAssertException.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\MartinContext.cs">
-      <Link>Linker.Conditionals\MartinContext.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\MartinOptions.cs">
-      <Link>Linker.Conditionals\MartinOptions.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\MartinTestException.cs">
-      <Link>Linker.Conditionals\MartinTestException.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\PreprocessStep.cs">
-      <Link>Linker.Conditionals\PreprocessStep.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\RequireFeatureConditional.cs">
-      <Link>Linker.Conditionals\RequireFeatureConditional.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\SizeReportStep.cs">
-      <Link>Linker.Conditionals\SizeReportStep.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\XApiReader.cs">
-      <Link>Linker.Conditionals\XApiReader.cs</Link>
-    </Compile>
-    <Compile Include="..\Linker.Conditionals\XmlConfigurationWriter.cs">
-      <Link>Linker.Conditionals\XmlConfigurationWriter.cs</Link>
-    </Compile>
+    <Compile Include="Linker.Conditionals\AsWeakInstanceOfConditional.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlock.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlockList.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlockScanner.cs" />
+    <Compile Include="Linker.Conditionals\BasicBlockType.cs" />
+    <Compile Include="Linker.Conditionals\BranchType.cs" />
+    <Compile Include="Linker.Conditionals\CecilHelper.cs" />
+    <Compile Include="Linker.Conditionals\CodeRewriter.cs" />
+    <Compile Include="Linker.Conditionals\ConditionalMarkStep.cs" />
+    <Compile Include="Linker.Conditionals\ConstantCallConditional.cs" />
+    <Compile Include="Linker.Conditionals\ConstantValue.cs" />
+    <Compile Include="Linker.Conditionals\DeadCodeEliminator.cs" />
+    <Compile Include="Linker.Conditionals\DebugHelpers.cs" />
+    <Compile Include="Linker.Conditionals\FlowAnalysis.cs" />
+    <Compile Include="Linker.Conditionals\IsFeatureSupportedConditional.cs" />
+    <Compile Include="Linker.Conditionals\IsTypeAvailableConditional.cs" />
+    <Compile Include="Linker.Conditionals\IsWeakInstanceOfConditional.cs" />
+    <Compile Include="Linker.Conditionals\JumpOrigin.cs" />
+    <Compile Include="Linker.Conditionals\LinkerConditional.cs" />
+    <Compile Include="Linker.Conditionals\MartinAssertException.cs" />
+    <Compile Include="Linker.Conditionals\MartinContext.cs" />
+    <Compile Include="Linker.Conditionals\MartinOptions.cs" />
+    <Compile Include="Linker.Conditionals\MartinTestException.cs" />
+    <Compile Include="Linker.Conditionals\PreprocessStep.cs" />
+    <Compile Include="Linker.Conditionals\RequireFeatureConditional.cs" />
+    <Compile Include="Linker.Conditionals\SizeReportStep.cs" />
+    <Compile Include="Linker.Conditionals\XApiReader.cs" />
+    <Compile Include="Linker.Conditionals\XmlConfigurationWriter.cs" />
+    <Compile Include="Linker.Conditionals\ConditionalBaseStep.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\monolinker.csproj">
+    <ProjectReference Include="monolinker.csproj">
       <Project>{D60432F1-3C12-4235-A1CC-4CA5575403BD}</Project>
       <Name>monolinker</Name>
     </ProjectReference>

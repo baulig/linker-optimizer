@@ -62,17 +62,19 @@ namespace Mono.Linker.Conditionals
 			Context.Logger.LogMessage (MessageImportance.Low, message);
 		}
 
-		public static void InitializePipeline (LinkContext context)
+		public static void InitializePipeline (LinkContext linkContext)
 		{
-			context.Logger.LogMessage (MessageImportance.Normal, "Enabling Martin's Playground");
+			linkContext.Logger.LogMessage (MessageImportance.Normal, "Enabling Martin's Playground");
 
-			var myContext = new MartinContext (context);
+			var context = new MartinContext (linkContext);
 
-			myContext.Initialize ();
+			context.Initialize ();
 
-			context.Pipeline.AddStepAfter (typeof (TypeMapStep), new PreprocessStep (myContext));
-			context.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (myContext));
-			context.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep (myContext));
+			if (context.Options.Preprocess)
+				linkContext.Pipeline.AddStepAfter (typeof (TypeMapStep), new PreprocessStep (context));
+			linkContext.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (context));
+			if (context.Options.ReportSize)
+				linkContext.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep (context));
 		}
 
 		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";

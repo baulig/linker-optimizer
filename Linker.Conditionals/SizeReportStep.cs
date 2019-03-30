@@ -26,44 +26,32 @@
 using System;
 using Mono.Cecil;
 using System.Collections.Generic;
-using Mono.Linker.Steps;
 
 namespace Mono.Linker.Conditionals
 {
-	public class SizeReportStep : BaseStep
+	public class SizeReportStep : ConditionalBaseStep
 	{
-		public MartinContext Context {
-			get;
-		}
-
 		readonly Dictionary<string, int> namespace_sizes;
 		readonly Dictionary<string, int> type_sizes;
 		readonly Dictionary<string, int> method_sizes;
 
 		public SizeReportStep (MartinContext context)
+			: base (context)
 		{
-			Context = context;
-
 			namespace_sizes = new Dictionary<string, int> ();
 			type_sizes = new Dictionary<string, int> ();
 			method_sizes = new Dictionary<string, int> ();
 		}
 
-		protected override bool ConditionToProcess ()
-		{
-			return Context.Options.ReportSize;
-		}
-
 		protected override void ProcessAssembly (AssemblyDefinition assembly)
 		{
-			foreach (TypeDefinition type in assembly.MainModule.Types) {
+			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (type);
 			}
 		}
 
 		protected override void EndProcess ()
 		{
-			base.EndProcess ();
 			Report ();
 		}
 
