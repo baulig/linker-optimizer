@@ -146,7 +146,12 @@ namespace Mono.Linker.Optimizer
 			if (corlib == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.{name}`.");
 
+			Resolver.RegisterSupportMethod (corlib);
+
 			var helper = _test_helper_support_type?.Methods.FirstOrDefault (m => full ? m.FullName == name : m.Name == name);
+			if (helper != null)
+				Resolver.RegisterSupportMethod (helper);
+
 			return new SupportMethodRegistration (corlib, helper);
 		}
 

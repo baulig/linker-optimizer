@@ -65,29 +65,56 @@ namespace Mono.Linker.Optimizer
 			type_hash.Add (type);
 		}
 
-		internal void RegisterConstantMethod (MethodDefinition method, ConstantValue value)
+		internal void RegisterSupportMethod (MethodDefinition method)
 		{
-			GetModuleRegistration (method.Module).RegisterType (method.DeclaringType);
+			var registration = GetModuleRegistration (method.Module);
+			registration.RegisterType (method.DeclaringType);
+			registration.RegisterMethod (method);
 			type_hash.Add (method.DeclaringType);
 			method_hash.Add (method);
+		}
+
+		internal void RegisterConstantMethod (MethodDefinition method, ConstantValue value)
+		{
+			Context.LogDebug ($"REGISTER CONSTANT: {method} {value}");
+			RegisterSupportMethod (method);
 		}
 
 		internal bool TryFastResolve (MethodReference reference, out MethodDefinition resolved)
 		{
 			Context.LogDebug ($"TRY FAST RESOLVE: {reference.GetType ().Name} {reference.Module} {reference.MetadataToken} {reference}");
-			Context.Debug ();
+
+//			resolved = reference.Resolve ();
+//			if (method_hash.Contains (resolved)) {
+//				Context.LogDebug ($"TRY FAST RESOLVE #1: {reference.GetType ().Name} {reference.Module} {reference.MetadataToken} {reference}");
+//				Context.Debug ();
+//				if (!(reference is MethodDefinition))
+//					throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+//			}
+
+			if (reference.FullName.Contains ("Martin") || reference.FullName.Contains ("MonoLinker"))
+				Context.Debug ();
 
 			if (reference is MethodDefinition method) {
 				resolved = method;
 				return true;
 			}
 
-			if (reference.MetadataToken.TokenType != TokenType.MemberRef) {
-				resolved = null;
+			resolved = null;
+			if (reference.MetadataToken.TokenType != TokenType.MemberRef)
 				return false;
+
+			if (reference.DeclaringType.IsNested || reference.DeclaringType.HasGenericParameters)
+				return false;
+
+			var type = reference.DeclaringType.Resolve ();
+
+			if (type_hash.Contains (type)) {
+				resolved = reference.Resolve ();
+				return true;
 			}
 
-			if (reference.Module == null || !module_registration.TryGetValue (reference.Module, out var module)) {
+			if (!module_registration.TryGetValue (type.Module, out var module)) {
 				resolved = null;
 				return false;
 			}
