@@ -35,9 +35,9 @@ namespace Mono.Linker.Conditionals
 			get;
 		}
 
-		public XApiReader (LinkContext context, XPathDocument document)
+		public XApiReader (MartinContext context, XPathDocument document)
 		{
-			Context = context.MartinContext;
+			Context = context;
 
 			var nav = document.CreateNavigator ();
 

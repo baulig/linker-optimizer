@@ -66,12 +66,13 @@ namespace Mono.Linker.Conditionals
 		{
 			context.Logger.LogMessage (MessageImportance.Normal, "Enabling Martin's Playground");
 
-			context.MartinContext = new MartinContext (context);
+			var myContext = new MartinContext (context);
 
-			context.Pipeline.AddStepAfter (typeof (TypeMapStep), new InitializeStep ());
-			context.Pipeline.AddStepAfter (typeof (InitializeStep), new PreprocessStep ());
-			context.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep ());
-			context.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep ());
+			myContext.Initialize ();
+
+			context.Pipeline.AddStepAfter (typeof (TypeMapStep), new PreprocessStep (myContext));
+			context.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (myContext));
+			context.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep (myContext));
 		}
 
 		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";
@@ -203,15 +204,6 @@ namespace Mono.Linker.Conditionals
 		{
 			var reference = method.DeclaringType.Module.ImportReference (_platform_not_supported_exception_ctor.Value);
 			return Instruction.Create (OpCodes.Newobj, reference);
-		}
-
-		class InitializeStep : BaseStep
-		{
-			protected override void Process ()
-			{
-				Context.MartinContext.Initialize ();
-				base.Process ();
-			}
 		}
 
 		class SupportMethodRegistration

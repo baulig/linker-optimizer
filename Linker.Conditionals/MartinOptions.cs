@@ -251,7 +251,9 @@ namespace Mono.Linker.Conditionals
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, fail ?? warn);
+#if MARTIN_FIXME
 			context.Context.Tracer.Dump ();
+#endif
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
 				throw new NotSupportedException (message + original_message + ".");
@@ -270,7 +272,9 @@ namespace Mono.Linker.Conditionals
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, fail ?? warn);
+#if MARTIN_FIXME
 			context.Context.Tracer.Dump ();
+#endif
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
 				throw new NotSupportedException (message + ".");
