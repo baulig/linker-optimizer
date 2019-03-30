@@ -28,7 +28,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Mono.Cecil, Version=0.9.5.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -63,11 +62,17 @@
     <Compile Include="Linker.Conditionals\XApiReader.cs" />
     <Compile Include="Linker.Conditionals\XmlConfigurationWriter.cs" />
     <Compile Include="Linker.Conditionals\ConditionalBaseStep.cs" />
+    <Compile Include="System.Runtime.CompilerServices\MonoLinkerFeature.cs" />
+    <Compile Include="System.Runtime.CompilerServices\MonoLinkerSupport.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="monolinker.csproj">
-      <Project>{D60432F1-3C12-4235-A1CC-4CA5575403BD}</Project>
-      <Name>monolinker</Name>
+    <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">
+      <Project>{DD28E2B1-057B-4B4D-A04D-B2EBD9E76E46}</Project>
+      <Name>Mono.Linker</Name>
+    </ProjectReference>
+    <ProjectReference Include="external\linker\external\cecil\Mono.Cecil.csproj">
+      <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
+      <Name>Mono.Cecil</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
