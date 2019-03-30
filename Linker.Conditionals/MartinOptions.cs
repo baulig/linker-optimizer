@@ -77,15 +77,6 @@ namespace Mono.Linker.Conditionals
 			};
 		}
 
-		internal void CheckEnvironmentOptions ()
-		{
-			var options = Environment.GetEnvironmentVariable ("MARTIN_LINKER_OPTIONS");
-			if (string.IsNullOrEmpty (options))
-				return;
-
-			ParseOptions (options);
-		}
-
 		internal void ParseOptions (string options)
 		{
 			var parts = options.Split (',');
@@ -256,9 +247,7 @@ namespace Mono.Linker.Conditionals
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, fail ?? warn);
-#if MARTIN_FIXME
-			context.Context.Tracer.Dump ();
-#endif
+			context.DumpTracerStack ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
 				throw new NotSupportedException (message + original_message + ".");
@@ -277,9 +266,7 @@ namespace Mono.Linker.Conditionals
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, fail ?? warn);
-#if MARTIN_FIXME
-			context.Context.Tracer.Dump ();
-#endif
+			context.DumpTracerStack ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
 				throw new NotSupportedException (message + ".");

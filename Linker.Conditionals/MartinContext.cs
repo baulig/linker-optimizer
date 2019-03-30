@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
 using Mono.Cecil;
@@ -91,6 +92,7 @@ namespace Mono.Linker.Conditionals
 		SupportMethodRegistration _require_feature;
 		Lazy<TypeDefinition> _platform_not_support_exception;
 		Lazy<MethodDefinition> _platform_not_supported_exception_ctor;
+		FieldInfo _tracer_stack_field;
 
 		void Initialize ()
 		{
@@ -123,7 +125,7 @@ namespace Mono.Linker.Conditionals
 			_platform_not_supported_exception_ctor = new Lazy<MethodDefinition> (
 				() => _platform_not_support_exception.Value.Methods.FirstOrDefault (m => m.Name == ".ctor") ?? throw new NotSupportedException ($"Can't find `System.PlatformNotSupportedException`."));
 
-			Options.CheckEnvironmentOptions ();
+			_tracer_stack_field = typeof (Tracer).GetField ("dependency_stack", BindingFlags.Instance | BindingFlags.NonPublic);
 		}
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)
@@ -206,6 +208,52 @@ namespace Mono.Linker.Conditionals
 		{
 			var reference = method.DeclaringType.Module.ImportReference (_platform_not_supported_exception_ctor.Value);
 			return Instruction.Create (OpCodes.Newobj, reference);
+		}
+
+		static bool IsAssemblyBound (TypeDefinition td)
+		{
+			do {
+				if (td.IsNestedPrivate || td.IsNestedAssembly || td.IsNestedFamilyAndAssembly)
+					return true;
+
+				td = td.DeclaringType;
+			} while (td != null);
+
+			return false;
+		}
+
+		static string TokenString (object o)
+		{
+			if (o == null)
+				return "N:null";
+
+			if (o is TypeReference t) {
+				bool addAssembly = true;
+				var td = t as TypeDefinition ?? t.Resolve ();
+
+				if (td != null) {
+					addAssembly = td.IsNotPublic || IsAssemblyBound (td);
+					t = td;
+				}
+
+				var addition = addAssembly ? $":{t.Module}" : "";
+
+				return $"{(o as IMetadataTokenProvider).MetadataToken.TokenType}:{o}{addition}";
+			}
+
+			if (o is IMetadataTokenProvider)
+				return (o as IMetadataTokenProvider).MetadataToken.TokenType + ":" + o;
+
+			return "Other:" + o;
+		}
+
+		internal void DumpTracerStack ()
+		{
+			var stack = (Stack<object>)_tracer_stack_field.GetValue (Context.Tracer);
+			LogMessage (MessageImportance.Normal, "Dependency Stack:");
+			foreach (var dependency in stack) {
+				LogMessage (MessageImportance.Normal, $"  {TokenString (dependency)}");
+			}
 		}
 
 		class SupportMethodRegistration

@@ -47,6 +47,10 @@ namespace Mono.Linker.Optimizer
 			var arguments = ProcessResponseFile (args);
 			ParseArguments (arguments);
 
+			var env = Environment.GetEnvironmentVariable ("MARTIN_LINKER_OPTIONS");
+			if (!string.IsNullOrEmpty (env))
+				options.ParseOptions (env);
+
 			Driver.Execute (arguments.ToArray ());
 
 			return 0;
