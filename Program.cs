@@ -26,16 +26,17 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Xml.XPath;
 using System.Collections.Generic;
-using Mono.Linker.Conditionals;
 using Mono.Linker.Steps;
+using System.Diagnostics;
 
 namespace Mono.Linker.Optimizer
 {
 	public static class Program
 	{
-		static readonly MartinOptions options = new MartinOptions ();
+		static readonly OptimizerOptions options = new OptimizerOptions ();
+		static string mainModule;
+		static bool moduleEnabled;
 
 		public static int Main (string[] args)
 		{
@@ -48,10 +49,32 @@ namespace Mono.Linker.Optimizer
 			ParseArguments (arguments);
 
 			var env = Environment.GetEnvironmentVariable ("MARTIN_LINKER_OPTIONS");
-			if (!string.IsNullOrEmpty (env))
+			if (!string.IsNullOrEmpty (env)) {
+				moduleEnabled = true;
 				options.ParseOptions (env);
+			}
+
+			moduleEnabled &= !options.DisableModule;
+
+			if (moduleEnabled) {
+				if (mainModule == null) {
+					Console.Error.WriteLine ("Missing main module argument.");
+					return 1;
+				}
+				arguments.Insert (0, "-a");
+				arguments.Insert (1, mainModule);
+				arguments.Insert (2, "--custom-step");
+				arguments.Insert (3, $"TypeMapStep:{typeof (InitializeStep).AssemblyQualifiedName}");
+			}
+
+			var watch = new Stopwatch ();
+			watch.Start ();
 
 			Driver.Execute (arguments.ToArray ());
+
+			watch.Stop ();
+
+			Console.Error.WriteLine ($"Mono Linker Optimizer finished in {watch.Elapsed}.");
 
 			return 0;
 		}
@@ -78,8 +101,6 @@ namespace Mono.Linker.Optimizer
 
 		static void ParseArguments (List<string> arguments)
 		{
-			var martinsPlayground = false;
-
 			while (arguments.Count > 0) {
 				var token = arguments[0];
 				if (!token.StartsWith ("--martin", StringComparison.Ordinal))
@@ -88,34 +109,42 @@ namespace Mono.Linker.Optimizer
 				arguments.RemoveAt (0);
 				switch (token) {
 				case "--martin":
-					martinsPlayground = true;
+					if (mainModule != null) {
+						Console.Error.WriteLine ($"Duplicate --martin argument.");
+						Environment.Exit (1);
+					}
+					mainModule = arguments[0];
+					arguments.RemoveAt (0);
+					LoadFile (mainModule);
+					moduleEnabled = true;
 					continue;
 				case "--martin-xml":
 					var filename = arguments[0];
 					arguments.RemoveAt (0);
 					OptionsReader.Read (options, filename);
-					martinsPlayground = true;
+					moduleEnabled = true;
 					break;
 				case "--martin-args":
 					options.ParseOptions (arguments[0]);
 					arguments.RemoveAt (0);
-					martinsPlayground = true;
+					moduleEnabled = true;
 					break;
 				}
 			}
+		}
 
-			if (!martinsPlayground)
-				return;
-
-			arguments.Insert (0, "--custom-step");
-			arguments.Insert (1, $"TypeMapStep:{typeof (InitializeStep).AssemblyQualifiedName}");
+		static void LoadFile (string filename)
+		{
+			var xml = Path.ChangeExtension (Path.GetFileNameWithoutExtension (filename), "xml");
+			if (File.Exists (xml))
+				OptionsReader.Read (options, xml);
 		}
 
 		class InitializeStep : IStep
 		{
 			public void Process (LinkContext context)
 			{
-				MartinContext.Initialize (context, options);
+				OptimizerContext.Initialize (context, options);
 			}
 		}
 	}
