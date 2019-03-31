@@ -7,7 +7,7 @@ include $(ROOTDIR)/build/rules.make
 
 standalone-all:: build
 
-CLEAN_FILES += output
+CLEAN_DIRECTORIES += output
 
 ifdef STANDALONE_MAKE
 

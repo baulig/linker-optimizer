@@ -25,5 +25,6 @@ endif
 clean: standalone-clean
 
 standalone-clean::
-	rm -rf $(CLEAN_FILES)
+	@rm -f $(CLEAN_FILES)
+	@rm -rf $(CLEAN_DIRECTORIES)
 
