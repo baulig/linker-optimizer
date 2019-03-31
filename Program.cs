@@ -38,6 +38,8 @@ namespace Mono.Linker.Optimizer
 		static string mainModule;
 		static bool moduleEnabled;
 
+		const string ProgramName = "Mono Linker Optimizer";
+
 		public static int Main (string[] args)
 		{
 			if (args.Length == 0) {
@@ -67,14 +69,24 @@ namespace Mono.Linker.Optimizer
 				arguments.Insert (3, $"TypeMapStep:{typeof (InitializeStep).AssemblyQualifiedName}");
 			}
 
+			foreach (var arg in arguments) {
+				Console.Error.WriteLine ($"ARG: |{arg}|");
+			}
+
 			var watch = new Stopwatch ();
 			watch.Start ();
 
-			Driver.Execute (arguments.ToArray ());
+			try {
+				var driver = new Driver (arguments.ToArray ());
+				driver.Run ();
+			} catch (Exception ex) {
+				Console.Error.WriteLine ($"Fatal error in {ProgramName}: {ex.Message}");
+				throw;
+			}
 
 			watch.Stop ();
 
-			Console.Error.WriteLine ($"Mono Linker Optimizer finished in {watch.Elapsed}.");
+			Console.Error.WriteLine ($"{ProgramName} finished in {watch.Elapsed}.");
 
 			return 0;
 		}

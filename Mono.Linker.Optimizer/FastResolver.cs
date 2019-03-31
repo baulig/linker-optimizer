@@ -43,13 +43,14 @@ namespace Mono.Linker.Optimizer
 
 			type_hash = new HashSet<TypeDefinition> ();
 			method_hash = new HashSet<MethodDefinition> ();
-			module_registration = new Dictionary<ModuleDefinition, ModuleRegistration> ();
+//			module_registration = new Dictionary<ModuleDefinition, ModuleRegistration> ();
 		}
 
 		readonly HashSet<TypeDefinition> type_hash;
 		readonly HashSet<MethodDefinition> method_hash;
-		readonly Dictionary<ModuleDefinition, ModuleRegistration> module_registration;
+		//		readonly Dictionary<ModuleDefinition, ModuleRegistration> module_registration;
 
+#if FIMXE
 		ModuleRegistration GetModuleRegistration (ModuleDefinition module)
 		{
 			if (!module_registration.TryGetValue (module, out var registration)) {
@@ -58,18 +59,19 @@ namespace Mono.Linker.Optimizer
 			}
 			return registration;
 		}
+#endif
 
 		internal void RegisterSupportType (TypeDefinition type)
 		{
-			GetModuleRegistration (type.Module).RegisterType (type);
+//			GetModuleRegistration (type.Module).RegisterType (type);
 			type_hash.Add (type);
 		}
 
 		internal void RegisterSupportMethod (MethodDefinition method)
 		{
-			var registration = GetModuleRegistration (method.Module);
-			registration.RegisterType (method.DeclaringType);
-			registration.RegisterMethod (method);
+//			var registration = GetModuleRegistration (method.Module);
+//			registration.RegisterType (method.DeclaringType);
+//			registration.RegisterMethod (method);
 			type_hash.Add (method.DeclaringType);
 			method_hash.Add (method);
 		}
@@ -82,18 +84,20 @@ namespace Mono.Linker.Optimizer
 
 		internal bool TryFastResolve (MethodReference reference, out MethodDefinition resolved)
 		{
-			Context.LogDebug ($"TRY FAST RESOLVE: {reference.GetType ().Name} {reference.Module} {reference.MetadataToken} {reference}");
+			// Context.LogDebug ($"TRY FAST RESOLVE: {reference.GetType ().Name} {reference.Module} {reference.MetadataToken} {reference}");
 
-//			resolved = reference.Resolve ();
-//			if (method_hash.Contains (resolved)) {
-//				Context.LogDebug ($"TRY FAST RESOLVE #1: {reference.GetType ().Name} {reference.Module} {reference.MetadataToken} {reference}");
-//				Context.Debug ();
-//				if (!(reference is MethodDefinition))
-//					throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
-//			}
+			//			resolved = reference.Resolve ();
+			//			if (method_hash.Contains (resolved)) {
+			//				Context.LogDebug ($"TRY FAST RESOLVE #1: {reference.GetType ().Name} {reference.Module} {reference.MetadataToken} {reference}");
+			//				Context.Debug ();
+			//				if (!(reference is MethodDefinition))
+			//					throw new InvalidTimeZoneException ("I LIVE ON THE MOON!");
+			//			}
 
-			if (reference.FullName.Contains ("Martin") || reference.FullName.Contains ("MonoLinker"))
+			if (reference.FullName.Contains ("Martin") || reference.FullName.Contains ("MonoLinker")) {
+				Context.LogDebug ($"TRY FAST RESOLVE: {reference.GetType ().Name} {reference.Module} {reference.MetadataToken} {reference}");
 				Context.Debug ();
+			}
 
 			if (reference is MethodDefinition method) {
 				resolved = method;
@@ -101,19 +105,19 @@ namespace Mono.Linker.Optimizer
 			}
 
 			resolved = null;
-			if (reference.MetadataToken.TokenType != TokenType.MemberRef)
+			if (reference.MetadataToken.TokenType != TokenType.MemberRef && reference.MetadataToken.TokenType != TokenType.MethodSpec)
 				return false;
 
 			if (reference.DeclaringType.IsNested || reference.DeclaringType.HasGenericParameters)
 				return false;
 
 			var type = reference.DeclaringType.Resolve ();
-
 			if (type_hash.Contains (type)) {
 				resolved = reference.Resolve ();
 				return true;
 			}
 
+#if FIXME
 			if (!module_registration.TryGetValue (type.Module, out var module)) {
 				resolved = null;
 				return false;
@@ -121,8 +125,8 @@ namespace Mono.Linker.Optimizer
 
 			var result = module.TryGetMethod (reference.MetadataToken, out resolved);
 			Context.LogDebug ($"TRY FAST RESOVLE #1: {result} {resolved}");
+#endif
 
-			resolved = null;
 			return false;
 		}
 
