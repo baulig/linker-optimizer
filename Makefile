@@ -15,7 +15,7 @@ standalone-build::
 	msbuild /nologo /verbosity:minimal $(ROOTDIR)/Mono.Linker.Optimizer.sln
 
 standalone-build-release::
-	msbuild /nologo /verbosity:minimal /p:Configuration=Release $(ROOTDIR)Mono.Linker.Optimizer.sln
+	msbuild /nologo /verbosity:minimal /p:Configuration=Release $(ROOTDIR)/Mono.Linker.Optimizer.sln
 
 endif
 
@@ -23,7 +23,7 @@ ifdef INTEGRATED_MAKE
 
 PROGRAM = monolinker-optimizer.exe
 
-LOCAL_MCS_FLAGS = /main:Mono.Linker.Optimizer.Program
+LOCAL_MCS_FLAGS = /main:Mono.Linker.Optimizer.Program /r:$(the_libdir)monolinker.exe
 LIB_REFS = System System.Core System.Xml Mono.Cecil
 
 include $(ROOTDIR)/../../../build/executable.make
