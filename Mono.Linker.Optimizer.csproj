@@ -64,7 +64,6 @@
     <Compile Include="Mono.Linker.Optimizer.BasicBlocks\ConstantValue.cs" />
     <Compile Include="Mono.Linker.Optimizer.BasicBlocks\DeadCodeEliminator.cs" />
     <Compile Include="Mono.Linker.Optimizer.Conditionals\RequireFeatureConditional.cs" />
-    <Compile Include="Mono.Linker.Optimizer\FastResolver.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">

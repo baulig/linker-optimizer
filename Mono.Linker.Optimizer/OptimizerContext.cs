@@ -46,18 +46,12 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		public FastResolver Resolver {
-			get;
-		}
-
 		public AnnotationStore Annotations => Context.Annotations;
 
 		OptimizerContext (LinkContext context, OptimizerOptions options)
 		{
 			Context = context;
 			Options = options;
-
-			Resolver = new FastResolver (this);
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
@@ -120,10 +114,6 @@ namespace Mono.Linker.Optimizer
 			if (_corlib_support_type == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}` in corlib.");
 
-			Resolver.RegisterSupportType (_corlib_support_type);
-			if (_test_helper_support_type != null)
-				Resolver.RegisterSupportType (_test_helper_support_type);
-
 			_is_weak_instance_of = ResolveSupportMethod ("IsWeakInstanceOf");
 			_as_weak_instance_of = ResolveSupportMethod ("AsWeakInstanceOf");
 
@@ -146,12 +136,7 @@ namespace Mono.Linker.Optimizer
 			if (corlib == null)
 				throw new NotSupportedException ($"Cannot find `{LinkerSupportType}.{name}`.");
 
-			Resolver.RegisterSupportMethod (corlib);
-
 			var helper = _test_helper_support_type?.Methods.FirstOrDefault (m => full ? m.FullName == name : m.Name == name);
-			if (helper != null)
-				Resolver.RegisterSupportMethod (helper);
-
 			return new SupportMethodRegistration (corlib, helper);
 		}
 
@@ -208,7 +193,6 @@ namespace Mono.Linker.Optimizer
 
 		internal void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
 		{
-			Resolver.RegisterConstantMethod (method, value);
 			constant_methods.Add (method, value);
 		}
 
@@ -220,6 +204,32 @@ namespace Mono.Linker.Optimizer
 		internal IList<MethodDefinition> GetConstantMethods ()
 		{
 			return constant_methods.Keys.ToList ();
+		}
+
+		internal bool TryFastResolve (MethodReference reference, out MethodDefinition resolved)
+		{
+			if (reference is MethodDefinition method) {
+				resolved = method;
+				return true;
+			}
+
+			resolved = null;
+			if (reference.MetadataToken.TokenType != TokenType.MemberRef && reference.MetadataToken.TokenType != TokenType.MethodSpec)
+				return false;
+
+			if (reference.DeclaringType.IsNested || reference.DeclaringType.HasGenericParameters)
+				return false;
+
+			var type = reference.DeclaringType.Resolve ();
+			if (type == null)
+				return false;
+
+			if (type == _corlib_support_type || type == _test_helper_support_type) {
+				resolved = reference.Resolve ();
+				return true;
+			}
+
+			return false;
 		}
 
 		internal Instruction CreateNewPlatformNotSupportedException (MethodDefinition method)

@@ -108,10 +108,8 @@ namespace Mono.Linker.Optimizer.Conditionals
 		{
 			var reference = (MethodReference)instruction.Operand;
 
-			if (!scanner.Context.Resolver.TryFastResolve (reference, out var target)) {
+			if (!scanner.Context.TryFastResolve (reference, out var target))
 				return false;
-				target = reference.Resolve ();
-			}
 
 			if (target == null) {
 				if (reference.DeclaringType.Name.Contains ("...")) {
