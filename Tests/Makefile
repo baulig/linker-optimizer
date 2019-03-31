@@ -9,11 +9,6 @@ ifdef TESTNAME
 TESTNAME_ARG = -test=$(TESTNAME)
 endif
 
-TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(PROFILE_PATH)/mscorlib.dll
-AOTTESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(AOTPROFILE_PATH)/mscorlib.dll
-
-CLEAN_FILES += *.exe *.dll *.pdb
-
 CORLIB_SOURCES := \
 	../System.Runtime.CompilerServices/MonoLinkerFeature.cs \
 	../System.Runtime.CompilerServices/MonoLinkerSupport.cs

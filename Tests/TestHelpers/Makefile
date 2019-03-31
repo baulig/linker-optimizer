@@ -3,7 +3,7 @@ thisdir = tools/linker/Martin/Tests/TestHelpers
 makefile_dir := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOTDIR := $(abspath $(makefile_dir)/../..)
 
-include $(ROOTDIR)/rules.make
+include $(ROOTDIR)/build/rules.make
 
 CORLIB_SOURCES := \
 	../../System.Runtime.CompilerServices/MonoLinkerFeature.cs \
@@ -16,7 +16,7 @@ TEST_HELPER_SOURCES := \
 
 TEST_HELPERS_LIBRARY := TestHelpers.dll
 
-all:: $(TEST_HELPERS_LIBRARY)
+standalone-all:: $(TEST_HELPERS_LIBRARY)
 
 $(TEST_HELPERS_LIBRARY): $(TEST_HELPER_SOURCES)
 	$(TESTS_COMPILER) /t:library /out:$@ $^

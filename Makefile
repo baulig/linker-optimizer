@@ -11,10 +11,10 @@ CLEAN_DIRECTORIES += output
 
 ifdef STANDALONE_MAKE
 
-build:
+standalone-build::
 	msbuild /nologo /verbosity:minimal $(ROOTDIR)/Mono.Linker.Optimizer.sln
 
-build-release:
+standalone-build-release::
 	msbuild /nologo /verbosity:minimal /p:Configuration=Release $(ROOTDIR)Mono.Linker.Optimizer.sln
 
 endif
@@ -28,8 +28,8 @@ LIB_REFS = System System.Core System.Xml Mono.Cecil
 
 include $(ROOTDIR)/../../../build/executable.make
 
-build: $(the_lib)
+standalone-build:: $(the_lib)
 
-build-release: $(the_lib)
+standalone-build-release:: $(the_lib)
 
 endif

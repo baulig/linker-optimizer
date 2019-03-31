@@ -1,8 +1,10 @@
 .DEFAULT: all
 default: standalone-all
 
-.PHONY: standalone-all standalone-clean build
-standalone-all::
+.PHONY: standalone-all standalone-build standalone-build-release standalone-clean build
+standalone-all:: standalone-build
+
+standalone-build::
 
 ifneq "$(MONO_ROOT)" ""
 STANDALONE_MAKE = 1
@@ -21,6 +23,11 @@ endif
 ifdef STANDALONE_MAKE
 include $(ROOTDIR)/build/standalone.make
 endif
+
+TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(PROFILE_PATH)/mscorlib.dll
+AOTTESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(AOTPROFILE_PATH)/mscorlib.dll
+
+CLEAN_FILES += *.exe *.dll *.pdb
 
 clean: standalone-clean
 
