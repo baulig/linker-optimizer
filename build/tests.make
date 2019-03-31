@@ -11,6 +11,8 @@ $(TEST_HELPERS_LIBRARY):
 
 CLEAN_DIRECTORIES += $(LINKER_OUTPUT)
 
+.NOTPARALLEL:
+
 compile-tests:: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(AOTTEST_CASES:.cs=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY)
 
 run: $(TEST_CASES:.cs=) $(AOTTEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
