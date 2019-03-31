@@ -14,3 +14,14 @@ TEST_CASES := \
 	test-conditionals-6.cs
 
 include $(ROOTDIR)/build/tests.make
+
+$(eval $(call RunTests,weak-instances))
+$(eval $(call RunTests,features))
+$(eval $(call RunTests,conditionals))
+$(eval $(call RunTests,flow-analysis))
+$(eval $(call RunTests,globalization))
+$(eval $(call RunTests,size-check))
+
+$(eval $(call RunIlTests,conditionals))
+$(eval $(call RunIlTests,flow-analysis))
+

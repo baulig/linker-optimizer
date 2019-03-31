@@ -9,6 +9,8 @@ TEST_HELPERS_LIBRARY = ../TestHelpers/TestHelpers.dll
 $(TEST_HELPERS_LIBRARY):
 	$(MAKE) -C ../TestHelpers
 
+CLEAN_DIRECTORIES += $(LINKER_OUTPUT)
+
 compile-tests:: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(AOTTEST_CASES:.cs=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY)
 
 run: $(TEST_CASES:.cs=) $(AOTTEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
