@@ -1,19 +1,18 @@
-ifdef TESTNAME
-TESTNAME_ARG = -test=$(TESTNAME)
-endif
-
 standalone-all:: compile-tests
 
-TEST_HELPERS_LIBRARY = ../TestHelpers/TestHelpers.dll
+TEST_HELPERS_LIBRARY = $(ROOTDIR)/Tests/TestHelpers/TestHelpers.dll
 
 $(TEST_HELPERS_LIBRARY):
-	$(MAKE) -C ../TestHelpers
+	$(MAKE) -C $(ROOTDIR)/Tests/TestHelpers
+
+$(LINKER_EXE):
+	$(MAKE) -C $(ROOTDIR) standalone-build
 
 CLEAN_DIRECTORIES += $(LINKER_OUTPUT)
 
 .NOTPARALLEL:
 
-compile-tests:: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(AOTTEST_CASES:.cs=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY)
+compile-tests:: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(AOTTEST_CASES:.cs=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY) $(LINKER_EXE)
 
 run: $(TEST_CASES:.cs=) $(AOTTEST_CASES:.cs=) $(ILTEST_CASES:.il=) build
 

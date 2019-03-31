@@ -29,6 +29,8 @@ AOTTESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -
 
 CLEAN_FILES += *.exe *.dll *.pdb
 
+all: standalone-all
+
 clean: standalone-clean
 
 standalone-clean::
