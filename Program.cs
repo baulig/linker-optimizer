@@ -69,10 +69,6 @@ namespace Mono.Linker.Optimizer
 				arguments.Insert (3, $"TypeMapStep:{typeof (InitializeStep).AssemblyQualifiedName}");
 			}
 
-			foreach (var arg in arguments) {
-				Console.Error.WriteLine ($"ARG: |{arg}|");
-			}
-
 			var watch = new Stopwatch ();
 			watch.Start ();
 
