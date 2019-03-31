@@ -1,3 +1,9 @@
+.DEFAULT: all
+default: standalone-all
+
+.PHONY: standalone-all standalone-clean build
+standalone-all::
+
 ifneq "$(MONO_ROOT)" ""
 STANDALONE_MAKE = 1
 else
@@ -9,9 +15,15 @@ endif
 endif
 
 ifdef INTEGRATED_MAKE
-include $(ROOTDIR)/mono.make
+include $(ROOTDIR)/build/mono.make
 endif
 
 ifdef STANDALONE_MAKE
-include $(ROOTDIR)/standalone.make
+include $(ROOTDIR)/build/standalone.make
 endif
+
+clean: standalone-clean
+
+standalone-clean::
+	rm -rf $(CLEAN_FILES)
+

@@ -3,7 +3,11 @@ thisdir = tools/linker/Martin
 makefile_dir := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOTDIR := $(abspath $(makefile_dir))
 
-include rules.make
+include $(ROOTDIR)/build/rules.make
+
+standalone-all:: build
+
+CLEAN_FILES += output
 
 ifdef STANDALONE_MAKE
 
