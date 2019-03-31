@@ -6,49 +6,29 @@ ROOTDIR := $(abspath $(makefile_dir)/../..)
 include $(ROOTDIR)/build/rules.make
 
 TEST_CASES := \
-	test-weak-instances-1.cs \
-	test-weak-instances-2.cs \
-	test-weak-instances-3.cs \
-	test-weak-instances-4.cs \
-	test-weak-instances-5.cs \
-	test-weak-instances-6.cs \
-	test-features-1.cs \
-	test-features-2.cs \
-	test-features-3.cs \
-	test-features-4.cs \
-	test-features-5.cs \
-	test-features-6.cs \
-	test-features-7.cs \
-	test-conditionals-1.cs \
-	test-conditionals-2.cs \
-	test-conditionals-3.cs \
-	test-conditionals-4.cs \
-	test-conditionals-5.cs \
-	test-conditionals-6.cs \
-	test-flow-analysis-1.cs \
-	test-flow-analysis-2.cs \
-	test-flow-analysis-3.cs \
-	test-flow-analysis-4.cs \
-	test-flow-analysis-5.cs
+	test-globalization-1.cs \
+	test-globalization-2.cs \
+	test-globalization-3.cs \
+	test-globalization-4.cs \
+	test-globalization-5.cs \
+	test-crypto-1.cs \
+	test-security-1.cs \
+	test-remoting-1.cs \
+	test-remoting-2.cs \
+	test-size-check-1.cs \
+	test-size-check-2.cs \
+	test-size-check-3.cs \
+	test-size-check-4.cs \
+	test-size-check-5.cs
 
-ILTEST_CASES := \
-	iltest-conditionals-1.il \
-	iltest-conditionals-2.il \
-	iltest-conditionals-3.il \
-	iltest-conditionals-4.il \
-	iltest-conditionals-5.il \
-	iltest-flow-analysis-1.il
-
+AOTTEST_CASES := \
+	aottest-crypto-1.cs \
+	aottest-remoting-1.cs
 
 include $(ROOTDIR)/build/tests.make
 
-$(eval $(call RunTests,weak-instances))
-$(eval $(call RunTests,features))
-$(eval $(call RunTests,conditionals))
-$(eval $(call RunTests,flow-analysis))
 $(eval $(call RunTests,globalization))
+$(eval $(call RunTests,crypto))
+$(eval $(call RunTests,security))
+$(eval $(call RunTests,remoting))
 $(eval $(call RunTests,size-check))
-
-$(eval $(call RunIlTests,conditionals))
-$(eval $(call RunIlTests,flow-analysis))
-
