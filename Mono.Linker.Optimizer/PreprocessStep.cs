@@ -162,6 +162,10 @@ namespace Mono.Linker.Optimizer {
 				CodeRewriter.ReplaceWithReturnFalse (Context, method);
 				break;
 
+			case OptimizerOptions.MethodAction.ReturnTrue:
+				CodeRewriter.ReplaceWithReturnTrue (Context, method);
+				break;
+
 			case OptimizerOptions.MethodAction.ReturnNull:
 				CodeRewriter.ReplaceWithReturnNull (Context, method);
 				break;

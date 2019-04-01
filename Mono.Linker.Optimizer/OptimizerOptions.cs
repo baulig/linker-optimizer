@@ -179,6 +179,9 @@ namespace Mono.Linker.Optimizer
 			case "return-false":
 				action = MethodAction.ReturnFalse;
 				return true;
+			case "return-true":
+				action = MethodAction.ReturnTrue;
+				return true;
 			default:
 				return Enum.TryParse (name, true, out action);
 			}
@@ -374,6 +377,7 @@ namespace Mono.Linker.Optimizer
 			Warn,
 			Throw,
 			ReturnFalse,
+			ReturnTrue,
 			ReturnNull
 		}
 
