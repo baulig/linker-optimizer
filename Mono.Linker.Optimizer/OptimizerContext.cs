@@ -221,6 +221,7 @@ namespace Mono.Linker.Optimizer
 		internal void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
 		{
 			constant_methods.Add (method, value);
+			ReportWriter?.MarkAsConstantMethod (method, value);
 		}
 
 		internal bool TryGetConstantMethod (MethodDefinition method, out ConstantValue value)

@@ -24,6 +24,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Text;
+using System.Xml;
+using System.Xml.XPath;
+
 namespace Mono.Linker.Optimizer
 {
 	public class WriteReportStep : OptimizerBaseStep
@@ -35,7 +39,21 @@ namespace Mono.Linker.Optimizer
 
 		protected override void Process ()
 		{
-			throw new NotImplementedException ();
+			var settings = new XmlWriterSettings {
+				Indent = true,
+				OmitXmlDeclaration = false,
+				ConformanceLevel = ConformanceLevel.Document,
+				IndentChars = "\t",
+				Encoding = Encoding.Default
+			};
+
+			using (var xml = XmlWriter.Create (Options.ReportFileName, settings)) {
+				xml.WriteStartDocument ();
+				xml.WriteStartElement ("martin-report");
+				Context.ReportWriter.WriteReport (xml);
+				xml.WriteEndElement ();
+				xml.WriteEndDocument ();
+			}
 		}
 	}
 }

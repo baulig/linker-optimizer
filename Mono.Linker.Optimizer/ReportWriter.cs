@@ -31,6 +31,8 @@ using System.Collections.Generic;
 
 namespace Mono.Linker.Optimizer
 {
+	using BasicBlocks;
+
 	public class ReportWriter
 	{
 		public OptimizerContext Context {
@@ -46,21 +48,16 @@ namespace Mono.Linker.Optimizer
 			_namespace_hash = new Dictionary<string, TypeEntry> ();
 		}
 
-		public void DumpConstantProperties ()
+		internal void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
 		{
-			var settings = new XmlWriterSettings {
-				Indent = true,
-				OmitXmlDeclaration = true,
-				ConformanceLevel = ConformanceLevel.Fragment,
-				IndentChars = "\t"
-			};
-			var output = new StringBuilder ();
-			output.AppendLine ();
-			using (var xml = XmlWriter.Create (output, settings))
-				DumpConstantProperties (xml);
-			output.AppendLine ();
-			Context.LogMessage (MessageImportance.High, $"CONDITIONAL XML SECTION:");
-			Context.LogMessage (MessageImportance.High, output.ToString ());
+			if (method.DeclaringType.DeclaringType != null)
+				throw new NotSupportedException ($"Conditionals in nested classes are not supported yet.");
+
+			Console.Error.WriteLine ($"MARK AS CONSTANT: {method.FullName} - {CecilHelper.GetMethodSignature (method)}");
+
+			var entry = GetTypeEntry (method.DeclaringType);
+			entry.Methods.Add (new MethodEntry (CecilHelper.GetMethodSignature (method)));
+			entry.Items.Add (method.Name);
 		}
 
 		void DumpConstantProperties (XmlWriter xml)
@@ -125,16 +122,48 @@ namespace Mono.Linker.Optimizer
 			return typeEntry;
 		}
 
+		public void WriteReport (XmlWriter xml)
+		{
+			foreach (var entry in _namespace_hash.Values) {
+				xml.WriteStartElement ("namespace");
+				xml.WriteAttributeString ("name", entry.Name);
+
+				foreach (var type in entry.Children.Values) {
+					xml.WriteStartElement ("type");
+					xml.WriteAttributeString ("name", type.Name);
+
+					foreach (var item in type.Items) {
+						xml.WriteStartElement ("item");
+						xml.WriteAttributeString ("name", item);
+						xml.WriteAttributeString ("action", "scan");
+						xml.WriteEndElement ();
+					}
+
+					foreach (var item in type.Methods) {
+						xml.WriteStartElement ("method");
+						xml.WriteAttributeString ("name", item.Name);
+						xml.WriteAttributeString ("action", "scan");
+						xml.WriteEndElement ();
+					}
+
+					xml.WriteEndElement ();
+				}
+				xml.WriteEndElement ();
+			}
+		}
+
 		class TypeEntry
 		{
 			public readonly string Name;
 			public readonly Dictionary<string, TypeEntry> Children;
+			public readonly List<MethodEntry> Methods;
 			public readonly List<string> Items;
 
 			public TypeEntry (string name)
 			{
 				Name = name;
 				Children = new Dictionary<string, TypeEntry> ();
+				Methods = new List<MethodEntry> ();
 				Items = new List<string> ();
 			}
 		}
