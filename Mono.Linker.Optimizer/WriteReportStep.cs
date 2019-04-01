@@ -1,5 +1,5 @@
 ﻿//
-// ConditionalBaseStep.cs
+// WriteReportStep.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -24,34 +24,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using System.Collections.Generic;
-using Mono.Cecil;
-using Mono.Linker.Steps;
-
 namespace Mono.Linker.Optimizer
 {
-	public abstract class ConditionalBaseStep : IStep
+	public class WriteReportStep : OptimizerBaseStep
 	{
-		public OptimizerContext Context {
-			get;
-		}
-
-		public OptimizerOptions Options => Context.Options;
-
-		public AnnotationStore Annotations => Context.Context.Annotations;
-
-		protected ConditionalBaseStep (OptimizerContext context)
+		public WriteReportStep (OptimizerContext context)
+			: base (context)
 		{
-			Context = context;
 		}
 
-		public void Process (LinkContext context)
+		protected override void Process ()
 		{
-			Process ();
+			throw new NotImplementedException ();
 		}
-
-		protected abstract void Process ();
-
-		protected AssemblyDefinition[] GetAssemblies () => Context.Context.GetAssemblies ();
 	}
 }

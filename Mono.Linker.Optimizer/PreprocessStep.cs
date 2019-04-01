@@ -27,12 +27,10 @@ using System;
 using Mono.Cecil;
 using System.Runtime.CompilerServices;
 
-namespace Mono.Linker.Optimizer
-{
+namespace Mono.Linker.Optimizer {
 	using BasicBlocks;
 
-	public class PreprocessStep : ConditionalBaseStep
-	{
+	public class PreprocessStep : OptimizerBaseStep {
 		public PreprocessStep (OptimizerContext context)
 			: base (context)
 		{

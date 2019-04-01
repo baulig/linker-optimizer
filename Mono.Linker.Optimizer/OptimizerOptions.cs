@@ -65,6 +65,10 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
+		public string ReportFileName {
+			get; set;
+		}
+
 		readonly List<TypeEntry> _type_actions;
 		readonly List<MethodEntry> _method_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
