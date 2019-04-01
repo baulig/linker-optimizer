@@ -288,14 +288,14 @@ namespace Mono.Linker.Optimizer
 
 		static void DumpFailEntry (OptimizerContext context, TypeEntry entry)
 		{
-			context.LogMessage (MessageImportance.High, "  " + entry.ToString ());
+			context.LogMessage (MessageImportance.High, "  " + entry);
 			if (entry.Parent != null)
 				DumpFailEntry (context, entry.Parent);
 		}
 
 		static void DumpFailEntry (OptimizerContext context, MethodEntry entry)
 		{
-			context.LogMessage (MessageImportance.High, "  " + entry.ToString ());
+			context.LogMessage (MessageImportance.High, "  " + entry);
 			if (entry.Parent != null)
 				DumpFailEntry (context, entry.Parent);
 		}

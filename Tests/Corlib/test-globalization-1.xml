@@ -5,8 +5,7 @@
 
 		<conditional feature="globalization" enabled="false">
 			<namespace name="System.Globalization">
-
-				<type name="GlobalizationSupport">
+				<type name="GlobalizationMode" debug="true">
 					<method name="get_Invariant" action="return-true" />
 				</type>
 
