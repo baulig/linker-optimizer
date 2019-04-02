@@ -15,7 +15,7 @@ corlib-test: build
 	@echo RUN CORLIB TEST $@
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
-	$(LINKER) --martin $(PROFILE_PATH)/tests/net_4_x_corlib_test.dll --martin-xml corlib-nunit.xml $(LINKER_ARGS_CORLIB_TEST) --dump-dependencies -x $(MONO_ROOT)/mcs/class/corlib/LinkerDescriptor/mscorlib.xml
+	$(LINKER) --optimizer $(PROFILE_PATH)/tests/net_4_x_corlib_test.dll --optimizer-xml corlib-nunit.xml $(LINKER_ARGS_CORLIB_TEST) --dump-dependencies -x $(MONO_ROOT)/mcs/class/corlib/LinkerDescriptor/mscorlib.xml
 	#@gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
 	MONO_PATH=$(PROFILE_PATH) monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
@@ -25,7 +25,7 @@ corlib-test-profiler: build-release
 	@echo RUN CORLIB TEST $@
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
-	time (mono --debug $(PROFILER_FLAGS) $(LINKER_RELEASE_EXE) --martin $(PROFILE_PATH)/tests/net_4_x_corlib_test.dll --martin-xml corlib-profile.xml $(LINKER_ARGS_CORLIB_TEST) --dump-dependencies -x $(MONO_ROOT)/mcs/class/corlib/LinkerDescriptor/mscorlib.xml)
+	time (mono --debug $(PROFILER_FLAGS) $(LINKER_RELEASE_EXE) --optimizer $(PROFILE_PATH)/tests/net_4_x_corlib_test.dll --optimizer-xml corlib-profile.xml $(LINKER_ARGS_CORLIB_TEST) --dump-dependencies -x $(MONO_ROOT)/mcs/class/corlib/LinkerDescriptor/mscorlib.xml)
 
 corlib-test-profiler-disabled: build-release
 	@echo RUN CORLIB TEST $@
@@ -47,7 +47,7 @@ corlib-xtest: build
 	@rm -rf $(LINKER_OUTPUT)
 	@mkdir $(LINKER_OUTPUT)
 	@echo $(XUNIT_PATH)
-	$(LINKER) --martin -a $(PROFILE_PATH)/tests/net_4_x_corlib_xunit-test.dll -i corlib-xunit.xml $(LINKER_ARGS_CORLIB_TEST) --dump-dependencies -d $(XUNIT_PATH) -d $(PROFILE_PATH)/tests -d $(PROFILE_PATH)/Facades -x $(ROOTDIR)/class/corlib/LinkerDescriptor/mscorlib_xtest.xml
+	$(LINKER) --optimizer -a $(PROFILE_PATH)/tests/net_4_x_corlib_xunit-test.dll -i corlib-xunit.xml $(LINKER_ARGS_CORLIB_TEST) --dump-dependencies -d $(XUNIT_PATH) -d $(PROFILE_PATH)/tests -d $(PROFILE_PATH)/Facades -x $(ROOTDIR)/class/corlib/LinkerDescriptor/mscorlib_xtest.xml
 	#@gzip -d $(LINKER_OUTPUT)/linker-dependencies.xml.gz
 	MONO_PATH=$(PROFILE_PATH) monodis $(LINKER_OUTPUT)/mscorlib.dll > $(LINKER_OUTPUT)/mscorlib.il
 	MONO_PATH=$(PROFILE_PATH) monodis --typedef $(LINKER_OUTPUT)/mscorlib.dll | sed -e 's,^[0-9]*: ,,g' -e 's,(.*,,g' > $(LINKER_OUTPUT)/mscorlib.txt
