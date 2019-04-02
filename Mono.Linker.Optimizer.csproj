@@ -40,7 +40,6 @@
     <Compile Include="Mono.Linker.Optimizer\OptimizerAssertionException.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerContext.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerOptions.cs" />
-    <Compile Include="Mono.Linker.Optimizer\MartinTestException.cs" />
     <Compile Include="Mono.Linker.Optimizer\PreprocessStep.cs" />
     <Compile Include="Mono.Linker.Optimizer\SizeReportStep.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptionsReader.cs" />

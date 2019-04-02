@@ -109,7 +109,7 @@ namespace Mono.Linker.Optimizer
 						ProfileName = value;
 						continue;
 					default:
-						throw new NotSupportedException ($"Unknown option `{part}`.");
+						throw new OptimizerException ($"Unknown option `{part}`.");
 					}
 				}
 
@@ -164,7 +164,7 @@ namespace Mono.Linker.Optimizer
 		public void SetFeatureEnabled (MonoLinkerFeature feature, bool enabled)
 		{
 			if (feature == MonoLinkerFeature.Unknown)
-				throw new NotSupportedException ($"Cannot modify `{nameof (MonoLinkerFeature.Unknown)}`.");
+				throw new OptimizerException ($"Cannot modify `{nameof (MonoLinkerFeature.Unknown)}`.");
 			_enabled_features [feature] = enabled;
 		}
 
@@ -183,7 +183,7 @@ namespace Mono.Linker.Optimizer
 				return MonoLinkerFeature.Martin;
 			default:
 				if (!Enum.TryParse<MonoLinkerFeature> (name, true, out var feature))
-					throw new NotSupportedException ($"Unknown linker feature `{name}`.");
+					throw new OptimizerException ($"Unknown linker feature `{name}`.");
 				return feature;
 			}
 		}
@@ -287,7 +287,7 @@ namespace Mono.Linker.Optimizer
 			context.DumpTracerStack ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
-				throw new NotSupportedException (message + original_message + ".");
+				throw new OptimizerException (message + original_message + ".");
 		}
 
 		public void CheckFailList (OptimizerContext context, MethodDefinition method)
@@ -306,7 +306,7 @@ namespace Mono.Linker.Optimizer
 			context.DumpTracerStack ();
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
-				throw new NotSupportedException (message + ".");
+				throw new OptimizerException (message + ".");
 		}
 
 		static void DumpFailEntry (OptimizerContext context, TypeEntry entry)

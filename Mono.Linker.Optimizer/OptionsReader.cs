@@ -238,7 +238,7 @@ namespace Mono.Linker.Optimizer
 
 		Exception ThrowError (string message)
 		{
-			throw new NotSupportedException ($"Invalid XML: {message}");
+			throw new OptimizerException ($"Invalid XML: {message}");
 		}
 
 		static void ProcessChildren (XPathNavigator nav, string children, Action<XPathNavigator> action)
