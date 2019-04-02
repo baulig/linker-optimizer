@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" />
 
 	<features>
 		<feature name="remoting" enabled="false" />
 	</features>
-</linker>
+</linker-optimizer>

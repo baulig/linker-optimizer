@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" />
 
 	<conditional feature="security" enabled="false">
@@ -11,4 +11,4 @@
 	<features>
 		<feature name="security" enabled="false" />
 	</features>
-</linker>
+</linker-optimizer>

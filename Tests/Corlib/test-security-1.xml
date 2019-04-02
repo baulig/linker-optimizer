@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options all-modules="true" preprocess="true" report-size="true" />
 
 	<type name="HebrewNumber" action="fail" />
@@ -17,4 +17,4 @@
 		<feature name="collator" enabled="false" />
 		<feature name="globalization" enabled="false" />
 	</features>
-</linker>
+</linker-optimizer>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options all-modules="true" analyze-all="true" preprocess="true" report-size="true" />
 
 	<type name="SynchronizationAttribute" action="fail" />
@@ -26,4 +26,4 @@
 		<feature name="collator" enabled="false" />
 		<feature name="globalization" enabled="false" />
 	</features>
-</linker>
+</linker-optimizer>

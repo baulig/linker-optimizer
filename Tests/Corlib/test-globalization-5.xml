@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options all-modules="true" analyze-all="false" preprocess="true" />
 
 	<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
@@ -9,4 +9,4 @@
 			<method name="get_UseManagedCollation" action="return-false" />
 		</type>
 	</namespace>
-</linker>
+</linker-optimizer>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options all-modules="true" analyze-all="true" preprocess="true" report-size="false" />
 
 	<conditional feature="remoting" enabled="false">
@@ -46,4 +46,4 @@
 		<feature name="serialization" enabled="false" />
 		<feature name="security" enabled="false" />
 	</features>
-</linker>
+</linker-optimizer>
