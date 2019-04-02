@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options preprocess="true" />
-
 	<type name="Foo" action="fail" />
 
 	<method name="ConvertToThrow" action="throw" />

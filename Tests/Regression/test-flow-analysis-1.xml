@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options preprocess="false" />
+	<options preprocessor="disabled" />
 </linker-optimizer>
