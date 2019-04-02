@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options preprocess="false" />
 
 	<method substring="ArrayElementsHaveSpace" action="debug"/>
-</linker>
+</linker-optimizer>

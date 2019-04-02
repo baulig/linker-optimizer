@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options preprocess="true" />
 
 	<type name="Foo" action="fail" />
 
 	<method name="ConvertToReturnFalse" action="return-false" />
 	<method name="ConvertToInstanceReturnFalse" action="return-false" />
-</linker>
+</linker-optimizer>

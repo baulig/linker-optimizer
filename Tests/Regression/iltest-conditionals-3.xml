@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<linker>
+<linker-optimizer>
 	<options preprocess="true" />
 
 	<type name="Foo" action="fail" />
@@ -7,4 +7,4 @@
 	<method name="ConvertToThrow" action="throw" />
 	<method name="ConvertToInstanceThrow" action="throw" />
 	<method name="ConvertToFooThrow" action="throw" />
-</linker>
+</linker-optimizer>
