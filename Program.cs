@@ -50,7 +50,7 @@ namespace Mono.Linker.Optimizer
 			var arguments = ProcessResponseFile (args);
 			ParseArguments (arguments);
 
-			var env = Environment.GetEnvironmentVariable ("MARTIN_LINKER_OPTIONS");
+			var env = Environment.GetEnvironmentVariable ("LINKER_OPTIMIZER_OPTIONS");
 			if (!string.IsNullOrEmpty (env)) {
 				moduleEnabled = true;
 				options.ParseOptions (env);

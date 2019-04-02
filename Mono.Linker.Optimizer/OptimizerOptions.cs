@@ -82,7 +82,6 @@ namespace Mono.Linker.Optimizer
 
 		public OptimizerOptions ()
 		{
-			AutoDebugMain = true;
 			NoConditionalRedefinition = true;
 			_type_actions = new List<TypeEntry> ();
 			_method_actions = new List<MethodEntry> ();

@@ -34,10 +34,10 @@ corlib-test-profiler-disabled: build-release
 	time (mono --debug $(PROFILER_FLAGS) $(LINKER_RELEASE_EXE) $(LINKER_ARGS_CORLIB_TEST) --dump-dependencies -a $(PROFILE_PATH)/tests/net_4_x_corlib_test.dll -x $(MONO_ROOT)/mcs/class/corlib/LinkerDescriptor/mscorlib.xml)
 
 corlib-test-globalization: build
-	$(MAKE) corlib-test MARTIN_LINKER_OPTIONS="globalization" EXTRA_NUNIT_EXCLUDES=",LinkerGlobalization,ManagedCollator"
+	$(MAKE) corlib-test LINKER_OPTIMIZER_OPTIONS="globalization" EXTRA_NUNIT_EXCLUDES=",LinkerGlobalization,ManagedCollator"
 
 corlib-test-collator: build
-	$(MAKE) corlib-test MARTIN_LINKER_OPTIONS="collator" EXTRA_NUNIT_EXCLUDES=",ManagedCollator"
+	$(MAKE) corlib-test LINKER_OPTIMIZER_OPTIONS="collator" EXTRA_NUNIT_EXCLUDES=",ManagedCollator"
 
 run-corlib-test:
 	(cd $(LINKER_OUTPUT); MONO_PATH=.:$(PROFILE_PATH) $(RUNTIME) $(RUNTIME_FLAGS) --debug $(PROFILE_PATH)/nunit-lite-console.exe net_4_x_corlib_test.dll $(NUNIT_ARGS) $(TESTNAME_ARG))

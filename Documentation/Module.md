@@ -22,7 +22,7 @@ The file will be expected to contain _only_ definitions relevant for this module
 Also please not that XML files provided via `-x` or `-i` will not be regocnized as argument processing will stop once we encounter the first unknown argument.
 
 * `--martin-options <options>`: Command-separated list of options.
-These options will be processed _after_ all XML files have been read (thus overriding anything specified in those XML files) and _before_ the `MARTIN_LINKER_OPTIONS` environment variable.
+These options will be processed _after_ all XML files have been read (thus overriding anything specified in those XML files) and _before_ the `LINKER_OPTIMIZER_OPTIONS` environment variable.
 
 If the `--martin` argument has not been given, then the pristine linker will be invoked, without registering the optimizer.
 
