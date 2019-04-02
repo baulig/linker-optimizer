@@ -105,11 +105,11 @@ namespace Mono.Linker.Optimizer
 			var maxSize = asmEntry.Size * (1f + tolerance);
 			var minSize = asmEntry.Size * (1f - tolerance);
 			if (size < minSize) {
-				Context.LogMessage (MessageImportance.High, $"Assembly `{asmEntry.Name}` size below minimum: expected {asmEntry.Size} (tolerance {asmEntry.Size * tolerance}), got {size}.");
+				Context.LogMessage (MessageImportance.High, $"Assembly `{asmEntry.Name}` size below minimum: expected {asmEntry.Size} (tolerance {tolerance:p}), got {size}.");
 				return false;
 			}
 			if (size > maxSize) {
-				Context.LogMessage (MessageImportance.High, $"Assembly `{asmEntry.Name}` size above maximum: expected {asmEntry.Size} (tolerance {asmEntry.Size * tolerance}), got {size}.");
+				Context.LogMessage (MessageImportance.High, $"Assembly `{asmEntry.Name}` size above maximum: expected {asmEntry.Size} (tolerance {tolerance:p}), got {size}.");
 				return false;
 			}
 

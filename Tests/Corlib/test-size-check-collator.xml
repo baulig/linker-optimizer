@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<linker>
+	<martin>
+		<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" profile="desktop" />
+
+		<size-check profile="desktop">
+			<assembly name="test-size-check-collator" size="3584" />
+			<assembly name="mscorlib" size="1210368" tolerance="0.05" />
+		</size-check>
+
+		<features>
+			<feature name="collator" enabled="false" />
+		</features>
+	</martin>
+</linker>

@@ -156,13 +156,13 @@ namespace Mono.Linker.Optimizer
 		{
 			if (_assembly_sizes.Count == 0)
 				return;
-			xml.WriteStartElement ("size-report");
+			xml.WriteStartElement ("size-check");
 			if (!string.IsNullOrEmpty (Context.Options.ProfileName))
 				xml.WriteAttributeString ("profile", Context.Options.ProfileName);
 			foreach (var entry in _assembly_sizes) {
 				xml.WriteStartElement ("assembly");
 				xml.WriteAttributeString ("name", entry.Key);
-				xml.WriteAttributeString ("value", entry.Value.ToString ());
+				xml.WriteAttributeString ("size", entry.Value.ToString ());
 				xml.WriteEndElement ();
 			}
 			xml.WriteEndElement ();

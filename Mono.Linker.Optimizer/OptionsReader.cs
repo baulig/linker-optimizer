@@ -101,12 +101,17 @@ namespace Mono.Linker.Optimizer
 
 			if (GetBoolAttribute (nav, "report-size", out value))
 				Options.ReportSize = value;
+
+			var profile = GetAttribute (nav, "profile");
+			if (profile != null)
+				Options.ProfileName = profile;
 		}
 
 		void OnSizeCheck (XPathNavigator nav)
 		{
 			var profile = GetAttribute (nav, "profile") ?? "default";
 			var entry = new OptimizerOptions.SizeCheckEntry (profile);
+			Options.AddSizeCheckEntry (entry);
 
 			ProcessChildren (nav, "assembly", child => {
 				var name = GetAttribute (child, "name") ?? throw ThrowError ("<assembly> requires `name` attribute.");

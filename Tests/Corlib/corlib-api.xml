@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<linker>
+	<martin>
+		<conditional feature="collator" enabled="false">
+			<namespace name="System.Globalization">
+				<type name="GlobalizationMode" debug="true">
+					<method name="get_Invariant" action="return-true" />
+				</type>
+			</namespace>
+		</conditional>
+	</martin>
+</linker>
