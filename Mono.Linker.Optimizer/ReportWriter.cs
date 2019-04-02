@@ -126,16 +126,7 @@ namespace Mono.Linker.Optimizer
 
 		public void WriteReport (XmlWriter xml)
 		{
-			if (_assembly_sizes.Count > 0) {
-				xml.WriteStartElement ("size-report");
-				foreach (var entry in _assembly_sizes) {
-					xml.WriteStartElement ("assembly");
-					xml.WriteAttributeString ("name", entry.Key);
-					xml.WriteAttributeString ("value", entry.Value.ToString ());
-					xml.WriteEndElement ();
-				}
-				xml.WriteEndElement ();
-			}
+			WriteSizeReport (xml);
 
 			foreach (var entry in _namespace_hash.Values) {
 				xml.WriteStartElement ("namespace");
@@ -159,6 +150,22 @@ namespace Mono.Linker.Optimizer
 				}
 				xml.WriteEndElement ();
 			}
+		}
+
+		void WriteSizeReport (XmlWriter xml)
+		{
+			if (_assembly_sizes.Count == 0)
+				return;
+			xml.WriteStartElement ("size-report");
+			if (!string.IsNullOrEmpty (Context.Options.ProfileName))
+				xml.WriteAttributeString ("profile", Context.Options.ProfileName);
+			foreach (var entry in _assembly_sizes) {
+				xml.WriteStartElement ("assembly");
+				xml.WriteAttributeString ("name", entry.Key);
+				xml.WriteAttributeString ("value", entry.Value.ToString ());
+				xml.WriteEndElement ();
+			}
+			xml.WriteEndElement ();
 		}
 
 		void WriteMethodEntry (XmlWriter xml, MethodEntry entry)
