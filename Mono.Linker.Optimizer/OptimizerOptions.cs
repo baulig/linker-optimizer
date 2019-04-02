@@ -71,6 +71,10 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
+		public string ProfileName {
+			get; set;
+		}
+
 		readonly List<TypeEntry> _type_actions;
 		readonly List<MethodEntry> _method_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
@@ -92,6 +96,21 @@ namespace Mono.Linker.Optimizer
 			var parts = options.Split (',');
 			for (int i = 0; i < parts.Length; i++) {
 				var part = parts [i];
+
+				var pos = part.IndexOf ('=');
+				if (pos > 0) {
+					var name = part.Substring (0, pos);
+					var value = part.Substring (pos + 1);
+
+					switch (name) {
+					case "profile":
+						ProfileName = value;
+						continue;
+					default:
+						throw new NotSupportedException ($"Unknown option `{part}`.");
+					}
+				}
+
 				bool? enabled = null;
 				if (part [0] == '+') {
 					part = part.Substring (1);
