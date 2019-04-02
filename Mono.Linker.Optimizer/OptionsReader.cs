@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.IO;
 using System.Xml;
 using System.Xml.XPath;
 using Mono.Cecil;
@@ -36,25 +37,24 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		public static void Read (OptimizerOptions options, XPathDocument document)
-		{
-			var reader = new OptionsReader (options);
-			reader.Read (document);
+		public string FileName {
+			get;
 		}
 
 		public static void Read (OptimizerOptions options, string filename)
 		{
-			var reader = new OptionsReader (options);
 			var settings = new XmlReaderSettings ();
+			var reader = new OptionsReader (options, filename);
 			using (var xml = XmlReader.Create (filename, settings)) {
+				Console.WriteLine ($"Reading XML description from {filename}.");
 				reader.Read (new XPathDocument (xml));
 			}
-			Console.WriteLine ($"Read XML description from {filename}.");
 		}
 
-		OptionsReader (OptimizerOptions options)
+		OptionsReader (OptimizerOptions options, string filename)
 		{
 			Options = options;
+			FileName = filename;
 		}
 
 		void Read (XPathDocument document)
@@ -69,6 +69,8 @@ namespace Mono.Linker.Optimizer
 			if (options != null)
 				OnOptions (options);
 
+			ProcessChildren (root, "include", OnInclude);
+
 			ProcessChildren (root, "features/feature", OnFeature);
 			ProcessChildren (root, "conditional", OnConditional);
 
@@ -77,6 +79,20 @@ namespace Mono.Linker.Optimizer
 			ProcessChildren (root, "method", child => OnMethodEntry (child));
 
 			ProcessChildren (root, "size-check", OnSizeCheck);
+		}
+
+		void OnInclude (XPathNavigator nav)
+		{
+			var file = GetAttribute (nav, "filename") ?? throw ThrowError ("<include> requires `filename` argument.");
+
+			if (!Path.IsPathRooted (file)) {
+				var directory = Path.GetDirectoryName (Path.GetFullPath (FileName));
+				file = Path.Combine (directory, file);
+			}
+
+			if (!File.Exists (file))
+				throw ThrowError ($"Include file `{file}` does not exist.");	
+			Read (Options, file);
 		}
 
 		void OnOptions (XPathNavigator nav)

@@ -3,10 +3,14 @@
 	<martin>
 		<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" profile="desktop" />
 
+		<include filename="corlib-api.xml" />
+
 		<size-check profile="desktop">
 			<assembly name="test-size-check-collator" size="3584" />
 			<assembly name="mscorlib" size="1210368" tolerance="0.05" />
 		</size-check>
+
+		<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
 
 		<features>
 			<feature name="collator" enabled="false" />

@@ -75,14 +75,27 @@ namespace Mono.Linker.Optimizer
 			try {
 				var driver = new Driver (arguments.ToArray ());
 				driver.Run ();
+			} catch (OptimizerException ex) {
+				Console.Error.WriteLine ($"Fatal error in {ProgramName}: {ex.Message}");
+				Console.Error.WriteLine ();
+				return 1;
+			} catch (MarkException ex) {
+				if (ex.InnerException is OptimizerException optimizerException) {
+					Console.Error.WriteLine ($"Fatal error in {ProgramName}: {optimizerException.Message}");
+					Console.Error.WriteLine ();
+					return 1;
+				}
+				throw;
 			} catch (Exception ex) {
 				Console.Error.WriteLine ($"Fatal error in {ProgramName}: {ex.Message}");
+				Console.Error.WriteLine ();
 				throw;
 			}
 
 			watch.Stop ();
 
 			Console.Error.WriteLine ($"{ProgramName} finished in {watch.Elapsed}.");
+			Console.Error.WriteLine ();
 
 			return 0;
 		}
