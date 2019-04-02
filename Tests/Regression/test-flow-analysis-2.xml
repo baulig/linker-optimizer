@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
-	<martin>
-		<options preprocess="false" />
+	<options preprocess="false" />
 
-		<method substring="ArrayElementsHaveSpace" action="debug"/>
-	</martin>
+	<method substring="ArrayElementsHaveSpace" action="debug"/>
 </linker>

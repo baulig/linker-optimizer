@@ -61,7 +61,7 @@ namespace Mono.Linker.Optimizer
 		{
 			var nav = document.CreateNavigator ();
 
-			var root = nav.SelectSingleNode ("/linker/martin");
+			var root = nav.SelectSingleNode ("/linker-optimizer");
 			if (root == null)
 				return;
 
