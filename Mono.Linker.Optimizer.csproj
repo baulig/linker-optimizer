@@ -44,7 +44,6 @@
     <Compile Include="Mono.Linker.Optimizer\PreprocessStep.cs" />
     <Compile Include="Mono.Linker.Optimizer\SizeReportStep.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptionsReader.cs" />
-    <Compile Include="Mono.Linker.Optimizer\XmlConfigurationWriter.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerBaseStep.cs" />
     <Compile Include="System.Runtime.CompilerServices\MonoLinkerFeature.cs" />
     <Compile Include="System.Runtime.CompilerServices\MonoLinkerSupport.cs" />

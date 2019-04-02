@@ -44,8 +44,6 @@ namespace Mono.Linker.Optimizer {
 				return;
 
 			Preprocess ();
-
-			DumpConstantProperties ();
 		}
 
 		void RemoveFeatures ()
@@ -170,12 +168,6 @@ namespace Mono.Linker.Optimizer {
 				CodeRewriter.ReplaceWithReturnNull (Context, method);
 				break;
 			}
-		}
-
-		void DumpConstantProperties ()
-		{
-			var writer = new XmlConfigurationWriter (Context);
-			writer.DumpConstantProperties ();
 		}
 	}
 }

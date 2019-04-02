@@ -58,50 +58,6 @@ namespace Mono.Linker.Optimizer
 			GetMethodEntry (method).ConstantValue = value;
 		}
 
-		void DumpConstantProperties (XmlWriter xml)
-		{
-			var methods = Context.GetConstantMethods ();
-			if (methods.Count == 0)
-				return;
-
-			var ns = new Dictionary<string, TypeEntry> ();
-
-			foreach (var method in methods) {
-				if (method.DeclaringType.DeclaringType != null)
-					throw new NotSupportedException ($"Conditionals in nested classes are not supported yet.");
-
-				if (!ns.TryGetValue (method.DeclaringType.Namespace, out var entry)) {
-					entry = new TypeEntry (method.DeclaringType.Namespace);
-					ns.Add (entry.Name, entry);
-				}
-
-				if (!entry.Children.TryGetValue (method.DeclaringType.Name, out var typeEntry)) {
-					typeEntry = new TypeEntry (method.DeclaringType.Name);
-					entry.Children.Add (typeEntry.Name, typeEntry);
-				}
-
-				typeEntry.Items.Add (method.Name);
-			}
-
-			foreach (var entry in ns.Values) {
-				xml.WriteStartElement ("namespace");
-				xml.WriteAttributeString ("name", entry.Name);
-
-				foreach (var type in entry.Children.Values) {
-					xml.WriteStartElement ("type");
-					xml.WriteAttributeString ("name", type.Name);
-					foreach (var item in type.Items) {
-						xml.WriteStartElement ("method");
-						xml.WriteAttributeString ("name", item);
-						xml.WriteAttributeString ("action", "scan");
-						xml.WriteEndElement ();
-					}
-					xml.WriteEndElement ();
-				}
-				xml.WriteEndElement ();
-			}
-		}
-
 		TypeEntry GetTypeEntry (TypeDefinition type)
 		{
 			if (type.DeclaringType != null)
