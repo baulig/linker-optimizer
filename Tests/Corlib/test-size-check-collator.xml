@@ -7,7 +7,7 @@
 
 		<size-check profile="desktop">
 			<assembly name="test-size-check-collator" size="3584" />
-			<assembly name="mscorlib" size="1210368" tolerance="0.05" />
+			<assembly name="mscorlib" size="1203200" tolerance="0.01" />
 		</size-check>
 
 		<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
