@@ -1,5 +1,5 @@
 ﻿//
-// MartinAssertException.cs
+// OptimizerAssertionException.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -26,13 +26,15 @@
 using System;
 namespace Mono.Linker.Optimizer
 {
-	class MartinAssertException : Exception
+	class OptimizerAssertionException : Exception
 	{
-		public MartinAssertException ()
-		{ }
+		public OptimizerAssertionException ()
+		{
+		}
 
-		public MartinAssertException (string message)
+		public OptimizerAssertionException (string message)
 			: base (message)
-		{ }
+		{
+		}
 	}
 }
