@@ -31,6 +31,8 @@ using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer
 {
+	using BasicBlocks;
+
 	public class OptimizerOptions
 	{
 		public bool ScanAllModules {
@@ -484,6 +486,8 @@ namespace Mono.Linker.Optimizer
 				case MatchKind.Substring:
 					return method.FullName.Contains (Name);
 				default:
+					if (Name.Contains ('('))
+						return method.Name + CecilHelper.GetMethodSignature (method) == Name;
 					return method.Name == Name;
 				}
 			}

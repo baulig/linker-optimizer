@@ -55,9 +55,7 @@ namespace Mono.Linker.Optimizer
 
 			Console.Error.WriteLine ($"MARK AS CONSTANT: {method.FullName} - {CecilHelper.GetMethodSignature (method)}");
 
-			var entry = GetTypeEntry (method.DeclaringType);
-			entry.Methods.Add (new MethodEntry (CecilHelper.GetMethodSignature (method)));
-			entry.Items.Add (method.Name);
+			GetMethodEntry (method).ConstantValue = value;
 		}
 
 		void DumpConstantProperties (XmlWriter xml)
@@ -122,6 +120,16 @@ namespace Mono.Linker.Optimizer
 			return typeEntry;
 		}
 
+		MethodEntry GetMethodEntry (MethodDefinition method)
+		{
+			var parent = GetTypeEntry (method.DeclaringType);
+			if (!parent.Methods.TryGetValue (method, out var entry)) {
+				entry = new MethodEntry (method.Name + CecilHelper.GetMethodSignature (method));
+				parent.Methods.Add (method, entry);
+			}
+			return entry;
+		}
+
 		public void WriteReport (XmlWriter xml)
 		{
 			foreach (var entry in _namespace_hash.Values) {
@@ -139,12 +147,8 @@ namespace Mono.Linker.Optimizer
 						xml.WriteEndElement ();
 					}
 
-					foreach (var item in type.Methods) {
-						xml.WriteStartElement ("method");
-						xml.WriteAttributeString ("name", item.Name);
-						xml.WriteAttributeString ("action", "scan");
-						xml.WriteEndElement ();
-					}
+					foreach (var item in type.Methods.Values)
+						WriteMethodEntry (xml, item);
 
 					xml.WriteEndElement ();
 				}
@@ -152,18 +156,44 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
+		void WriteMethodEntry (XmlWriter xml, MethodEntry entry)
+		{
+			xml.WriteStartElement ("method");
+			xml.WriteAttributeString ("name", entry.Name);
+
+			switch (entry.ConstantValue) {
+			case ConstantValue.False:
+				xml.WriteAttributeString ("action", "return-false");
+				break;
+			case ConstantValue.True:
+				xml.WriteAttributeString ("action", "return-true");
+				break;
+			case ConstantValue.Null:
+				xml.WriteAttributeString ("action", "return-null");
+				break;
+			case ConstantValue.Throw:
+				xml.WriteAttributeString ("action", "throw");
+				break;
+			default:
+				xml.WriteAttributeString ("action", "scan");
+				break;
+			}
+
+			xml.WriteEndElement ();
+		}
+
 		class TypeEntry
 		{
 			public readonly string Name;
 			public readonly Dictionary<string, TypeEntry> Children;
-			public readonly List<MethodEntry> Methods;
+			public readonly Dictionary<MethodDefinition, MethodEntry> Methods;
 			public readonly List<string> Items;
 
 			public TypeEntry (string name)
 			{
 				Name = name;
 				Children = new Dictionary<string, TypeEntry> ();
-				Methods = new List<MethodEntry> ();
+				Methods = new Dictionary<MethodDefinition, MethodEntry> ();
 				Items = new List<string> ();
 			}
 		}
@@ -171,6 +201,7 @@ namespace Mono.Linker.Optimizer
 		class MethodEntry
 		{
 			public readonly string Name;
+			public ConstantValue? ConstantValue;
 
 			public MethodEntry (string name)
 			{
