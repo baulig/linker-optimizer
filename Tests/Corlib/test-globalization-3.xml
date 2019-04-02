@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options all-modules="true" analyze-all="true" preprocess="true" report-size="true" main-debug="false" />
+	<options all-modules="true" analyze-all="true" preprocessor="full" report-size="true" />
 
 	<type fullname="System.DateTimeParse" action="size" />
 	<type fullname="System.Globalization.DateTimeFormatInfo" action="size" />

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options all-modules="true" analyze-all="false" preprocess="true" />
+	<options all-modules="true" analyze-all="false" preprocessor="full" />
 
 	<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
 

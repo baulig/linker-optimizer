@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options all-modules="true" preprocess="true" report-size="true" />
+	<options all-modules="true" preprocessor="full" report-size="true" />
 
 	<type name="HebrewNumber" action="fail" />
 	<type name="EncodingTable" action="fail" />

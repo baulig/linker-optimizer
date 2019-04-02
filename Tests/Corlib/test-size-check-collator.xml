@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" profile="desktop" />
+	<options all-modules="true" preprocessor="full" report-size="true" analyze-all="true" profile="desktop" />
 
 	<include filename="corlib-api.xml" />
 
