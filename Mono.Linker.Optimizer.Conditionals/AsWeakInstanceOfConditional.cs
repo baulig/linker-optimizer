@@ -91,7 +91,7 @@ namespace Mono.Linker.Optimizer.Conditionals
 		public static AsWeakInstanceOfConditional Create (BasicBlockScanner scanner, ref BasicBlock bb, ref int index, TypeDefinition type)
 		{
 			if (bb.Instructions.Count < 2)
-				throw new NotSupportedException ();
+				throw new OptimizerAssertionException ();
 			if (index + 1 >= scanner.Body.Instructions.Count)
 				throw new OptimizerAssertionException ();
 
