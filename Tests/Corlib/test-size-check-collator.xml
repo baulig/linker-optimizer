@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
-	<martin>
-		<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" profile="desktop" />
+	<options all-modules="true" preprocess="true" report-size="true" analyze-all="true" main-debug="false" profile="desktop" />
 
-		<include filename="corlib-api.xml" />
+	<include filename="corlib-api.xml" />
 
-		<size-check profile="desktop">
-			<assembly name="test-size-check-collator" size="3584" />
-			<assembly name="mscorlib" size="1203200" tolerance="0.01" />
-		</size-check>
+	<size-check profile="desktop">
+		<assembly name="test-size-check-collator" size="3584" />
+		<assembly name="mscorlib" size="1203200" tolerance="0.01" />
+	</size-check>
 
-		<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
+	<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
 
-		<features>
-			<feature name="collator" enabled="false" />
-		</features>
-	</martin>
+	<features>
+		<feature name="collator" enabled="false" />
+	</features>
 </linker>

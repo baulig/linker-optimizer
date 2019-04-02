@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker>
-	<martin>
-		<conditional feature="collator" enabled="false">
-			<namespace name="System.Globalization">
-				<type name="CompareInfo">
-					<method name="get_UseManagedCollation" action="return-false" />
-				</type>
-			</namespace>
-		</conditional>
+	<conditional feature="collator" enabled="false">
+		<namespace name="System.Globalization">
+			<type name="CompareInfo">
+				<method name="get_UseManagedCollation" action="return-false" />
+			</type>
+		</namespace>
+	</conditional>
 
-		<conditional feature="globalization" enabled="false">
-			<namespace name="System.Globalization">
-				<type name="GlobalizationMode" debug="true">
-					<method name="get_Invariant" action="return-true" />
-				</type>
-			</namespace>
-		</conditional>
-	</martin>
+	<conditional feature="globalization" enabled="false">
+		<namespace name="System.Globalization">
+			<type name="GlobalizationMode" debug="true">
+				<method name="get_Invariant" action="return-true" />
+			</type>
+		</namespace>
+	</conditional>
 </linker>
