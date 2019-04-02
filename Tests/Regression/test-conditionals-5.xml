@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options preprocess="true" />
+	<options preprocessor="full" />
 
 	<features>
 		<feature name="martin" enabled="false" />

@@ -43,7 +43,7 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
-		public bool Preprocess {
+		public PreprocessorMode Preprocessor {
 			get; set;
 		}
 
@@ -112,6 +112,12 @@ namespace Mono.Linker.Optimizer
 					}
 				}
 
+				switch (part) {
+				case "preprocess":
+					SetPreprocessorMode (part);
+					continue;
+				}
+
 				bool? enabled = null;
 				if (part [0] == '+') {
 					part = part.Substring (1);
@@ -131,9 +137,6 @@ namespace Mono.Linker.Optimizer
 				case "analyze-all":
 					AnalyzeAll = enabled ?? true;
 					break;
-				case "preprocess":
-					Preprocess = enabled ?? true;
-					break;
 				case "no-conditional-redefinition":
 					NoConditionalRedefinition = enabled ?? true;
 					break;
@@ -151,6 +154,13 @@ namespace Mono.Linker.Optimizer
 					break;
 				}
 			}
+		}
+
+		public void SetPreprocessorMode (string argument)
+		{
+			if (!Enum.TryParse (argument, true, out PreprocessorMode mode))
+			throw new OptimizerException ($"Invalid preprocessor mode: `{argument}`.");
+			Preprocessor = mode;
 		}
 
 		public bool IsFeatureEnabled (MonoLinkerFeature feature)
@@ -332,6 +342,16 @@ namespace Mono.Linker.Optimizer
 		public void AddMethodEntry (string name, MatchKind match, MethodAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
 			_method_actions.Add (new MethodEntry (name, match, action, parent, conditional));
+
+			switch (action) {
+			case MethodAction.ReturnFalse:
+			case MethodAction.ReturnTrue:
+			case MethodAction.ReturnNull:
+			case MethodAction.Throw:
+				if (Preprocessor == PreprocessorMode.None)
+					Preprocessor = PreprocessorMode.Automatic;
+				break;
+			}
 		}
 
 		public bool HasTypeEntry (TypeDefinition type, TypeAction action)
@@ -527,6 +547,14 @@ namespace Mono.Linker.Optimizer
 			{
 				return $"[{GetType ().Name} {Name}:{Match}:{Action}]";
 			}
+		}
+
+		public enum PreprocessorMode
+		{
+			None,
+			Disabled,
+			Automatic,
+			Full
 		}
 
 		public void AddSizeCheckEntry (SizeCheckEntry entry)

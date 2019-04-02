@@ -106,8 +106,12 @@ namespace Mono.Linker.Optimizer
 			if (GetBoolAttribute (nav, "analyze-all", out value))
 				Options.AnalyzeAll = value;
 
-			if (GetBoolAttribute (nav, "preprocess", out value))
-				Options.Preprocess = value;
+			if (GetAttribute (nav, "preprocess") != null)
+				throw ThrowError ("NEED TO REMOVE preprocess");
+
+			var preprocess = GetAttribute (nav, "preprocessor");
+			if (preprocess != null)
+				Options.SetPreprocessorMode (preprocess);
 
 			if (GetBoolAttribute (nav, "no-conditional-redefinition", out value))
 				Options.NoConditionalRedefinition = value;
