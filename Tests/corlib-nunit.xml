@@ -6,6 +6,10 @@
 
 	<type fullname="Mono.Runtime" action="preserve" />
 
+	<conditional feature="sre" enabled="true">
+		<type fullname="System.Reflection.Emit.TypeBuilder" action="preserve" />
+	</conditional>
+
 	<conditional feature="crypto" enabled="true">
 		<type fullname="System.Security.Cryptography.CryptoConfig" action="preserve" />
 	</conditional>
@@ -36,7 +40,4 @@
 		</namespace>
 	</conditional>
 
-	<features>
-		<feature name="security" enabled="true" />
-	</features>
 </linker-optimizer>
