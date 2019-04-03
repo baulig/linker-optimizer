@@ -6,10 +6,11 @@
 	<include filename="corlib-asserts.xml" />
 
 	<size-check profile="net_4_x">
-		<assembly name="mscorlib" size="1203200" tolerance="0.01" />
+		<assembly name="mscorlib" size="1183232" tolerance="0.01" />
 	</size-check>
 
 	<features>
 		<feature name="collator" enabled="false" />
+		<feature name="globalization" enabled="false" />
 	</features>
 </linker-optimizer>

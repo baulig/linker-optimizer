@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<linker-optimizer>
+	<conditional feature="collator" enabled="false">
+		<type fullname="Mono.Globalization.Unicode.SimpleCollator" action="fail" />
+	</conditional>>
+
+	<conditional feature="globalization" enabled="false">
+		<namespace name="System.Globalization">
+			<type name="HebrewNumber" action="fail" />
+			<type name="JapaneseCalendar" action="fail" />
+			<type name="TaiwanCalendar" action="fail" />
+			<type name="DateTimeFormatInfo">
+				<method substring="DateTimeFormatInfo::TryParseHebrewNumber" action="fail"/>
+			</type>
+		</namespace>
+		<type fullname="System.DateTimeParse">
+			<method name="MatchHebrewDigits" action="fail"/>
+		</type>
+	</conditional>
+</linker-optimizer>
