@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -108,6 +109,8 @@ namespace Mono.Linker.Optimizer
 		{
 			LogMessage (MessageImportance.High, "Initializing Martin's Playground");
 
+			var mainName = Path.GetFileNameWithoutExtension (mainModule);
+
 			foreach (var asm in Context.GetAssemblies ()) {
 				switch (asm.Name.Name) {
 				case "mscorlib":
@@ -118,7 +121,7 @@ namespace Mono.Linker.Optimizer
 					_test_helper_support_type = asm.MainModule.GetType (LinkerSupportType);
 					break;
 				default:
-					if (asm.Name.Name.Equals (mainModule))
+					if (asm.Name.Name.Equals (mainName))
 						MainAssembly = asm;
 					break;
 				}
