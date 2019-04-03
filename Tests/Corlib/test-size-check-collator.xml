@@ -6,7 +6,13 @@
 	<include filename="corlib-asserts.xml" />
 
 	<size-check profile="net_4_x">
-		<assembly name="mscorlib" size="1203200" tolerance="0.01" />
+		<assembly name="mscorlib" size="1203200" />
+	</size-check>
+	<size-check profile="testing_aot_full">
+		<assembly name="mscorlib" size="1129472" />
+	</size-check>
+	<size-check profile="wasm">
+		<assembly name="mscorlib" size="1081344" />
 	</size-check>
 
 	<features>

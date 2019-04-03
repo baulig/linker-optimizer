@@ -92,15 +92,19 @@ namespace Mono.Linker.Optimizer
 		bool CheckSize (AssemblyDefinition assembly, int size)
 		{
 			var entry = Options.GetSizeCheckEntry (Options.ProfileName);
-			if (entry == null)
-				return true;
+			if (entry == null) {
+				if (Options.ProfileName == null)
+					return true;
+				Context.LogMessage (MessageImportance.High, $"Cannot find size entries for profile `{Options.ProfileName}`.");
+				return false;
+			}
 
 			var asmEntry = entry.Assemblies.FirstOrDefault (e => e.Name == assembly.Name.Name);
 			if (asmEntry == null)
 				return true;
 
 			Context.LogDebug ($"SIZE CHECK: {asmEntry} {size}");
-			var tolerance = asmEntry.Tolerance ?? 0.1f;
+			var tolerance = asmEntry.Tolerance ?? 0.005f;
 
 			var maxSize = asmEntry.Size * (1f + tolerance);
 			var minSize = asmEntry.Size * (1f - tolerance);

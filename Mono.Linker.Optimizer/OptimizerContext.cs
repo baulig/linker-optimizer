@@ -124,8 +124,6 @@ namespace Mono.Linker.Optimizer
 				}
 			}
 
-			if (_corlib_support_type == null)
-				throw new OptimizerException ($"Cannot find `{LinkerSupportType}` in corlib.");
 			if (CorlibAssembly == null)
 				throw new OptimizerException ($"Cannot find `mscorlib.dll` is assembly list.");
 			if (MainAssembly == null)
@@ -149,10 +147,7 @@ namespace Mono.Linker.Optimizer
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)
 		{
-			var corlib = _corlib_support_type.Methods.FirstOrDefault (m => full ? m.FullName == name : m.Name == name);
-			if (corlib == null)
-				throw new OptimizerException ($"Cannot find `{LinkerSupportType}.{name}`.");
-
+			var corlib = _corlib_support_type?.Methods.FirstOrDefault (m => full ? m.FullName == name : m.Name == name);
 			var helper = _test_helper_support_type?.Methods.FirstOrDefault (m => full ? m.FullName == name : m.Name == name);
 			return new SupportMethodRegistration (corlib, helper);
 		}

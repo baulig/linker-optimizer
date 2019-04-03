@@ -78,3 +78,9 @@ iltest-%: iltest-%.exe standalone-build
 standalone-build::
 	$(MAKE) -C $(ROOTDIR) standalone-build
 
+aot-%:
+	$(MAKE) PROFILE=testing_aot_full $(patsubst aot-%,%,$@)
+
+wasm-%:
+	$(MAKE) PROFILE=wasm $(patsubst wasm-%,%,$@)
+
