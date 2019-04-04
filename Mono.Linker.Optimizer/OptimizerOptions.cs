@@ -97,6 +97,7 @@ namespace Mono.Linker.Optimizer
 
 		readonly List<TypeEntry> _type_actions;
 		readonly List<MethodEntry> _method_actions;
+		readonly List<FieldEntry> _field_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
 		public OptimizerOptions ()
@@ -104,6 +105,7 @@ namespace Mono.Linker.Optimizer
 			NoConditionalRedefinition = true;
 			_type_actions = new List<TypeEntry> ();
 			_method_actions = new List<MethodEntry> ();
+			_field_actions = new List<FieldEntry> ();
 			_enabled_features = new Dictionary<MonoLinkerFeature, bool> {
 				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Martin] = false
@@ -251,6 +253,17 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
+		internal static bool TryParseFieldAction (string name, out FieldAction action)
+		{
+			switch (name.ToLowerInvariant ()) {
+			case "make-object":
+				action = FieldAction.MakeObject;
+				return true;
+			default:
+				return Enum.TryParse (name, true, out action);
+			}
+		}
+
 		bool DontDebugThis (TypeDefinition type)
 		{
 			if (type.DeclaringType != null)
@@ -386,6 +399,18 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
+		public void AddFieldEntry (string name, FieldAction action, TypeEntry parent, Func<MemberReference, bool> conditional = null)
+		{
+			_field_actions.Add (new FieldEntry (name, action, parent, conditional));
+
+			switch (action) {
+			case FieldAction.MakeObject:
+				if (Preprocessor == PreprocessorMode.None)
+					Preprocessor = PreprocessorMode.Automatic;
+				break;
+			}
+		}
+
 		public bool HasTypeEntry (TypeDefinition type, TypeAction action)
 		{
 			if (type.DeclaringType != null)
@@ -433,6 +458,14 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
+		public void ProcessFieldEntries (FieldDefinition field, Action<FieldAction> action)
+		{
+			foreach (var entry in _field_actions) {
+				if (entry.Action != FieldAction.None && entry.Matches (field))
+					action (entry.Action);
+			}
+		}
+
 		public enum TypeAction
 		{
 			None,
@@ -453,6 +486,12 @@ namespace Mono.Linker.Optimizer
 			ReturnFalse,
 			ReturnTrue,
 			ReturnNull
+		}
+
+		public enum FieldAction
+		{
+			None,
+			MakeObject
 		}
 
 		public enum MatchKind
@@ -578,6 +617,52 @@ namespace Mono.Linker.Optimizer
 			public override string ToString ()
 			{
 				return $"[{GetType ().Name} {Name}:{Match}:{Action}]";
+			}
+		}
+
+		public class FieldEntry
+		{
+			public string Name {
+				get;
+			}
+
+			public FieldAction Action {
+				get;
+			}
+
+			public TypeEntry Parent {
+				get;
+			}
+
+			public Func<FieldDefinition, bool> Conditional {
+				get;
+			}
+
+			public bool Matches (FieldDefinition field, FieldAction? action = null)
+			{
+				if (action != null && action.Value != Action)
+					return false;
+				if (Conditional != null && !Conditional (field))
+					return false;
+				if (!Parent.Matches (field.DeclaringType))
+					return false;
+
+				return field.Name == Name;
+			}
+
+			public bool Matches (FieldDefinition field, FieldAction action) => Action == action && Matches (field);
+
+			public FieldEntry (string name, FieldAction action, TypeEntry parent, Func<MemberReference, bool> conditional = null)
+			{
+				Name = name;
+				Action = action;
+				Parent = parent;
+				Conditional = conditional;
+			}
+
+			public override string ToString ()
+			{
+				return $"[{GetType ().Name} {Name}:{Action}]";
 			}
 		}
 

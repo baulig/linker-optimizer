@@ -96,6 +96,10 @@ namespace Mono.Linker.Optimizer {
 				ProcessMethod (method);
 			}
 
+			foreach (var field in type.Fields) {
+				ProcessField (field);
+			}
+
 			if (Options.Preprocessor == OptimizerOptions.PreprocessorMode.Full) {
 				foreach (var property in type.Properties) {
 					ProcessProperty (property);
@@ -106,6 +110,11 @@ namespace Mono.Linker.Optimizer {
 		void ProcessMethod (MethodDefinition method)
 		{
 			Options.ProcessMethodEntries (method, a => ProcessMethodActions (method, a));
+		}
+
+		void ProcessField (FieldDefinition field)
+		{
+			Options.ProcessFieldEntries (field, a => ProcessFieldActions (field, a));
 		}
 
 		void ProcessProperty (PropertyDefinition property)
@@ -172,6 +181,18 @@ namespace Mono.Linker.Optimizer {
 
 			case OptimizerOptions.MethodAction.ReturnNull:
 				CodeRewriter.ReplaceWithReturnNull (Context, method);
+				break;
+			}
+		}
+
+		void ProcessFieldActions (FieldDefinition field, OptimizerOptions.FieldAction action)
+		{
+			switch (action) {
+			case OptimizerOptions.FieldAction.MakeObject:
+				Context.LogMessage (MessageImportance.High, $"Make object: {field} {action}");
+				Context.Debug ();
+				field.FieldType = Context.Context.GetType ("System.Object");
+//				throw new InvalidTimeZoneException ("I LIVE ON THE MOON");
 				break;
 			}
 		}

@@ -219,6 +219,7 @@ namespace Mono.Linker.Optimizer
 				entry = Options.AddTypeEntry (name, match, OptimizerOptions.TypeAction.None, parent, conditional);
 
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
+			ProcessChildren (nav, "field", child => OnFieldEntry (child, entry, conditional));
 		}
 
 		OptimizerOptions.TypeEntry AddTypeEntry (string name, OptimizerOptions.MatchKind match, string action, OptimizerOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
@@ -240,6 +241,17 @@ namespace Mono.Linker.Optimizer
 				throw ThrowError ($"Invalid `action` attribute in {nav.OuterXml}.");
 
 			Options.AddMethodEntry (name, match, methodAction, parent, conditional);
+		}
+
+		void OnFieldEntry (XPathNavigator nav, OptimizerOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
+		{
+			var name = GetAttribute (nav, "name") ?? throw ThrowError ($"Missing `name` attribute in {nav.OuterXml}.");
+			var action = GetAttribute (nav, "action") ?? throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
+
+			if (!OptimizerOptions.TryParseFieldAction (action, out var fieldAction))
+				throw ThrowError ($"Invalid `action` attribute in {nav.OuterXml}.");
+
+			Options.AddFieldEntry (name, fieldAction, parent, conditional);
 		}
 
 		internal static Exception ThrowError (string message)
