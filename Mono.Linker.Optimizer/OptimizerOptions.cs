@@ -393,6 +393,7 @@ namespace Mono.Linker.Optimizer
 			case MethodAction.ReturnTrue:
 			case MethodAction.ReturnNull:
 			case MethodAction.Throw:
+			case MethodAction.Remove:
 				if (Preprocessor == PreprocessorMode.None)
 					Preprocessor = PreprocessorMode.Automatic;
 				break;
@@ -445,6 +446,8 @@ namespace Mono.Linker.Optimizer
 		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
 		{
 			foreach (var entry in _method_actions) {
+				if (method.DeclaringType == null)
+					continue;
 				if (entry.Action != MethodAction.None && entry.Matches (method))
 					action (entry.Action);
 			}
@@ -483,6 +486,7 @@ namespace Mono.Linker.Optimizer
 			Fail,
 			Warn,
 			Throw,
+			Remove,
 			ReturnFalse,
 			ReturnTrue,
 			ReturnNull

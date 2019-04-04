@@ -15,11 +15,17 @@
 	<namespace name="System.Runtime.Remoting.Channels" action="fail" />
 
 	<namespace name="System.Runtime.Remoting.Messaging">
-		<type name="AsyncResult" action="warn">
+		<type name="AsyncResult" action="none">
 			<field name="call_message" action="make-object" />
 		</type>
-		<type name="MonoMethodMessage" action="warn" />
+		<type name="MonoMethodMessage" action="none">
+			<field name="ctx" action="make-object" />
+		</type>
 		<type name="LogicalCallContext" action="warn" />
+		<type name="CallContext">
+			<method name="SetLogicalCallContext" action="remove" />
+			<method name="SetCurrentCallContext" action="remove" />
+		</type>
 	</namespace>
 
 	<type fullname="System.Threading.ExecutionContext" />

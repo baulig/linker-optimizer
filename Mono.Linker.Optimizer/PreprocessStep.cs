@@ -92,7 +92,7 @@ namespace Mono.Linker.Optimizer {
 					ProcessType (nested);
 			}
 
-			foreach (var method in type.Methods) {
+			foreach (var method in type.Methods.ToArray ()) {
 				ProcessMethod (method);
 			}
 
@@ -181,6 +181,10 @@ namespace Mono.Linker.Optimizer {
 
 			case OptimizerOptions.MethodAction.ReturnNull:
 				CodeRewriter.ReplaceWithReturnNull (Context, method);
+				break;
+
+			case OptimizerOptions.MethodAction.Remove:
+				method.DeclaringType.Methods.Remove (method);
 				break;
 			}
 		}
