@@ -310,6 +310,7 @@ namespace Mono.Linker.Optimizer
 		{
 			xml.WriteStartElement ("type");
 			xml.WriteAttributeString ("name", entry.Name);
+			xml.WriteAttributeString ("full-name", entry.FullName);
 			xml.WriteAttributeString ("size", entry.Size.ToString ());
 
 			foreach (var type in entry.GetNestedTypes ())
@@ -335,7 +336,7 @@ namespace Mono.Linker.Optimizer
 				return;
 
 			var ns = parent.GetNamespace (type.Namespace);
-			var entry = ns.GetType (type.Name);
+			var entry = ns.GetType (type);
 
 			foreach (var method in type.Methods)
 				ProcessMethod (context, entry, method);
@@ -349,7 +350,7 @@ namespace Mono.Linker.Optimizer
 			if (!context.Annotations.IsMarked (type))
 				return;
 
-			var entry = parent.GetNestedType (type.Name, true);
+			var entry = parent.GetNestedType (type, true);
 
 			foreach (var method in type.Methods)
 				ProcessMethod (context, entry, method);
@@ -446,15 +447,15 @@ namespace Mono.Linker.Optimizer
 		{
 			Dictionary<string, DetailedTypeEntry> types;
 
-			public DetailedTypeEntry GetType (string name, bool add = true)
+			public DetailedTypeEntry GetType (TypeDefinition type, bool add = true)
 			{
 				LazyInitializer.EnsureInitialized (ref types);
-				if (types.TryGetValue (name, out var entry))
+				if (types.TryGetValue (type.Name, out var entry))
 					return entry;
 				if (!add)
 					return null;
-				entry = new DetailedTypeEntry (this, name);
-				types.Add (name, entry);
+				entry = new DetailedTypeEntry (this, type.Name, type.FullName);
+				types.Add (type.Name, entry);
 				return entry;
 			}
 
@@ -478,15 +479,15 @@ namespace Mono.Linker.Optimizer
 		{
 			public bool HasNestedTypes => nested != null;
 
-			public DetailedTypeEntry GetNestedType (string name, bool add)
+			public DetailedTypeEntry GetNestedType (TypeDefinition type, bool add)
 			{
 				LazyInitializer.EnsureInitialized (ref nested);
-				if (nested.TryGetValue (name, out var entry))
+				if (nested.TryGetValue (type.Name, out var entry))
 					return entry;
 				if (!add)
 					return null;
-				entry = new DetailedTypeEntry (this, name);
-				nested.Add (name, entry);
+				entry = new DetailedTypeEntry (this, type.Name, type.FullName);
+				nested.Add (type.Name, entry);
 				return entry;
 			}
 
@@ -525,9 +526,14 @@ namespace Mono.Linker.Optimizer
 			Dictionary<string, DetailedTypeEntry> nested;
 			Dictionary<string, DetailedMethodEntry> methods;
 
-			public DetailedTypeEntry (DetailedEntry parent, string name)
+			public string FullName {
+				get;
+			}
+
+			public DetailedTypeEntry (DetailedEntry parent, string name, string fullName)
 				: base (parent, name, 0)
 			{
+				FullName = fullName;
 			}
 		}
 
