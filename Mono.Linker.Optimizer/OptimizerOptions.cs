@@ -338,7 +338,8 @@ namespace Mono.Linker.Optimizer
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, fail ?? warn);
-			context.DumpTracerStack ();
+			var stack = context.DumpTracerStack ();
+			context.ReportWriter?.ReportFailListEntry (type, fail ?? warn, original, stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
 				throw new OptimizerException (message + original_message + ".");
@@ -357,7 +358,8 @@ namespace Mono.Linker.Optimizer
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, fail ?? warn);
-			context.DumpTracerStack ();
+			var stack = context.DumpTracerStack ();
+			context.ReportWriter?.ReportFailListEntry (method, fail ?? warn, stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (fail != null)
 				throw new OptimizerException (message + ".");
