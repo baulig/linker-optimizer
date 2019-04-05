@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options all-modules="true" analyze-all="true" preprocessor="full" />
+	<options all-modules="true" analyze-all="true" preprocessor="full" report-size="true" />
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
@@ -24,7 +24,7 @@
 		<type name="LogicalCallContext" action="warn" />
 		<type name="CallContext">
 			<method name="SetLogicalCallContext" action="remove" />
-			<method name="SetCurrentCallContext" action="remove" />
+			<method name="SetCurrentCallContext" action="none" />
 		</type>
 	</namespace>
 

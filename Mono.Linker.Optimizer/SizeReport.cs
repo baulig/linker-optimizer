@@ -24,13 +24,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.IO;
 using System.Linq;
+using Mono.Cecil;
 using System.Xml;
 using System.Xml.XPath;
 using System.Collections.Generic;
 
 namespace Mono.Linker.Optimizer
 {
+	using BasicBlocks;
+
 	public class SizeReport
 	{
 		public OptimizerOptions Options {
@@ -38,12 +42,14 @@ namespace Mono.Linker.Optimizer
 		}
 
 		readonly List<ConfigurationEntry> _configuration_entries;
+		readonly List<DetailedAssemblyEntry> _detailed_assembly_entries;
 
 		public SizeReport (OptimizerOptions options)
 		{
 			Options = options;
 
 			_configuration_entries = new List<ConfigurationEntry> ();
+			_detailed_assembly_entries = new List<DetailedAssemblyEntry> ();
 		}
 
 		public void Read (XPathNavigator nav)
@@ -108,7 +114,7 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		public bool CheckAssemblySize (OptimizerContext context, string assembly, int size)
+		bool CheckAssemblySize (OptimizerContext context, string assembly, int size)
 		{
 			if (!IsEnabled)
 				return true;
@@ -259,5 +265,163 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
+		internal bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
+		{
+			if (!IsEnabled)
+				return true;
+
+			var detailed = new DetailedAssemblyEntry (assembly.Name.Name, size);
+			_detailed_assembly_entries.Add (detailed);
+			ReportDetailed (context, assembly, detailed);
+
+			return CheckAssemblySize (context, assembly.Name.Name, size);
+		}
+
+		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, DetailedAssemblyEntry entry)
+		{
+			foreach (var type in assembly.MainModule.Types) {
+				ProcessType (context, entry, type);
+			}
+
+		}
+
+		void ProcessType (OptimizerContext context, DetailedAssemblyEntry parent, TypeDefinition type)
+		{
+			if (!context.Annotations.IsMarked (type))
+				return;
+
+			if (!parent.Namespaces.TryGetValue (type.Namespace, out var ns)) {
+				ns = new DetailedNamespaceEntry (type.Namespace);
+				parent.Namespaces.Add (type.Namespace, ns);
+			}
+
+			if (!ns.Types.TryGetValue (type.Name, out var entry)) {
+				entry = new DetailedTypeEntry (type.Name);
+				ns.Types.Add (type.Name, entry);
+			}
+
+
+			foreach (var method in type.Methods)
+				ProcessMethod (context, entry, method);
+
+			foreach (var nested in type.NestedTypes)
+				ProcessType (context, entry, nested);
+		}
+
+		void ProcessType (OptimizerContext context, DetailedTypeEntry parent, TypeDefinition type)
+		{
+			if (!context.Annotations.IsMarked (type))
+				return;
+
+			if (!parent.NestedTypes.TryGetValue (type.Name, out var entry)) {
+				entry = new DetailedTypeEntry (type.Name);
+				parent.NestedTypes.Add (type.Name, entry);
+			}
+
+			foreach (var method in type.Methods)
+				ProcessMethod (context, entry, method);
+
+			foreach (var nested in type.NestedTypes)
+				ProcessType (context, entry, nested);
+		}
+
+		void ProcessMethod (OptimizerContext context, DetailedTypeEntry parent, MethodDefinition method)
+		{
+			if (!method.HasBody || !context.Annotations.IsMarked (method))
+				return;
+
+			var name = method.Name + CecilHelper.GetMethodSignature (method);
+			if (parent.Methods.ContainsKey (name))
+				return;
+
+			if (Options.HasTypeEntry (method.DeclaringType, OptimizerOptions.TypeAction.Size))
+				context.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
+
+			parent.Methods.Add (name, new DetailedMethodEntry (name, method.Body.CodeSize));
+		}
+
+		abstract class DetailedEntry
+		{
+			public string Name {
+				get;
+			}
+
+			protected DetailedEntry (string name)
+			{
+				Name = name;
+			}
+
+			public override string ToString ()
+			{
+				return $"[{GetType ().Name}: {Name}]";
+			}
+		}
+
+		class DetailedAssemblyEntry : DetailedEntry
+		{
+			public int Size {
+				get;
+			}
+
+			public Dictionary<string, DetailedNamespaceEntry> Namespaces {
+				get;
+			}
+
+			public DetailedAssemblyEntry (string name, int size)
+				: base (name)
+			{
+				Size = size;
+				Namespaces = new Dictionary<string, DetailedNamespaceEntry> ();
+			}
+
+			public override string ToString ()
+			{
+				return $"[{GetType ().Name}: {Name} {Size}]";
+			}
+		}
+
+		class DetailedNamespaceEntry : DetailedEntry
+		{
+			public Dictionary<string, DetailedTypeEntry> Types {
+				get;
+			}
+
+			public DetailedNamespaceEntry (string name)
+				: base (name)
+			{
+				Types = new Dictionary<string, DetailedTypeEntry> ();
+			}
+		}
+
+		class DetailedTypeEntry : DetailedEntry
+		{
+			public Dictionary<string, DetailedMethodEntry> Methods {
+				get;
+			}
+
+			public Dictionary<string, DetailedTypeEntry> NestedTypes {
+				get;
+			}
+
+			public DetailedTypeEntry (string name)
+				: base (name)
+			{
+				Methods = new Dictionary<string, DetailedMethodEntry> ();
+				NestedTypes = new Dictionary<string, DetailedTypeEntry> ();
+			}
+		}
+
+		class DetailedMethodEntry : DetailedEntry
+		{
+			public int Size {
+				get;
+			}
+
+			public DetailedMethodEntry (string name, int size)
+				: base (name)
+			{
+				Size = size;
+			}
+		}
 	}
 }
