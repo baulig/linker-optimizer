@@ -128,8 +128,13 @@ namespace Mono.Linker.Optimizer
 
 		public void WriteReport (XmlWriter xml)
 		{
-			WriteSizeReport (xml);
+			WriteActionReport (xml);
 
+			WriteSizeReport (xml);
+		}
+
+		void WriteActionReport (XmlWriter xml)
+		{
 			foreach (var entry in _namespace_hash.Values) {
 				xml.WriteStartElement ("namespace");
 				xml.WriteAttributeString ("name", entry.Name);
@@ -156,9 +161,6 @@ namespace Mono.Linker.Optimizer
 
 		void WriteSizeReport (XmlWriter xml)
 		{
-			if (_assembly_sizes.Count == 0 || !Options.SizeReport.IsEnabled)
-				return;
-
 			foreach (var entry in _assembly_sizes)
 				Options.SizeReport.ReportAssemblySize (entry.Key, entry.Value);
 

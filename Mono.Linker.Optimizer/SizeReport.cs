@@ -24,8 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using System.IO;
 using System.Linq;
+using System.Threading;
 using Mono.Cecil;
 using System.Xml;
 using System.Xml.XPath;
@@ -98,8 +98,6 @@ namespace Mono.Linker.Optimizer
 			return entry;
 		}
 
-		public bool IsEnabled => SizeReportProfile != null;
-
 		string SizeReportProfile {
 			get {
 				switch (Options.CheckSize) {
@@ -116,7 +114,7 @@ namespace Mono.Linker.Optimizer
 
 		bool CheckAssemblySize (OptimizerContext context, string assembly, int size)
 		{
-			if (!IsEnabled)
+			if (SizeReportProfile == null)
 				return true;
 
 			var entry = GetSizeReportEntry (Options.SizeCheckConfiguration, SizeReportProfile);
@@ -197,6 +195,8 @@ namespace Mono.Linker.Optimizer
 				}
 				xml.WriteEndElement ();
 			}
+
+			WriteDetailedReport (xml);
 		}
 
 		class ConfigurationEntry
@@ -267,9 +267,6 @@ namespace Mono.Linker.Optimizer
 
 		internal bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
-			if (!IsEnabled)
-				return true;
-
 			var detailed = new DetailedAssemblyEntry (assembly.Name.Name, size);
 			_detailed_assembly_entries.Add (detailed);
 			ReportDetailed (context, assembly, detailed);
@@ -282,7 +279,23 @@ namespace Mono.Linker.Optimizer
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (context, entry, type);
 			}
+		}
 
+		void WriteDetailedReport (XmlWriter xml)
+		{
+			xml.WriteStartElement ("size-report");
+			foreach (var assembly in _detailed_assembly_entries) {
+				xml.WriteStartElement ("assembly");
+				xml.WriteAttributeString ("name", assembly.Name);
+				foreach (var ns in assembly.GetNamespaces ()) {
+					xml.WriteStartElement ("namespace");
+					xml.WriteAttributeString ("name", ns.Name);
+					xml.WriteAttributeString ("size", ns.Size.ToString ());
+					xml.WriteEndElement ();
+				}
+				xml.WriteEndElement ();
+			}
+			xml.WriteEndElement ();
 		}
 
 		void ProcessType (OptimizerContext context, DetailedAssemblyEntry parent, TypeDefinition type)
@@ -290,13 +303,10 @@ namespace Mono.Linker.Optimizer
 			if (!context.Annotations.IsMarked (type))
 				return;
 
-			if (!parent.Namespaces.TryGetValue (type.Namespace, out var ns)) {
-				ns = new DetailedNamespaceEntry (type.Namespace);
-				parent.Namespaces.Add (type.Namespace, ns);
-			}
+			var ns = parent.GetNamespace (type.Namespace);
 
 			if (!ns.Types.TryGetValue (type.Name, out var entry)) {
-				entry = new DetailedTypeEntry (type.Name);
+				entry = new DetailedTypeEntry (ns, type.Name);
 				ns.Types.Add (type.Name, entry);
 			}
 
@@ -313,10 +323,7 @@ namespace Mono.Linker.Optimizer
 			if (!context.Annotations.IsMarked (type))
 				return;
 
-			if (!parent.NestedTypes.TryGetValue (type.Name, out var entry)) {
-				entry = new DetailedTypeEntry (type.Name);
-				parent.NestedTypes.Add (type.Name, entry);
-			}
+			var entry = parent.GetNestedType (type.Name, true);
 
 			foreach (var method in type.Methods)
 				ProcessMethod (context, entry, method);
@@ -337,46 +344,77 @@ namespace Mono.Linker.Optimizer
 			if (Options.HasTypeEntry (method.DeclaringType, OptimizerOptions.TypeAction.Size))
 				context.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
 
-			parent.Methods.Add (name, new DetailedMethodEntry (name, method.Body.CodeSize));
+			parent.Methods.Add (name, new DetailedMethodEntry (parent, name, method.Body.CodeSize));
 		}
 
-		abstract class DetailedEntry
+		abstract class DetailedEntry : IComparable<DetailedEntry>
 		{
+			public DetailedEntry Parent {
+				get;
+			}
+
 			public string Name {
 				get;
 			}
 
-			protected DetailedEntry (string name)
-			{
-				Name = name;
-			}
-
-			public override string ToString ()
-			{
-				return $"[{GetType ().Name}: {Name}]";
-			}
-		}
-
-		class DetailedAssemblyEntry : DetailedEntry
-		{
 			public int Size {
 				get;
+				private set;
 			}
 
-			public Dictionary<string, DetailedNamespaceEntry> Namespaces {
-				get;
-			}
-
-			public DetailedAssemblyEntry (string name, int size)
-				: base (name)
+			void AddSize (int size)
 			{
-				Size = size;
-				Namespaces = new Dictionary<string, DetailedNamespaceEntry> ();
+				Size += size;
+				Parent?.AddSize (size);
+			}
+
+			protected DetailedEntry (DetailedEntry parent, string name, int size)
+			{
+				Parent = parent;
+				Name = name;
+
+				AddSize (size);
+			}
+
+			public int CompareTo (DetailedEntry obj)
+			{
+				return Size.CompareTo (obj.Size);
 			}
 
 			public override string ToString ()
 			{
 				return $"[{GetType ().Name}: {Name} {Size}]";
+			}
+		}
+
+		class DetailedAssemblyEntry : DetailedEntry
+		{
+			Dictionary<string, DetailedNamespaceEntry> namespaces;
+
+			public DetailedNamespaceEntry GetNamespace (string name, bool add = true)
+			{
+				LazyInitializer.EnsureInitialized (ref namespaces);
+				if (namespaces.TryGetValue (name, out var entry))
+					return entry;
+				if (!add)
+					return null;
+				entry = new DetailedNamespaceEntry (this, name);
+				namespaces.Add (name, entry);
+				return entry;
+			}
+
+			public SortedSet<DetailedNamespaceEntry> GetNamespaces ()
+			{
+				LazyInitializer.EnsureInitialized (ref namespaces);
+				var set = new SortedSet<DetailedNamespaceEntry> ();
+				foreach (var ns in namespaces.Values)
+					set.Add (ns);
+				return set;
+			}
+
+			public DetailedAssemblyEntry (string name, int size)
+				: base (null, name, size)
+			{
 			}
 		}
 
@@ -386,8 +424,8 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			public DetailedNamespaceEntry (string name)
-				: base (name)
+			public DetailedNamespaceEntry (DetailedAssemblyEntry parent, string name)
+				: base (parent, name, 0)
 			{
 				Types = new Dictionary<string, DetailedTypeEntry> ();
 			}
@@ -399,28 +437,34 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			public Dictionary<string, DetailedTypeEntry> NestedTypes {
-				get;
+			public bool HasNestedTypes => nested != null;
+
+			public DetailedTypeEntry GetNestedType (string name, bool add)
+			{
+				LazyInitializer.EnsureInitialized (ref nested);
+				if (nested.TryGetValue (name, out var entry))
+					return entry;
+				if (!add)
+					return null;
+				entry = new DetailedTypeEntry (this, name);
+				nested.Add (name, entry);
+				return entry;
 			}
 
-			public DetailedTypeEntry (string name)
-				: base (name)
+			Dictionary<string, DetailedTypeEntry> nested;
+
+			public DetailedTypeEntry (DetailedEntry parent, string name)
+				: base (parent, name, 0)
 			{
 				Methods = new Dictionary<string, DetailedMethodEntry> ();
-				NestedTypes = new Dictionary<string, DetailedTypeEntry> ();
 			}
 		}
 
 		class DetailedMethodEntry : DetailedEntry
 		{
-			public int Size {
-				get;
-			}
-
-			public DetailedMethodEntry (string name, int size)
-				: base (name)
+			public DetailedMethodEntry (DetailedTypeEntry parent, string name, int size)
+				: base (parent, name, size)
 			{
-				Size = size;
 			}
 		}
 	}
