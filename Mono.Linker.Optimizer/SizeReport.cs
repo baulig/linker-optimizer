@@ -287,14 +287,45 @@ namespace Mono.Linker.Optimizer
 			foreach (var assembly in _detailed_assembly_entries) {
 				xml.WriteStartElement ("assembly");
 				xml.WriteAttributeString ("name", assembly.Name);
-				foreach (var ns in assembly.GetNamespaces ()) {
-					xml.WriteStartElement ("namespace");
-					xml.WriteAttributeString ("name", ns.Name);
-					xml.WriteAttributeString ("size", ns.Size.ToString ());
-					xml.WriteEndElement ();
-				}
+				foreach (var ns in assembly.GetNamespaces ())
+					WriteDetailedReport (xml, ns);
 				xml.WriteEndElement ();
 			}
+			xml.WriteEndElement ();
+		}
+
+		void WriteDetailedReport (XmlWriter xml, DetailedNamespaceEntry entry)
+		{
+			xml.WriteStartElement ("namespace");
+			xml.WriteAttributeString ("name", entry.Name);
+			xml.WriteAttributeString ("size", entry.Size.ToString ());
+
+			foreach (var type in entry.GetTypes ())
+				WriteDetailedReport (xml, type);
+
+			xml.WriteEndElement ();
+		}
+
+		void WriteDetailedReport (XmlWriter xml, DetailedTypeEntry entry)
+		{
+			xml.WriteStartElement ("type");
+			xml.WriteAttributeString ("name", entry.Name);
+			xml.WriteAttributeString ("size", entry.Size.ToString ());
+
+			foreach (var type in entry.GetNestedTypes ())
+				WriteDetailedReport (xml, type);
+
+			foreach (var method in entry.GetMethods ())
+				WriteDetailedReport (xml, method);
+
+			xml.WriteEndElement ();
+		}
+
+		void WriteDetailedReport (XmlWriter xml, DetailedMethodEntry entry)
+		{
+			xml.WriteStartElement ("method");
+			xml.WriteAttributeString ("name", entry.Name);
+			xml.WriteAttributeString ("size", entry.Size.ToString ());
 			xml.WriteEndElement ();
 		}
 
@@ -304,12 +335,7 @@ namespace Mono.Linker.Optimizer
 				return;
 
 			var ns = parent.GetNamespace (type.Namespace);
-
-			if (!ns.Types.TryGetValue (type.Name, out var entry)) {
-				entry = new DetailedTypeEntry (ns, type.Name);
-				ns.Types.Add (type.Name, entry);
-			}
-
+			var entry = ns.GetType (type.Name);
 
 			foreach (var method in type.Methods)
 				ProcessMethod (context, entry, method);
@@ -337,14 +363,11 @@ namespace Mono.Linker.Optimizer
 			if (!method.HasBody || !context.Annotations.IsMarked (method))
 				return;
 
-			var name = method.Name + CecilHelper.GetMethodSignature (method);
-			if (parent.Methods.ContainsKey (name))
+			if (!parent.AddMethod (method))
 				return;
 
 			if (Options.HasTypeEntry (method.DeclaringType, OptimizerOptions.TypeAction.Size))
 				context.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
-
-			parent.Methods.Add (name, new DetailedMethodEntry (parent, name, method.Body.CodeSize));
 		}
 
 		abstract class DetailedEntry : IComparable<DetailedEntry>
@@ -405,10 +428,11 @@ namespace Mono.Linker.Optimizer
 
 			public SortedSet<DetailedNamespaceEntry> GetNamespaces ()
 			{
-				LazyInitializer.EnsureInitialized (ref namespaces);
 				var set = new SortedSet<DetailedNamespaceEntry> ();
-				foreach (var ns in namespaces.Values)
-					set.Add (ns);
+				if (namespaces != null) {
+					foreach (var ns in namespaces.Values)
+						set.Add (ns);
+				}
 				return set;
 			}
 
@@ -420,23 +444,38 @@ namespace Mono.Linker.Optimizer
 
 		class DetailedNamespaceEntry : DetailedEntry
 		{
-			public Dictionary<string, DetailedTypeEntry> Types {
-				get;
+			Dictionary<string, DetailedTypeEntry> types;
+
+			public DetailedTypeEntry GetType (string name, bool add = true)
+			{
+				LazyInitializer.EnsureInitialized (ref types);
+				if (types.TryGetValue (name, out var entry))
+					return entry;
+				if (!add)
+					return null;
+				entry = new DetailedTypeEntry (this, name);
+				types.Add (name, entry);
+				return entry;
+			}
+
+			public SortedSet<DetailedTypeEntry> GetTypes ()
+			{
+				var set = new SortedSet<DetailedTypeEntry> ();
+				if (types != null) {
+					foreach (var type in types.Values)
+						set.Add (type);
+				}
+				return set;
 			}
 
 			public DetailedNamespaceEntry (DetailedAssemblyEntry parent, string name)
 				: base (parent, name, 0)
 			{
-				Types = new Dictionary<string, DetailedTypeEntry> ();
 			}
 		}
 
 		class DetailedTypeEntry : DetailedEntry
 		{
-			public Dictionary<string, DetailedMethodEntry> Methods {
-				get;
-			}
-
 			public bool HasNestedTypes => nested != null;
 
 			public DetailedTypeEntry GetNestedType (string name, bool add)
@@ -451,12 +490,44 @@ namespace Mono.Linker.Optimizer
 				return entry;
 			}
 
+			public SortedSet<DetailedTypeEntry> GetNestedTypes ()
+			{
+				var set = new SortedSet<DetailedTypeEntry> ();
+				if (nested != null) {
+					foreach (var type in nested.Values)
+						set.Add (type);
+				}
+				return set;
+			}
+
+			public bool AddMethod (MethodDefinition method)
+			{
+				LazyInitializer.EnsureInitialized (ref methods);
+
+				var name = method.Name + CecilHelper.GetMethodSignature (method);
+				if (methods.ContainsKey (name))
+					return false;
+
+				methods.Add (name, new DetailedMethodEntry (this, name, method.Body.CodeSize));
+				return true;
+			}
+
+			public SortedSet<DetailedMethodEntry> GetMethods ()
+			{
+				var set = new SortedSet<DetailedMethodEntry> ();
+				if (methods != null) {
+					foreach (var method in methods.Values)
+						set.Add (method);
+				}
+				return set;
+			}
+
 			Dictionary<string, DetailedTypeEntry> nested;
+			Dictionary<string, DetailedMethodEntry> methods;
 
 			public DetailedTypeEntry (DetailedEntry parent, string name)
 				: base (parent, name, 0)
 			{
-				Methods = new Dictionary<string, DetailedMethodEntry> ();
 			}
 		}
 
