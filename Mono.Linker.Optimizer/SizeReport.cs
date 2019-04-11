@@ -43,7 +43,6 @@ namespace Mono.Linker.Optimizer
 
 		readonly List<ConfigurationEntry> _configuration_entries;
 		readonly List<DetailedAssemblyEntry> _detailed_assembly_entries;
-		readonly List<DetailedAssemblyEntry> _preprocessed_assembly_entries;
 
 		public SizeReport (OptimizerOptions options)
 		{
@@ -51,7 +50,6 @@ namespace Mono.Linker.Optimizer
 
 			_configuration_entries = new List<ConfigurationEntry> ();
 			_detailed_assembly_entries = new List<DetailedAssemblyEntry> ();
-			_preprocessed_assembly_entries = new List<DetailedAssemblyEntry> ();
 		}
 
 		public void Read (XPathNavigator nav)
@@ -548,52 +546,47 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		readonly HashSet<TypeDefinition> _all_types = new HashSet<TypeDefinition> ();
+		readonly List<TypeDefinition> _all_types = new List<TypeDefinition> ();
 
 		internal void Preprocess (OptimizerContext context)
 		{
 			foreach (var assembly in context.Context.GetAssemblies ()) {
-				var detailed = new DetailedAssemblyEntry (assembly.Name.Name, 0);
-				_preprocessed_assembly_entries.Add (detailed);
-
 				foreach (var type in assembly.MainModule.Types) {
 					if (type.Name == "<Module>")
 						continue;
-					PreprocessType (context, detailed, type);
+					PreprocessType (context, type);
 				}
 			}
 		}
 
-		void PreprocessType (OptimizerContext context, DetailedAssemblyEntry parent, TypeDefinition type)
+		void PreprocessType (OptimizerContext context, TypeDefinition type)
 		{
-			var ns = parent.GetNamespace (type.Namespace);
-			var entry = ns.GetType (type);
-
-			foreach (var method in type.Methods)
-				ProcessMethod (context, entry, method);
+			_all_types.Add (type);
 
 			foreach (var nested in type.NestedTypes)
-				PreprocessType (context, entry, nested);
-		}
-
-		void PreprocessType (OptimizerContext context, DetailedTypeEntry parent, TypeDefinition type)
-		{
-			var entry = parent.GetNestedType (type, true);
-
-			//foreach (var method in type.Methods)
-			//	ProcessMethod (context, entry, method);
-
-			foreach (var nested in type.NestedTypes)
-				PreprocessType (context, entry, nested);
+				PreprocessType (context, nested);
 		}
 
 		internal void WriteTypeReport (OptimizerContext context)
 		{
+			context.LogDebug ($"TYPE REPORT");
+
+			var ns = new Dictionary<string, bool> ();
+
 			foreach (var type in _all_types) {
-				if (context.Annotations.IsMarked (type))
-					continue;
-				context.LogDebug ($"TYPE REPORT: {type}");
+				var marked = context.Annotations.IsMarked (type);
+				context.LogDebug ($"  TYPE REPORT: {type} {marked}");
+
+				if (marked)
+					ns[type.Namespace] = true;
+				else if (!ns.ContainsKey (type.Namespace))
+					ns.Add (type.Namespace, false);
 			}
+
+			foreach (var entry in ns) {
+				context.LogDebug ($"  NS: {entry.Key} {entry.Value}");
+			}
+
 			context.LogDebug ($"TYPE REPORT DONE");
 		}
 	}
