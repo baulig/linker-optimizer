@@ -75,7 +75,18 @@ namespace Mono.Linker.Optimizer
 			if (sizeAttr == null || !int.TryParse (sizeAttr, out var size))
 				throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
 			var toleranceAttr = OptionsReader.GetAttribute (nav, "tolerance");
-			entry.Assemblies.Add (new AssemblySizeEntry (name, size, toleranceAttr));
+
+			var assembly = new AssemblySizeEntry (name, size, toleranceAttr);
+			entry.Assemblies.Add (assembly);
+
+			OptionsReader.ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, assembly));
+		}
+
+		void OnNamespaceEntry (XPathNavigator nav, AssemblySizeEntry assembly)
+		{
+			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
+
+			var ns = assembly.GetNamespace (name);
 		}
 
 		SizeReportEntry GetSizeReportEntry (string configuration, string profile)
@@ -219,6 +230,7 @@ namespace Mono.Linker.Optimizer
 			xml.WriteStartElement ("namespace");
 			xml.WriteAttributeString ("name", entry.Name);
 			xml.WriteAttributeString ("size", entry.Size.ToString ());
+			xml.WriteAttributeString ("marked", entry.Marked.ToString ());
 
 			foreach (var type in entry.GetTypes ())
 				WriteDetailedReport (xml, type);
@@ -232,6 +244,7 @@ namespace Mono.Linker.Optimizer
 			xml.WriteAttributeString ("name", entry.Name);
 			xml.WriteAttributeString ("full-name", entry.FullName);
 			xml.WriteAttributeString ("size", entry.Size.ToString ());
+			xml.WriteAttributeString ("marked", entry.Marked.ToString ());
 
 			foreach (var type in entry.GetNestedTypes ())
 				WriteDetailedReport (xml, type);
@@ -256,7 +269,10 @@ namespace Mono.Linker.Optimizer
 				return;
 
 			var ns = parent.GetNamespace (type.Namespace);
+			ns.Marked = true;
+
 			var entry = ns.GetType (type);
+			entry.Marked = true;
 
 			foreach (var method in type.Methods)
 				ProcessMethod (context, entry, method);
@@ -341,6 +357,10 @@ namespace Mono.Linker.Optimizer
 			}
 
 			public int Size {
+				get; set;
+			}
+
+			public bool Marked {
 				get; set;
 			}
 

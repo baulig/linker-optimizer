@@ -7,7 +7,7 @@
 	<include filename="test-remoting-4-size.xml" />
 
 	<features>
-		<feature name="remoting" enabled="true" />
+		<feature name="remoting" enabled="false" />
 		<feature name="collator" enabled="false" />
 		<feature name="globalization" enabled="false" />
 	</features>
