@@ -152,7 +152,27 @@ namespace Mono.Linker.Optimizer
 			return entry;
 		}
 
-		public void WriteReport (XmlWriter xml)
+		public void WriteReport ()
+		{
+			var settings = new XmlWriterSettings {
+				Indent = true,
+				OmitXmlDeclaration = false,
+				NewLineHandling = NewLineHandling.None,
+				ConformanceLevel = ConformanceLevel.Document,
+				IndentChars = "\t",
+				Encoding = Encoding.Default
+			};
+
+			using (var xml = XmlWriter.Create (Options.ReportFileName, settings)) {
+				xml.WriteStartDocument ();
+				xml.WriteStartElement ("optimizer-report");
+				WriteReport (xml);
+				xml.WriteEndElement ();
+				xml.WriteEndDocument ();
+			}
+		}
+
+		void WriteReport (XmlWriter xml)
 		{
 			WriteActionReport (xml);
 

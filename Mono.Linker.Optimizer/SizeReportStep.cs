@@ -59,8 +59,10 @@ namespace Mono.Linker.Optimizer
 			if (Context.ReportWriter == null)
 				Report ();
 
-			if (!result)
+			if (!result) {
+				Context.ReportWriter.WriteReport ();
 				throw new OptimizerException ("Size check failed.");
+			}
 		}
 
 		bool CheckAndReportSize (AssemblyDefinition assembly)

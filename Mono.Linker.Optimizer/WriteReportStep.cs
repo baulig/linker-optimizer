@@ -39,22 +39,7 @@ namespace Mono.Linker.Optimizer
 
 		protected override void Process ()
 		{
-			var settings = new XmlWriterSettings {
-				Indent = true,
-				OmitXmlDeclaration = false,
-				NewLineHandling = NewLineHandling.None,
-				ConformanceLevel = ConformanceLevel.Document,
-				IndentChars = "\t",
-				Encoding = Encoding.Default
-			};
-
-			using (var xml = XmlWriter.Create (Options.ReportFileName, settings)) {
-				xml.WriteStartDocument ();
-				xml.WriteStartElement ("optimizer-report");
-				Context.ReportWriter.WriteReport (xml);
-				xml.WriteEndElement ();
-				xml.WriteEndDocument ();
-			}
+			Context.ReportWriter.WriteReport ();
 		}
 	}
 }
