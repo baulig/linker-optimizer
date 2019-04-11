@@ -184,13 +184,15 @@ namespace Mono.Linker.Optimizer
 						xml.WriteAttributeString ("size", asm.Size.ToString ());
 						if (asm.Tolerance != null)
 							xml.WriteAttributeString ("tolerance", asm.Tolerance);
+
+						foreach (var ns in asm.GetNamespaces ())
+							WriteDetailedReport (xml, ns);
+
 						xml.WriteEndElement ();
 
 					}
 					xml.WriteEndElement ();
 				}
-
-				WriteDetailedReport (xml, configuration);
 
 				xml.WriteEndElement ();
 			}
@@ -328,21 +330,6 @@ namespace Mono.Linker.Optimizer
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (context, entry, type);
 			}
-		}
-
-		void WriteDetailedReport (XmlWriter xml, ConfigurationEntry configuration)
-		{
-			xml.WriteStartElement ("size-report");
-			foreach (var assembly in configuration.SizeReportEntries) {
-				xml.WriteStartElement ("assembly");
-#if FIXME
-				xml.WriteAttributeString ("name", assembly.Name);
-				foreach (var ns in assembly.GetNamespaces ())
-					WriteDetailedReport (xml, ns);
-#endif
-				xml.WriteEndElement ();
-			}
-			xml.WriteEndElement ();
 		}
 
 		void WriteDetailedReport (XmlWriter xml, DetailedNamespaceEntry entry)
