@@ -96,6 +96,9 @@ namespace Mono.Linker.Optimizer
 			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<type> requires `name` attribute.");
 			var fullName = OptionsReader.GetAttribute (nav, "full-name") ?? throw OptionsReader.ThrowError ("<type> requires `full-name` attribute.");
 			parent.GetType (name, fullName);
+
+			if (fullName.Contains ("SynchronizationAttribute"))
+				Console.Error.WriteLine ($"TYPE: {nav}");
 		}
 
 		SizeReportEntry GetSizeReportEntry (string configuration, string profile)
@@ -205,13 +208,8 @@ namespace Mono.Linker.Optimizer
 						if (asm.Tolerance != null)
 							xml.WriteAttributeString ("tolerance", asm.Tolerance);
 
-						if (Options.DetailedSizeReport) {
-							foreach (var ns in asm.GetNamespaces ()) {
-								if (string.IsNullOrEmpty (ns.Name))
-									continue;
-								WriteDetailedReport (xml, ns);
-							}
-						}
+						if (Options.DetailedSizeReport)
+							WriteDetailedReport (xml, asm);
 
 						xml.WriteEndElement ();
 
@@ -234,6 +232,15 @@ namespace Mono.Linker.Optimizer
 		{
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (context, entry, type);
+			}
+		}
+
+		void WriteDetailedReport (XmlWriter xml, AssemblySizeEntry assembly)
+		{
+			foreach (var ns in assembly.GetNamespaces ()) {
+				if (string.IsNullOrEmpty (ns.Name))
+					continue;
+				WriteDetailedReport (xml, ns);
 			}
 		}
 
