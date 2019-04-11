@@ -43,6 +43,7 @@ namespace Mono.Linker.Optimizer
 
 		readonly List<ConfigurationEntry> _configuration_entries;
 		readonly List<DetailedAssemblyEntry> _detailed_assembly_entries;
+		readonly List<DetailedAssemblyEntry> _preprocessed_assembly_entries;
 
 		public SizeReport (OptimizerOptions options)
 		{
@@ -50,6 +51,7 @@ namespace Mono.Linker.Optimizer
 
 			_configuration_entries = new List<ConfigurationEntry> ();
 			_detailed_assembly_entries = new List<DetailedAssemblyEntry> ();
+			_preprocessed_assembly_entries = new List<DetailedAssemblyEntry> ();
 		}
 
 		public void Read (XPathNavigator nav)
@@ -193,7 +195,7 @@ namespace Mono.Linker.Optimizer
 
 			WriteDetailedReport (xml);
 
-			WriteTypeReport (context);
+			WriteTypeReport (context, xml);
 		}
 
 		class ConfigurationEntry
@@ -551,25 +553,30 @@ namespace Mono.Linker.Optimizer
 		internal void Preprocess (OptimizerContext context)
 		{
 			foreach (var assembly in context.Context.GetAssemblies ()) {
+				var entry = new DetailedAssemblyEntry (assembly.Name.Name, 0);
+				_preprocessed_assembly_entries.Add (entry);
+
 				foreach (var type in assembly.MainModule.Types) {
 					if (type.Name == "<Module>")
 						continue;
-					PreprocessType (context, type);
+
+					var ns = entry.GetNamespace (type.Namespace);
+					ns.GetType (type);
 				}
 			}
 		}
 
-		void PreprocessType (OptimizerContext context, TypeDefinition type)
-		{
-			_all_types.Add (type);
-
-			foreach (var nested in type.NestedTypes)
-				PreprocessType (context, nested);
-		}
-
-		internal void WriteTypeReport (OptimizerContext context)
+		void WriteTypeReport (OptimizerContext context, XmlWriter xml)
 		{
 			context.LogDebug ($"TYPE REPORT");
+
+			xml.WriteStartElement ("type-list");
+
+			foreach (var assembly in _preprocessed_assembly_entries) {
+				xml.WriteStartElement ("assembly");
+				xml.WriteAttributeString ("name", assembly.Name);
+				xml.WriteEndElement ();
+			}
 
 			var ns = new Dictionary<string, bool> ();
 
@@ -584,8 +591,25 @@ namespace Mono.Linker.Optimizer
 			}
 
 			foreach (var entry in ns) {
-				context.LogDebug ($"  NS: {entry.Key} {entry.Value}");
+				if (!entry.Value)
+					continue;
+				xml.WriteStartElement ("namespace");
+				xml.WriteAttributeString ("name", entry.Key);
+				xml.WriteEndElement ();
 			}
+
+#if FIXME
+			foreach (var entry in ns) {
+				context.LogDebug ($"  NS: {entry.Key} {entry.Value}");
+
+				xml.WriteStartElement ("namespace");
+				xml.WriteAttributeString ("name", entry.Key);
+				xml.WriteAttributeString ("enabled", entry.Value.ToString ());
+				xml.WriteEndElement ();
+			}
+#endif
+
+			xml.WriteEndElement ();
 
 			context.LogDebug ($"TYPE REPORT DONE");
 		}
