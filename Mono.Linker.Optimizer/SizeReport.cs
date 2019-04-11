@@ -168,7 +168,7 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		public void Write (XmlWriter xml)
+		public void Write (OptimizerContext context, XmlWriter xml)
 		{
 			foreach (var configuration in _configuration_entries) {
 				xml.WriteStartElement ("size-check");
@@ -192,6 +192,8 @@ namespace Mono.Linker.Optimizer
 			}
 
 			WriteDetailedReport (xml);
+
+			WriteTypeReport (context);
 		}
 
 		class ConfigurationEntry
@@ -274,6 +276,8 @@ namespace Mono.Linker.Optimizer
 		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, DetailedAssemblyEntry entry)
 		{
 			foreach (var type in assembly.MainModule.Types) {
+				if (type.Name == "<Module>")
+					continue;
 				ProcessType (context, entry, type);
 			}
 		}
@@ -330,7 +334,7 @@ namespace Mono.Linker.Optimizer
 		void ProcessType (OptimizerContext context, DetailedAssemblyEntry parent, TypeDefinition type)
 		{
 			if (!context.Annotations.IsMarked (type))
-				return;
+				throw DebugHelpers.AssertFail ($"Type `{type}` is not marked.");
 
 			var ns = parent.GetNamespace (type.Namespace);
 			var entry = ns.GetType (type);
@@ -540,6 +544,23 @@ namespace Mono.Linker.Optimizer
 				: base (parent, name, size)
 			{
 			}
+		}
+
+		readonly HashSet<TypeDefinition> _all_types = new HashSet<TypeDefinition> ();
+
+		internal void MarkType (TypeDefinition type)
+		{
+			_all_types.Add (type);
+		}
+
+		internal void WriteTypeReport (OptimizerContext context)
+		{
+			foreach (var type in _all_types) {
+				if (context.Annotations.IsMarked (type))
+					continue;
+				context.LogDebug ($"TYPE REPORT: {type}");
+			}
+			context.LogDebug ($"TYPE REPORT DONE");
 		}
 	}
 }

@@ -158,7 +158,7 @@ namespace Mono.Linker.Optimizer
 
 			WriteFailReport (xml);
 
-			Options.SizeReport.Write (xml);
+			Options.SizeReport.Write (Context, xml);
 		}
 
 		void WriteActionReport (XmlWriter xml)

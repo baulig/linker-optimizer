@@ -85,6 +85,9 @@ namespace Mono.Linker.Optimizer {
 
 		void ProcessType (TypeDefinition type)
 		{
+			if (Options.DetailedSizeCheck)
+				Options.SizeReport.MarkType (type);
+
 			Options.ProcessTypeEntries (type, a => ProcessTypeActions (type, a));
 
 			if (type.HasNestedTypes) {
