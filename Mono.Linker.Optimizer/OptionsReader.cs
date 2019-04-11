@@ -106,6 +106,7 @@ namespace Mono.Linker.Optimizer
 			CheckAttribute (nav, "report-size", value => Options.ReportSize = value);
 			CheckAttribute (nav, "check-size", value => Options.CheckSize = value);
 			CheckAttribute (nav, "size-check-configuration", value => Options.SizeCheckConfiguration = value);
+			CheckAttribute (nav, "compare-size-with", value => Options.CompareSizeWith = value);
 			CheckAttribute (nav, "size-check-tolerance", value => Options.SizeCheckTolerance = value);
 			CheckAttribute (nav, "detailed-size-report", value => Options.DetailedSizeReport = value);
 			CheckAttribute (nav, "profile", value => Options.ProfileName = value);

@@ -23,6 +23,7 @@ TEST_CASES := \
 	test-remoting-1.cs \
 	test-remoting-2.cs \
 	test-remoting-3.cs \
+	test-remoting-4.cs \
 	test-security-1.cs \
 	test-size-check-full.cs \
 	test-size-check-collator.cs \
