@@ -42,14 +42,12 @@ namespace Mono.Linker.Optimizer
 		}
 
 		readonly List<ConfigurationEntry> _configuration_entries;
-		// readonly List<DetailedAssemblyEntry> _detailed_assembly_entries;
 
 		public SizeReport (OptimizerOptions options)
 		{
 			Options = options;
 
 			_configuration_entries = new List<ConfigurationEntry> ();
-			// _detailed_assembly_entries = new List<DetailedAssemblyEntry> ();
 		}
 
 		public void Read (XPathNavigator nav)
@@ -168,9 +166,7 @@ namespace Mono.Linker.Optimizer
 				asmEntry.Size = size;
 			}
 
-			var detailed = new DetailedAssemblyEntry (assembly.Name.Name, size);
-			configEntry.DetailedAssemblyEntries.Add (detailed);
-			ReportDetailed (context, assembly, detailed);
+			ReportDetailed (context, assembly, asmEntry);
 		}
 
 		public void Write (XmlWriter xml)
@@ -210,15 +206,10 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			public List<DetailedAssemblyEntry> DetailedAssemblyEntries {
-				get;
-			}
-
 			public ConfigurationEntry (string configuration)
 			{
 				Configuration = configuration;
 				SizeReportEntries = new List<SizeReportEntry> ();
-				DetailedAssemblyEntries = new List<DetailedAssemblyEntry> ();
 			}
 		}
 
@@ -244,8 +235,12 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		class AssemblySizeEntry
+		abstract class SizeEntry : IComparable<SizeEntry>
 		{
+			public SizeEntry Parent {
+				get;
+			}
+
 			public string Name {
 				get;
 			}
@@ -254,14 +249,64 @@ namespace Mono.Linker.Optimizer
 				get; set;
 			}
 
+			void AddSize (int size)
+			{
+				Size += size;
+				Parent?.AddSize (size);
+			}
+
+			protected SizeEntry (SizeEntry parent, string name, int size)
+			{
+				Parent = parent;
+				Name = name;
+
+				AddSize (size);
+			}
+
+			public int CompareTo (SizeEntry obj)
+			{
+				return Size.CompareTo (obj.Size);
+			}
+
+			public override string ToString ()
+			{
+				return $"[{GetType ().Name}: {Name} {Size}]";
+			}
+		}
+
+		class AssemblySizeEntry : SizeEntry
+		{
 			public string Tolerance {
 				get;
 			}
 
-			public AssemblySizeEntry (string name, int size, string tolerance)
+			Dictionary<string, DetailedNamespaceEntry> namespaces;
+
+			public DetailedNamespaceEntry GetNamespace (string name, bool add = true)
 			{
-				Name = name;
-				Size = size;
+				LazyInitializer.EnsureInitialized (ref namespaces);
+				if (namespaces.TryGetValue (name, out var entry))
+					return entry;
+				if (!add)
+					return null;
+				entry = new DetailedNamespaceEntry (this, name);
+				namespaces.Add (name, entry);
+				return entry;
+			}
+
+			public SortedSet<DetailedNamespaceEntry> GetNamespaces ()
+			{
+				var set = new SortedSet<DetailedNamespaceEntry> ();
+				if (namespaces != null) {
+					foreach (var ns in namespaces.Values)
+						set.Add (ns);
+				}
+				return set;
+			}
+
+			public AssemblySizeEntry (string name, int size, string tolerance)
+				: base (null, name, size)
+			{
 				Tolerance = tolerance;
 			}
 
@@ -278,7 +323,7 @@ namespace Mono.Linker.Optimizer
 			return CheckAssemblySize (context, assembly.Name.Name, size);
 		}
 
-		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, DetailedAssemblyEntry entry)
+		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, AssemblySizeEntry entry)
 		{
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (context, entry, type);
@@ -288,11 +333,13 @@ namespace Mono.Linker.Optimizer
 		void WriteDetailedReport (XmlWriter xml, ConfigurationEntry configuration)
 		{
 			xml.WriteStartElement ("size-report");
-			foreach (var assembly in configuration.DetailedAssemblyEntries) {
+			foreach (var assembly in configuration.SizeReportEntries) {
 				xml.WriteStartElement ("assembly");
+#if FIXME
 				xml.WriteAttributeString ("name", assembly.Name);
 				foreach (var ns in assembly.GetNamespaces ())
 					WriteDetailedReport (xml, ns);
+#endif
 				xml.WriteEndElement ();
 			}
 			xml.WriteEndElement ();
@@ -334,7 +381,7 @@ namespace Mono.Linker.Optimizer
 			xml.WriteEndElement ();
 		}
 
-		void ProcessType (OptimizerContext context, DetailedAssemblyEntry parent, TypeDefinition type)
+		void ProcessType (OptimizerContext context, AssemblySizeEntry parent, TypeDefinition type)
 		{
 			if (!context.Annotations.IsMarked (type))
 				return;
@@ -375,79 +422,7 @@ namespace Mono.Linker.Optimizer
 				context.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
 		}
 
-		abstract class DetailedEntry : IComparable<DetailedEntry>
-		{
-			public DetailedEntry Parent {
-				get;
-			}
-
-			public string Name {
-				get;
-			}
-
-			public int Size {
-				get;
-				private set;
-			}
-
-			void AddSize (int size)
-			{
-				Size += size;
-				Parent?.AddSize (size);
-			}
-
-			protected DetailedEntry (DetailedEntry parent, string name, int size)
-			{
-				Parent = parent;
-				Name = name;
-
-				AddSize (size);
-			}
-
-			public int CompareTo (DetailedEntry obj)
-			{
-				return Size.CompareTo (obj.Size);
-			}
-
-			public override string ToString ()
-			{
-				return $"[{GetType ().Name}: {Name} {Size}]";
-			}
-		}
-
-		class DetailedAssemblyEntry : DetailedEntry
-		{
-			Dictionary<string, DetailedNamespaceEntry> namespaces;
-
-			public DetailedNamespaceEntry GetNamespace (string name, bool add = true)
-			{
-				LazyInitializer.EnsureInitialized (ref namespaces);
-				if (namespaces.TryGetValue (name, out var entry))
-					return entry;
-				if (!add)
-					return null;
-				entry = new DetailedNamespaceEntry (this, name);
-				namespaces.Add (name, entry);
-				return entry;
-			}
-
-			public SortedSet<DetailedNamespaceEntry> GetNamespaces ()
-			{
-				var set = new SortedSet<DetailedNamespaceEntry> ();
-				if (namespaces != null) {
-					foreach (var ns in namespaces.Values)
-						set.Add (ns);
-				}
-				return set;
-			}
-
-			public DetailedAssemblyEntry (string name, int size)
-				: base (null, name, size)
-			{
-			}
-		}
-
-		class DetailedNamespaceEntry : DetailedEntry
+		class DetailedNamespaceEntry : SizeEntry
 		{
 			Dictionary<string, DetailedTypeEntry> types;
 
@@ -473,13 +448,13 @@ namespace Mono.Linker.Optimizer
 				return set;
 			}
 
-			public DetailedNamespaceEntry (DetailedAssemblyEntry parent, string name)
+			public DetailedNamespaceEntry (AssemblySizeEntry parent, string name)
 				: base (parent, name, 0)
 			{
 			}
 		}
 
-		class DetailedTypeEntry : DetailedEntry
+		class DetailedTypeEntry : SizeEntry
 		{
 			public bool HasNestedTypes => nested != null;
 
@@ -534,14 +509,14 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			public DetailedTypeEntry (DetailedEntry parent, string name, string fullName)
+			public DetailedTypeEntry (SizeEntry parent, string name, string fullName)
 				: base (parent, name, 0)
 			{
 				FullName = fullName;
 			}
 		}
 
-		class DetailedMethodEntry : DetailedEntry
+		class DetailedMethodEntry : SizeEntry
 		{
 			public DetailedMethodEntry (DetailedTypeEntry parent, string name, int size)
 				: base (parent, name, size)
