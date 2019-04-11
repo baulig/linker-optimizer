@@ -79,6 +79,9 @@ namespace Mono.Linker.Optimizer
 
 			context.Initialize (mainModule);
 
+			if (options.DetailedSizeCheck && options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
+				options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
+
 			linkContext.Pipeline.AddStepBefore (typeof (MarkStep), new PreprocessStep (context));
 			linkContext.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (context));
 			if (options.ReportSize || options.CheckSize != null)

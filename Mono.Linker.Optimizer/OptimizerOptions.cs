@@ -71,6 +71,10 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
+		public bool DetailedSizeCheck {
+			get; set;
+		}
+
 		public bool AutoDebugMain {
 			get; set;
 		}
@@ -179,6 +183,9 @@ namespace Mono.Linker.Optimizer
 					break;
 				case "disable-all":
 					DisableAll = enabled ?? true;
+					break;
+				case "detailed-size-check":
+					DetailedSizeCheck = enabled ?? true;
 					break;
 				default:
 					SetFeatureEnabled (part, enabled ?? false);
