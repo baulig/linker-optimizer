@@ -198,6 +198,97 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
+		internal bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
+		{
+			ReportAssemblySize (context, assembly, size);
+
+			return CheckAssemblySize (context, assembly.Name.Name, size);
+		}
+
+		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, AssemblySizeEntry entry)
+		{
+			foreach (var type in assembly.MainModule.Types) {
+				ProcessType (context, entry, type);
+			}
+		}
+
+		void WriteDetailedReport (XmlWriter xml, NamespaceEntry entry)
+		{
+			xml.WriteStartElement ("namespace");
+			xml.WriteAttributeString ("name", entry.Name);
+			xml.WriteAttributeString ("size", entry.Size.ToString ());
+
+			foreach (var type in entry.GetTypes ())
+				WriteDetailedReport (xml, type);
+
+			xml.WriteEndElement ();
+		}
+
+		void WriteDetailedReport (XmlWriter xml, TypeEntry entry)
+		{
+			xml.WriteStartElement ("type");
+			xml.WriteAttributeString ("name", entry.Name);
+			xml.WriteAttributeString ("full-name", entry.FullName);
+			xml.WriteAttributeString ("size", entry.Size.ToString ());
+
+			foreach (var type in entry.GetNestedTypes ())
+				WriteDetailedReport (xml, type);
+
+			foreach (var method in entry.GetMethods ())
+				WriteDetailedReport (xml, method);
+
+			xml.WriteEndElement ();
+		}
+
+		void WriteDetailedReport (XmlWriter xml, MethodEntry entry)
+		{
+			xml.WriteStartElement ("method");
+			xml.WriteAttributeString ("name", entry.Name);
+			xml.WriteAttributeString ("size", entry.Size.ToString ());
+			xml.WriteEndElement ();
+		}
+
+		void ProcessType (OptimizerContext context, AssemblySizeEntry parent, TypeDefinition type)
+		{
+			if (!context.Annotations.IsMarked (type))
+				return;
+
+			var ns = parent.GetNamespace (type.Namespace);
+			var entry = ns.GetType (type);
+
+			foreach (var method in type.Methods)
+				ProcessMethod (context, entry, method);
+
+			foreach (var nested in type.NestedTypes)
+				ProcessType (context, entry, nested);
+		}
+
+		void ProcessType (OptimizerContext context, TypeEntry parent, TypeDefinition type)
+		{
+			if (!context.Annotations.IsMarked (type))
+				return;
+
+			var entry = parent.GetNestedType (type, true);
+
+			foreach (var method in type.Methods)
+				ProcessMethod (context, entry, method);
+
+			foreach (var nested in type.NestedTypes)
+				ProcessType (context, entry, nested);
+		}
+
+		void ProcessMethod (OptimizerContext context, TypeEntry parent, MethodDefinition method)
+		{
+			if (!method.HasBody || !context.Annotations.IsMarked (method))
+				return;
+
+			if (!parent.AddMethod (method))
+				return;
+
+			if (Options.HasTypeEntry (method.DeclaringType, OptimizerOptions.TypeAction.Size))
+				context.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
+		}
+
 		class ConfigurationEntry
 		{
 			public string Configuration {
@@ -282,23 +373,23 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			Dictionary<string, DetailedNamespaceEntry> namespaces;
+			Dictionary<string, NamespaceEntry> namespaces;
 
-			public DetailedNamespaceEntry GetNamespace (string name, bool add = true)
+			public NamespaceEntry GetNamespace (string name, bool add = true)
 			{
 				LazyInitializer.EnsureInitialized (ref namespaces);
 				if (namespaces.TryGetValue (name, out var entry))
 					return entry;
 				if (!add)
 					return null;
-				entry = new DetailedNamespaceEntry (this, name);
+				entry = new NamespaceEntry (this, name);
 				namespaces.Add (name, entry);
 				return entry;
 			}
 
-			public SortedSet<DetailedNamespaceEntry> GetNamespaces ()
+			public SortedSet<NamespaceEntry> GetNamespaces ()
 			{
-				var set = new SortedSet<DetailedNamespaceEntry> ();
+				var set = new SortedSet<NamespaceEntry> ();
 				if (namespaces != null) {
 					foreach (var ns in namespaces.Values)
 						set.Add (ns);
@@ -318,116 +409,25 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		internal bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
+		class NamespaceEntry : SizeEntry
 		{
-			ReportAssemblySize (context, assembly, size);
+			Dictionary<string, TypeEntry> types;
 
-			return CheckAssemblySize (context, assembly.Name.Name, size);
-		}
-
-		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, AssemblySizeEntry entry)
-		{
-			foreach (var type in assembly.MainModule.Types) {
-				ProcessType (context, entry, type);
-			}
-		}
-
-		void WriteDetailedReport (XmlWriter xml, DetailedNamespaceEntry entry)
-		{
-			xml.WriteStartElement ("namespace");
-			xml.WriteAttributeString ("name", entry.Name);
-			xml.WriteAttributeString ("size", entry.Size.ToString ());
-
-			foreach (var type in entry.GetTypes ())
-				WriteDetailedReport (xml, type);
-
-			xml.WriteEndElement ();
-		}
-
-		void WriteDetailedReport (XmlWriter xml, DetailedTypeEntry entry)
-		{
-			xml.WriteStartElement ("type");
-			xml.WriteAttributeString ("name", entry.Name);
-			xml.WriteAttributeString ("full-name", entry.FullName);
-			xml.WriteAttributeString ("size", entry.Size.ToString ());
-
-			foreach (var type in entry.GetNestedTypes ())
-				WriteDetailedReport (xml, type);
-
-			foreach (var method in entry.GetMethods ())
-				WriteDetailedReport (xml, method);
-
-			xml.WriteEndElement ();
-		}
-
-		void WriteDetailedReport (XmlWriter xml, DetailedMethodEntry entry)
-		{
-			xml.WriteStartElement ("method");
-			xml.WriteAttributeString ("name", entry.Name);
-			xml.WriteAttributeString ("size", entry.Size.ToString ());
-			xml.WriteEndElement ();
-		}
-
-		void ProcessType (OptimizerContext context, AssemblySizeEntry parent, TypeDefinition type)
-		{
-			if (!context.Annotations.IsMarked (type))
-				return;
-
-			var ns = parent.GetNamespace (type.Namespace);
-			var entry = ns.GetType (type);
-
-			foreach (var method in type.Methods)
-				ProcessMethod (context, entry, method);
-
-			foreach (var nested in type.NestedTypes)
-				ProcessType (context, entry, nested);
-		}
-
-		void ProcessType (OptimizerContext context, DetailedTypeEntry parent, TypeDefinition type)
-		{
-			if (!context.Annotations.IsMarked (type))
-				return;
-
-			var entry = parent.GetNestedType (type, true);
-
-			foreach (var method in type.Methods)
-				ProcessMethod (context, entry, method);
-
-			foreach (var nested in type.NestedTypes)
-				ProcessType (context, entry, nested);
-		}
-
-		void ProcessMethod (OptimizerContext context, DetailedTypeEntry parent, MethodDefinition method)
-		{
-			if (!method.HasBody || !context.Annotations.IsMarked (method))
-				return;
-
-			if (!parent.AddMethod (method))
-				return;
-
-			if (Options.HasTypeEntry (method.DeclaringType, OptimizerOptions.TypeAction.Size))
-				context.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
-		}
-
-		class DetailedNamespaceEntry : SizeEntry
-		{
-			Dictionary<string, DetailedTypeEntry> types;
-
-			public DetailedTypeEntry GetType (TypeDefinition type, bool add = true)
+			public TypeEntry GetType (TypeDefinition type, bool add = true)
 			{
 				LazyInitializer.EnsureInitialized (ref types);
 				if (types.TryGetValue (type.Name, out var entry))
 					return entry;
 				if (!add)
 					return null;
-				entry = new DetailedTypeEntry (this, type.Name, type.FullName);
+				entry = new TypeEntry (this, type.Name, type.FullName);
 				types.Add (type.Name, entry);
 				return entry;
 			}
 
-			public SortedSet<DetailedTypeEntry> GetTypes ()
+			public SortedSet<TypeEntry> GetTypes ()
 			{
-				var set = new SortedSet<DetailedTypeEntry> ();
+				var set = new SortedSet<TypeEntry> ();
 				if (types != null) {
 					foreach (var type in types.Values)
 						set.Add (type);
@@ -435,31 +435,31 @@ namespace Mono.Linker.Optimizer
 				return set;
 			}
 
-			public DetailedNamespaceEntry (AssemblySizeEntry parent, string name)
+			public NamespaceEntry (AssemblySizeEntry parent, string name)
 				: base (parent, name, 0)
 			{
 			}
 		}
 
-		class DetailedTypeEntry : SizeEntry
+		class TypeEntry : SizeEntry
 		{
 			public bool HasNestedTypes => nested != null;
 
-			public DetailedTypeEntry GetNestedType (TypeDefinition type, bool add)
+			public TypeEntry GetNestedType (TypeDefinition type, bool add)
 			{
 				LazyInitializer.EnsureInitialized (ref nested);
 				if (nested.TryGetValue (type.Name, out var entry))
 					return entry;
 				if (!add)
 					return null;
-				entry = new DetailedTypeEntry (this, type.Name, type.FullName);
+				entry = new TypeEntry (this, type.Name, type.FullName);
 				nested.Add (type.Name, entry);
 				return entry;
 			}
 
-			public SortedSet<DetailedTypeEntry> GetNestedTypes ()
+			public SortedSet<TypeEntry> GetNestedTypes ()
 			{
-				var set = new SortedSet<DetailedTypeEntry> ();
+				var set = new SortedSet<TypeEntry> ();
 				if (nested != null) {
 					foreach (var type in nested.Values)
 						set.Add (type);
@@ -475,13 +475,13 @@ namespace Mono.Linker.Optimizer
 				if (methods.ContainsKey (name))
 					return false;
 
-				methods.Add (name, new DetailedMethodEntry (this, name, method.Body.CodeSize));
+				methods.Add (name, new MethodEntry (this, name, method.Body.CodeSize));
 				return true;
 			}
 
-			public SortedSet<DetailedMethodEntry> GetMethods ()
+			public SortedSet<MethodEntry> GetMethods ()
 			{
-				var set = new SortedSet<DetailedMethodEntry> ();
+				var set = new SortedSet<MethodEntry> ();
 				if (methods != null) {
 					foreach (var method in methods.Values)
 						set.Add (method);
@@ -489,23 +489,23 @@ namespace Mono.Linker.Optimizer
 				return set;
 			}
 
-			Dictionary<string, DetailedTypeEntry> nested;
-			Dictionary<string, DetailedMethodEntry> methods;
+			Dictionary<string, TypeEntry> nested;
+			Dictionary<string, MethodEntry> methods;
 
 			public string FullName {
 				get;
 			}
 
-			public DetailedTypeEntry (SizeEntry parent, string name, string fullName)
+			public TypeEntry (SizeEntry parent, string name, string fullName)
 				: base (parent, name, 0)
 			{
 				FullName = fullName;
 			}
 		}
 
-		class DetailedMethodEntry : SizeEntry
+		class MethodEntry : SizeEntry
 		{
-			public DetailedMethodEntry (DetailedTypeEntry parent, string name, int size)
+			public MethodEntry (TypeEntry parent, string name, int size)
 				: base (parent, name, size)
 			{
 			}
