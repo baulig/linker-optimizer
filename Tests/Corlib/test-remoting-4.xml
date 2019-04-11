@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options size-check-configuration="remoting" detailed-size-report="true" />
+	<options size-check-configuration="remoting" detailed-size-report="true" compare-size-with="remoting" />
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
+	<include filename="test-remoting-4-size.xml" />
 
 	<features>
 		<feature name="remoting" enabled="true" />
