@@ -60,9 +60,9 @@ namespace Mono.Linker.Optimizer
 
 		void OnProfileEntry (XPathNavigator nav, ConfigurationEntry configuration)
 		{
-			var profile = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<proifle> requires `name` attribute.");
+			var profile = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<profile> requires `name` attribute.");
 
-			var entry = new SizeReportEntry (configuration, profile);
+			var entry = new SizeReportEntry (profile);
 			configuration.SizeReportEntries.Add (entry);
 
 			OptionsReader.ProcessChildren (nav, "assembly", child => OnAssemblyEntry (child, entry));
@@ -84,7 +84,7 @@ namespace Mono.Linker.Optimizer
 
 		void OnNamespaceEntry (XPathNavigator nav, AssemblySizeEntry assembly)
 		{
-			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
+			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<namespace> requires `name` attribute.");
 
 			var ns = assembly.GetNamespace (name);
 
@@ -174,7 +174,7 @@ namespace Mono.Linker.Optimizer
 			var configEntry = GetConfigurationEntry (Options.SizeCheckConfiguration, true);
 			var sizeEntry = configEntry.SizeReportEntries.FirstOrDefault (e => e.Profile == SizeReportProfile);
 			if (sizeEntry == null) {
-				sizeEntry = new SizeReportEntry (configEntry, SizeReportProfile);
+				sizeEntry = new SizeReportEntry (SizeReportProfile);
 				configEntry.SizeReportEntries.Add (sizeEntry);
 			}
 
@@ -206,8 +206,11 @@ namespace Mono.Linker.Optimizer
 							xml.WriteAttributeString ("tolerance", asm.Tolerance);
 
 						if (Options.DetailedSizeReport) {
-							foreach (var ns in asm.GetNamespaces ())
+							foreach (var ns in asm.GetNamespaces ()) {
+								if (string.IsNullOrEmpty (ns.Name))
+									continue;
 								WriteDetailedReport (xml, ns);
+							}
 						}
 
 						xml.WriteEndElement ();
@@ -340,10 +343,6 @@ namespace Mono.Linker.Optimizer
 
 		class SizeReportEntry
 		{
-			public ConfigurationEntry Configuration {
-				get;
-			}
-
 			public string Profile {
 				get;
 			}
@@ -352,9 +351,8 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			public SizeReportEntry (ConfigurationEntry configuration, string profile)
+			public SizeReportEntry (string profile)
 			{
-				Configuration = configuration;
 				Profile = profile;
 				Assemblies = new List<AssemblySizeEntry> ();
 			}

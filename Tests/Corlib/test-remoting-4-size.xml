@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<optimizer-report>
+<linker-optimizer>
 	<action-report>
 		<namespace name="System.Globalization">
 			<type name="CompareInfo">
@@ -71,7 +71,7 @@
 		</namespace>
 	</action-report>
 	<size-check configuration="remoting">
-		<profile name="">
+		<profile name="test">
 			<assembly name="test-remoting-4" size="3586">
 				<namespace name="Martin.LinkerTest" size="2">
 					<type name="TestRemoting" full-name="Martin.LinkerTest.TestRemoting" size="2">
@@ -345,43 +345,6 @@
 						<method name="AsciHexDigitValue(System.Int32)" size="41" />
 						<method name="PtrToUtf8String(System.IntPtr)" size="80" />
 						<method name="DecodeBlobSize(System.IntPtr,System.IntPtr&amp;)" size="98" />
-					</type>
-				</namespace>
-				<namespace name="" size="985">
-					<type name="Locale" full-name="Locale" size="2">
-						<method name="GetText(System.String)" size="2" />
-					</type>
-					<type name="SR" full-name="SR" size="29">
-						<method name="GetResourceString(System.String)" size="2" />
-						<method name="Format(System.String,System.Object)" size="13" />
-						<method name="Format(System.String,System.Object,System.Object)" size="14" />
-					</type>
-					<type name="&lt;PrivateImplementationDetails&gt;" full-name="&lt;PrivateImplementationDetails&gt;" size="44">
-						<type name="__StaticArrayInitTypeSize=3" full-name="&lt;PrivateImplementationDetails&gt;/__StaticArrayInitTypeSize=3" size="0" />
-						<method name="ComputeStringHash(System.String)" size="44" />
-					</type>
-					<type name="Interop" full-name="Interop" size="910">
-						<type name="Error" full-name="Interop/Error" size="0" />
-						<type name="ErrorInfo" full-name="Interop/ErrorInfo" size="115">
-							<method name="get_Error()" size="7" />
-							<method name="GetErrorMessage()" size="12" />
-							<method name=".ctor(System.Int32)" size="20" />
-							<method name="get_RawErrno()" size="37" />
-							<method name="ToString()" size="39" />
-						</type>
-						<type name="Sys" full-name="Interop/Sys" size="354">
-							<type name="NodeType" full-name="Interop/Sys/NodeType" size="0" />
-							<type name="DirectoryEntry" full-name="Interop/Sys/DirectoryEntry" size="114">
-								<method name="GetName(System.Span`1&lt;System.Char&gt;)" size="114" />
-							</type>
-							<method name="GetLastErrorInfo()" size="11" />
-							<method name="StrError(System.Int32)" size="39" />
-							<method name="Stat(System.ReadOnlySpan`1&lt;System.Char&gt;,Interop/Sys/FileStatus&amp;)" size="54" />
-							<method name="ReadLink(System.String)" size="82" />
-						</type>
-						<method name="GetRandomBytes(System.Byte*,System.Int32)" size="8" />
-						<method name="GetIOException(Interop/ErrorInfo)" size="20" />
-						<method name="GetExceptionForIoErrno(Interop/ErrorInfo,System.String,System.Boolean)" size="413" />
 					</type>
 				</namespace>
 				<namespace name="System.Runtime.Remoting.Activation" size="1133">
@@ -6881,4 +6844,4 @@
 			</assembly>
 		</profile>
 	</size-check>
-</optimizer-report>
+</linker-optimizer>
