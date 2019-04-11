@@ -163,6 +163,8 @@ namespace Mono.Linker.Optimizer
 
 		void WriteActionReport (XmlWriter xml)
 		{
+			xml.WriteStartElement ("action-report");
+
 			foreach (var entry in _namespace_hash.Values) {
 				xml.WriteStartElement ("namespace");
 				xml.WriteAttributeString ("name", entry.Name);
@@ -185,6 +187,8 @@ namespace Mono.Linker.Optimizer
 				}
 				xml.WriteEndElement ();
 			}
+
+			xml.WriteEndElement ();
 		}
 
 		void WriteFailReport (XmlWriter xml)
@@ -193,6 +197,7 @@ namespace Mono.Linker.Optimizer
 				return;
 
 			xml.WriteStartElement ("fail-list");
+
 			foreach (var fail in _fail_list) {
 				xml.WriteStartElement ("fail");
 				xml.WriteAttributeString ("name", fail.Name);

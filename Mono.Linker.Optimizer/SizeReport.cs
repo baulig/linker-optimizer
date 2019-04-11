@@ -42,14 +42,14 @@ namespace Mono.Linker.Optimizer
 		}
 
 		readonly List<ConfigurationEntry> _configuration_entries;
-		readonly List<DetailedAssemblyEntry> _detailed_assembly_entries;
+		// readonly List<DetailedAssemblyEntry> _detailed_assembly_entries;
 
 		public SizeReport (OptimizerOptions options)
 		{
 			Options = options;
 
 			_configuration_entries = new List<ConfigurationEntry> ();
-			_detailed_assembly_entries = new List<DetailedAssemblyEntry> ();
+			// _detailed_assembly_entries = new List<DetailedAssemblyEntry> ();
 		}
 
 		public void Read (XPathNavigator nav)
@@ -151,21 +151,26 @@ namespace Mono.Linker.Optimizer
 			return true;
 		}
 
-		void ReportAssemblySize (string configuration, string profile, string assembly, int size)
+		void ReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
-			var configEntry = GetConfigurationEntry (configuration, true);
-			var sizeEntry = configEntry.SizeReportEntries.FirstOrDefault (e => e.Profile == profile);
+			var configEntry = GetConfigurationEntry (Options.SizeCheckConfiguration, true);
+			var sizeEntry = configEntry.SizeReportEntries.FirstOrDefault (e => e.Profile == SizeReportProfile);
 			if (sizeEntry == null) {
-				sizeEntry = new SizeReportEntry (configEntry, profile);
+				sizeEntry = new SizeReportEntry (configEntry, SizeReportProfile);
 				configEntry.SizeReportEntries.Add (sizeEntry);
 			}
-			var asmEntry = sizeEntry.Assemblies.FirstOrDefault (e => e.Name == assembly);
+
+			var asmEntry = sizeEntry.Assemblies.FirstOrDefault (e => e.Name == assembly.Name.Name);
 			if (asmEntry == null) {
-				asmEntry = new AssemblySizeEntry (assembly, size, null);
+				asmEntry = new AssemblySizeEntry (assembly.Name.Name, size, null);
 				sizeEntry.Assemblies.Add (asmEntry);
 			} else {
 				asmEntry.Size = size;
 			}
+
+			var detailed = new DetailedAssemblyEntry (assembly.Name.Name, size);
+			configEntry.DetailedAssemblyEntries.Add (detailed);
+			ReportDetailed (context, assembly, detailed);
 		}
 
 		public void Write (XmlWriter xml)
@@ -188,10 +193,11 @@ namespace Mono.Linker.Optimizer
 					}
 					xml.WriteEndElement ();
 				}
+
+				WriteDetailedReport (xml, configuration);
+
 				xml.WriteEndElement ();
 			}
-
-			WriteDetailedReport (xml);
 		}
 
 		class ConfigurationEntry
@@ -204,10 +210,15 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
+			public List<DetailedAssemblyEntry> DetailedAssemblyEntries {
+				get;
+			}
+
 			public ConfigurationEntry (string configuration)
 			{
 				Configuration = configuration;
 				SizeReportEntries = new List<SizeReportEntry> ();
+				DetailedAssemblyEntries = new List<DetailedAssemblyEntry> ();
 			}
 		}
 
@@ -262,11 +273,7 @@ namespace Mono.Linker.Optimizer
 
 		internal bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
-			ReportAssemblySize (Options.SizeCheckConfiguration, SizeReportProfile, assembly.Name.Name, size);
-
-			var detailed = new DetailedAssemblyEntry (assembly.Name.Name, size);
-			_detailed_assembly_entries.Add (detailed);
-			ReportDetailed (context, assembly, detailed);
+			ReportAssemblySize (context, assembly, size);
 
 			return CheckAssemblySize (context, assembly.Name.Name, size);
 		}
@@ -278,10 +285,10 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		void WriteDetailedReport (XmlWriter xml)
+		void WriteDetailedReport (XmlWriter xml, ConfigurationEntry configuration)
 		{
 			xml.WriteStartElement ("size-report");
-			foreach (var assembly in _detailed_assembly_entries) {
+			foreach (var assembly in configuration.DetailedAssemblyEntries) {
 				xml.WriteStartElement ("assembly");
 				xml.WriteAttributeString ("name", assembly.Name);
 				foreach (var ns in assembly.GetNamespaces ())
