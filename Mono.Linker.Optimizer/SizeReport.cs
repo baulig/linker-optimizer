@@ -73,7 +73,7 @@ namespace Mono.Linker.Optimizer
 			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
 			var sizeAttr = OptionsReader.GetAttribute (nav, "size");
 			if (sizeAttr == null || !int.TryParse (sizeAttr, out var size))
-				throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
+				throw OptionsReader.ThrowError ("<assembly> requires `size` attribute.");
 			var toleranceAttr = OptionsReader.GetAttribute (nav, "tolerance");
 
 			var assembly = new AssemblySizeEntry (name, size, toleranceAttr);
@@ -96,9 +96,6 @@ namespace Mono.Linker.Optimizer
 			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<type> requires `name` attribute.");
 			var fullName = OptionsReader.GetAttribute (nav, "full-name") ?? throw OptionsReader.ThrowError ("<type> requires `full-name` attribute.");
 			parent.GetType (name, fullName);
-
-			if (fullName.Contains ("SynchronizationAttribute"))
-				Console.Error.WriteLine ($"TYPE: {nav}");
 		}
 
 		SizeReportEntry GetSizeReportEntry (string configuration, string profile)
@@ -428,14 +425,15 @@ namespace Mono.Linker.Optimizer
 				return entry;
 			}
 
-			public SortedSet<NamespaceEntry> GetNamespaces ()
+			public List<NamespaceEntry> GetNamespaces ()
 			{
-				var set = new SortedSet<NamespaceEntry> ();
+				var list = new List<NamespaceEntry> ();
 				if (namespaces != null) {
 					foreach (var ns in namespaces.Values)
-						set.Add (ns);
+						list.Add (ns);
+					list.Sort ();
 				}
-				return set;
+				return list;
 			}
 
 			public AssemblySizeEntry (string name, int size, string tolerance)
@@ -471,14 +469,15 @@ namespace Mono.Linker.Optimizer
 				return entry;
 			}
 
-			public SortedSet<TypeEntry> GetTypes ()
+			public List<TypeEntry> GetTypes ()
 			{
-				var set = new SortedSet<TypeEntry> ();
+				var list = new List<TypeEntry> ();
 				if (types != null) {
 					foreach (var type in types.Values)
-						set.Add (type);
+						list.Add (type);
+					list.Sort ();
 				}
-				return set;
+				return list;
 			}
 
 			public NamespaceEntry (AssemblySizeEntry parent, string name)
@@ -503,14 +502,15 @@ namespace Mono.Linker.Optimizer
 				return entry;
 			}
 
-			public SortedSet<TypeEntry> GetNestedTypes ()
+			public List<TypeEntry> GetNestedTypes ()
 			{
-				var set = new SortedSet<TypeEntry> ();
+				var list = new List<TypeEntry> ();
 				if (nested != null) {
 					foreach (var type in nested.Values)
-						set.Add (type);
+						list.Add (type);
+					list.Sort ();
 				}
-				return set;
+				return list;
 			}
 
 			public bool AddMethod (MethodDefinition method)
@@ -525,14 +525,15 @@ namespace Mono.Linker.Optimizer
 				return true;
 			}
 
-			public SortedSet<MethodEntry> GetMethods ()
+			public List<MethodEntry> GetMethods ()
 			{
-				var set = new SortedSet<MethodEntry> ();
+				var list = new List<MethodEntry> ();
 				if (methods != null) {
 					foreach (var method in methods.Values)
-						set.Add (method);
+						list.Add (method);
+					list.Sort ();
 				}
-				return set;
+				return list;
 			}
 
 			Dictionary<string, TypeEntry> nested;

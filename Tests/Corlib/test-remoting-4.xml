@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
-	<options size-check-configuration="remoting" detailed-size-report="true" compare-size-with="remoting" profile="test" />
+	<options size-check-configuration="remoting" detailed-size-report="true" compare-size-with="remoting" check-size="test" profile="test" />
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
