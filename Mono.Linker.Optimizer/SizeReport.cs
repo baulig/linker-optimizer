@@ -87,6 +87,15 @@ namespace Mono.Linker.Optimizer
 			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
 
 			var ns = assembly.GetNamespace (name);
+
+			OptionsReader.ProcessChildren (nav, "type", child => OnTypeEntry (child, ns));
+		}
+
+		void OnTypeEntry (XPathNavigator nav, NamespaceEntry parent)
+		{
+			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<type> requires `name` attribute.");
+			var fullName = OptionsReader.GetAttribute (nav, "full-name") ?? throw OptionsReader.ThrowError ("<type> requires `full-name` attribute.");
+			parent.GetType (name, fullName);
 		}
 
 		SizeReportEntry GetSizeReportEntry (string configuration, string profile)
@@ -265,7 +274,11 @@ namespace Mono.Linker.Optimizer
 
 		void ProcessType (OptimizerContext context, AssemblySizeEntry parent, TypeDefinition type)
 		{
+			if (type.Name == "<Module>")
+				return;
 			if (!context.Annotations.IsMarked (type))
+				return;
+			if (type.FullName.StartsWith ("<PrivateImplementationDetails>", StringComparison.Ordinal))
 				return;
 
 			var ns = parent.GetNamespace (type.Namespace);
@@ -287,6 +300,7 @@ namespace Mono.Linker.Optimizer
 				return;
 
 			var entry = parent.GetNestedType (type, true);
+			entry.Marked = true;
 
 			foreach (var method in type.Methods)
 				ProcessMethod (context, entry, method);
@@ -437,13 +451,18 @@ namespace Mono.Linker.Optimizer
 
 			public TypeEntry GetType (TypeDefinition type, bool add = true)
 			{
+				return GetType (type.Name, type.FullName, add);
+			}
+
+			public TypeEntry GetType (string name, string fullName, bool add = true)
+			{
 				LazyInitializer.EnsureInitialized (ref types);
-				if (types.TryGetValue (type.Name, out var entry))
+				if (types.TryGetValue (name, out var entry))
 					return entry;
 				if (!add)
 					return null;
-				entry = new TypeEntry (this, type.Name, type.FullName);
-				types.Add (type.Name, entry);
+				entry = new TypeEntry (this, name, fullName);
+				types.Add (name, entry);
 				return entry;
 			}
 
