@@ -208,6 +208,9 @@ namespace Mono.Linker.Optimizer
 						if (Options.DetailedSizeReport)
 							WriteDetailedReport (xml, asm);
 
+						if (Options.CompareSizeWith != null)
+							CompareSize (xml, asm);
+
 						xml.WriteEndElement ();
 
 					}
@@ -243,10 +246,12 @@ namespace Mono.Linker.Optimizer
 
 		void WriteDetailedReport (XmlWriter xml, NamespaceEntry entry)
 		{
+			if (!entry.Marked)
+				return;
+
 			xml.WriteStartElement ("namespace");
 			xml.WriteAttributeString ("name", entry.Name);
 			xml.WriteAttributeString ("size", entry.Size.ToString ());
-			xml.WriteAttributeString ("marked", entry.Marked.ToString ());
 
 			foreach (var type in entry.GetTypes ())
 				WriteDetailedReport (xml, type);
@@ -256,11 +261,13 @@ namespace Mono.Linker.Optimizer
 
 		void WriteDetailedReport (XmlWriter xml, TypeEntry entry)
 		{
+			if (!entry.Marked)
+				return;
+
 			xml.WriteStartElement ("type");
 			xml.WriteAttributeString ("name", entry.Name);
 			xml.WriteAttributeString ("full-name", entry.FullName);
 			xml.WriteAttributeString ("size", entry.Size.ToString ());
-			xml.WriteAttributeString ("marked", entry.Marked.ToString ());
 
 			foreach (var type in entry.GetNestedTypes ())
 				WriteDetailedReport (xml, type);
@@ -276,6 +283,40 @@ namespace Mono.Linker.Optimizer
 			xml.WriteStartElement ("method");
 			xml.WriteAttributeString ("name", entry.Name);
 			xml.WriteAttributeString ("size", entry.Size.ToString ());
+			xml.WriteEndElement ();
+		}
+
+		void CompareSize (XmlWriter xml, AssemblySizeEntry assembly)
+		{
+			xml.WriteStartElement ("removed-types");
+			foreach (var ns in assembly.GetNamespaces ()) {
+				if (string.IsNullOrEmpty (ns.Name))
+					continue;
+				CompareSize (xml, ns);
+			}
+			xml.WriteEndElement ();
+		}
+
+		void CompareSize (XmlWriter xml, NamespaceEntry entry)
+		{
+			var types = entry.GetTypes ();
+			if (entry.Marked && types.All (t => t.Marked))
+				return;
+
+			xml.WriteStartElement ("namespace");
+			xml.WriteAttributeString ("name", entry.Name);
+			if (!entry.Marked)
+				xml.WriteAttributeString ("action", "fail");
+
+			foreach (var type in types) {
+				if (type.Marked)
+					continue;
+				xml.WriteStartElement ("type");
+				xml.WriteAttributeString ("name", type.Name);
+				xml.WriteAttributeString ("action", "fail");
+				xml.WriteEndElement ();
+			}
+
 			xml.WriteEndElement ();
 		}
 
