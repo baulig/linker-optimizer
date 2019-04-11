@@ -185,8 +185,10 @@ namespace Mono.Linker.Optimizer
 						if (asm.Tolerance != null)
 							xml.WriteAttributeString ("tolerance", asm.Tolerance);
 
-						foreach (var ns in asm.GetNamespaces ())
-							WriteDetailedReport (xml, ns);
+						if (Options.DetailedSizeReport) {
+							foreach (var ns in asm.GetNamespaces ())
+								WriteDetailedReport (xml, ns);
+						}
 
 						xml.WriteEndElement ();
 
