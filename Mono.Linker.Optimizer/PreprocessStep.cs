@@ -40,6 +40,9 @@ namespace Mono.Linker.Optimizer {
 		{
 			RemoveFeatures ();
 
+			if (Options.DetailedSizeCheck)
+				Options.SizeReport.Preprocess (Context);
+
 			Context.LogDebug ($"Preprocessor mode: {Options.Preprocessor}.");
 
 			switch (Options.Preprocessor) {
@@ -78,6 +81,8 @@ namespace Mono.Linker.Optimizer {
 		{
 			foreach (var assembly in GetAssemblies ()) {
 				foreach (var type in assembly.MainModule.Types) {
+					if (type.Name == "<Module>")
+						continue;
 					ProcessType (type);
 				}
 			}
@@ -85,9 +90,6 @@ namespace Mono.Linker.Optimizer {
 
 		void ProcessType (TypeDefinition type)
 		{
-			if (Options.DetailedSizeCheck)
-				Options.SizeReport.MarkType (type);
-
 			Options.ProcessTypeEntries (type, a => ProcessTypeActions (type, a));
 
 			if (type.HasNestedTypes) {
