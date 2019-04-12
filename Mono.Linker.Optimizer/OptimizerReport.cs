@@ -67,10 +67,9 @@ namespace Mono.Linker.Optimizer
 			OptionsReader.ProcessChildren (nav, "profile", child => OnProfileEntry (child, configuration));
 		}
 
-		[Obsolete]
-		void LogMessage (MessageImportance importance, string message)
+		void LogMessage (string message)
 		{
-			Logger.LogMessage (importance, message);
+			Logger.LogMessage (MessageImportance.Normal, message);
 		}
 
 		void LogWarning (string message)
@@ -387,7 +386,7 @@ namespace Mono.Linker.Optimizer
 				return;
 
 			if (Options.HasTypeEntry (method.DeclaringType, OptimizerOptions.TypeAction.Size))
-				context.LogMessage (MessageImportance.Normal, $"SIZE: {method.FullName} {method.Body.CodeSize}");
+				LogMessage ($"SIZE: {method.FullName} {method.Body.CodeSize}");
 		}
 
 		class ConfigurationEntry
