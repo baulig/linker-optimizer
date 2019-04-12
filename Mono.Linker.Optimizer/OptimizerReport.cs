@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -107,36 +108,33 @@ namespace Mono.Linker.Optimizer
 			return CheckAssemblySize (assembly.Name.Name, size);
 		}
 
-		public void Write (XmlWriter xml)
+		public void WriteReport (string filename)
 		{
-			foreach (var configuration in _configuration_entries) {
-				xml.WriteStartElement ("size-check");
-				xml.WriteAttributeString ("configuration", configuration.Configuration);
+			var settings = new XmlWriterSettings {
+				Indent = true,
+				OmitXmlDeclaration = false,
+				NewLineHandling = NewLineHandling.None,
+				ConformanceLevel = ConformanceLevel.Document,
+				IndentChars = "\t",
+				Encoding = Encoding.Default
+			};
 
-				foreach (var entry in configuration.SizeReportEntries) {
-					xml.WriteStartElement ("profile");
-					xml.WriteAttributeString ("name", entry.Profile);
-					foreach (var asm in entry.Assemblies) {
-						xml.WriteStartElement ("assembly");
-						xml.WriteAttributeString ("name", asm.Name);
-						xml.WriteAttributeString ("size", asm.Size.ToString ());
-						if (asm.Tolerance != null)
-							xml.WriteAttributeString ("tolerance", asm.Tolerance);
+			using (var xml = XmlWriter.Create (filename, settings)) {
+				xml.WriteStartDocument ();
+				xml.WriteStartElement ("optimizer-report");
 
-						if (IsEnabled (ReportMode.Detailed))
-							WriteDetailedReport (xml, asm);
-
-						if (Options.CompareSizeWith != null)
-							CompareSize (xml, asm);
-
-						xml.WriteEndElement ();
-
-					}
-					xml.WriteEndElement ();
-				}
+				Write (xml);
 
 				xml.WriteEndElement ();
+				xml.WriteEndDocument ();
 			}
+		}
+
+		public void Write (XmlWriter xml)
+		{
+			WriteSizeReport (xml);
+
+			WriteFailReport (xml);
 		}
 
 		void LogMessage (string message)
@@ -276,6 +274,38 @@ namespace Mono.Linker.Optimizer
 		{
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (context, entry, type);
+			}
+		}
+
+		void WriteSizeReport (XmlWriter xml)
+		{
+			foreach (var configuration in _configuration_entries) {
+				xml.WriteStartElement ("size-check");
+				xml.WriteAttributeString ("configuration", configuration.Configuration);
+
+				foreach (var entry in configuration.SizeReportEntries) {
+					xml.WriteStartElement ("profile");
+					xml.WriteAttributeString ("name", entry.Profile);
+					foreach (var asm in entry.Assemblies) {
+						xml.WriteStartElement ("assembly");
+						xml.WriteAttributeString ("name", asm.Name);
+						xml.WriteAttributeString ("size", asm.Size.ToString ());
+						if (asm.Tolerance != null)
+							xml.WriteAttributeString ("tolerance", asm.Tolerance);
+
+						if (IsEnabled (ReportMode.Detailed))
+							WriteDetailedReport (xml, asm);
+
+						if (Options.CompareSizeWith != null)
+							CompareSize (xml, asm);
+
+						xml.WriteEndElement ();
+
+					}
+					xml.WriteEndElement ();
+				}
+
+				xml.WriteEndElement ();
 			}
 		}
 
