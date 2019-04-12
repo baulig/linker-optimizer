@@ -95,7 +95,7 @@ namespace Mono.Linker.Optimizer
 
 			linkContext.Pipeline.AddStepBefore (typeof (MarkStep), new PreprocessStep (context));
 			linkContext.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (context));
-			linkContext.Pipeline.AppendStep (new WriteReportStep (context));
+			linkContext.Pipeline.AppendStep (new GenerateReportStep (context));
 		}
 
 		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";

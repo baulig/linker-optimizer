@@ -64,7 +64,7 @@
     <Compile Include="Mono.Linker.Optimizer.BasicBlocks\DeadCodeEliminator.cs" />
     <Compile Include="Mono.Linker.Optimizer.Conditionals\RequireFeatureConditional.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerActionReport.cs" />
-    <Compile Include="Mono.Linker.Optimizer\WriteReportStep.cs" />
+    <Compile Include="Mono.Linker.Optimizer\GenerateReportStep.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerException.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerReport.cs" />
     <Compile Include="Mono.Linker.Optimizer\ReportMode.cs" />

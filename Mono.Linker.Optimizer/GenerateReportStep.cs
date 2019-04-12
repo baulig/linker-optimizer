@@ -1,5 +1,5 @@
 ﻿//
-// WriteReportStep.cs
+// GenerateReportStep.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -29,9 +29,9 @@ using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer
 {
-	public class WriteReportStep : OptimizerBaseStep
+	public class GenerateReportStep : OptimizerBaseStep
 	{
-		public WriteReportStep (OptimizerContext context)
+		public GenerateReportStep (OptimizerContext context)
 			: base (context)
 		{
 		}
