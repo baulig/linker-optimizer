@@ -85,6 +85,14 @@ namespace Mono.Linker.Optimizer
 			OptionsReader.ProcessChildren (nav, "profile", child => OnProfileEntry (child, configuration));
 		}
 
+		public void MarkAsContainingConditionals (MethodDefinition method)
+		{
+			if (method.DeclaringType.DeclaringType != null)
+				throw new OptimizerAssertionException ($"Conditionals in nested classes are not supported yet.");
+
+			var entry = GetMethodEntry (_root_entry, method, true);
+		}
+
 		public void ReportFailListEntry (TypeDefinition type, OptimizerOptions.TypeEntry entry, string original, List<string> stack)
 		{
 			var fail = new FailListEntry (type.FullName) {
@@ -208,6 +216,16 @@ namespace Mono.Linker.Optimizer
 			parent.GetType (name, fullName);
 		}
 
+		ConfigurationEntry GetConfigurationEntry (string configuration, bool add)
+		{
+			var entry = _configuration_entries.FirstOrDefault (e => e.Configuration == configuration);
+			if (add && entry == null) {
+				entry = new ConfigurationEntry (configuration);
+				_configuration_entries.Add (entry);
+			}
+			return entry;
+		}
+
 		ProfileEntry GetProfileEntry (string configuration, string profile, bool add)
 		{
 			var configEntry = GetConfigurationEntry (configuration, add);
@@ -221,14 +239,40 @@ namespace Mono.Linker.Optimizer
 			return profileEntry;
 		}
 
-		ConfigurationEntry GetConfigurationEntry (string configuration, bool add)
+		AssemblyEntry GetAssemblyEntry (ProfileEntry profile, string name, bool add)
 		{
-			var entry = _configuration_entries.FirstOrDefault (e => e.Configuration == configuration);
-			if (add && entry == null) {
-				entry = new ConfigurationEntry (configuration);
-				_configuration_entries.Add (entry);
+			var assembly = profile.Assemblies.FirstOrDefault (e => e.Name == name);
+			if (add && assembly == null) {
+				assembly = new AssemblyEntry (name, 0, null);
+				profile.Assemblies.Add (assembly);
 			}
-			return entry;
+			return assembly;
+		}
+
+		TypeEntry GetTypeEntry (ProfileEntry profile, TypeDefinition type, bool add)
+		{
+			if (type.DeclaringType != null)
+				throw DebugHelpers.AssertFail ("Nested types are not supported yet.");
+
+			var assembly = GetAssemblyEntry (profile, type.Module.Assembly.Name.Name, add);
+			if (assembly == null)
+				return null;
+
+			var ns = assembly.GetNamespace (type.Name, add);
+			if (ns == null)
+				return null;
+
+			return ns.GetType (type, add);
+		}
+
+		MethodEntry GetMethodEntry (ProfileEntry profile, MethodDefinition method, bool add)
+		{
+			var type = GetTypeEntry (profile, method.DeclaringType, add);
+			if (type == null)
+				return null;
+
+			type.AddMethod (method);
+			return null;
 		}
 
 		bool CheckAssemblySize (string assembly, int size)
@@ -236,7 +280,7 @@ namespace Mono.Linker.Optimizer
 			if (!Options.CheckSize)
 				return true;
 
-			var asmEntry = _root_entry.Assemblies.FirstOrDefault (e => e.Name == assembly);
+			var asmEntry = GetAssemblyEntry (_root_entry, assembly, false);
 			if (asmEntry == null)
 				return true;
 
@@ -266,13 +310,8 @@ namespace Mono.Linker.Optimizer
 
 		void ReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
-			var asmEntry = _root_entry.Assemblies.FirstOrDefault (e => e.Name == assembly.Name.Name);
-			if (asmEntry == null) {
-				asmEntry = new AssemblyEntry (assembly.Name.Name, size, null);
-				_root_entry.Assemblies.Add (asmEntry);
-			} else {
-				asmEntry.SetSize (size);
-			}
+			var asmEntry = GetAssemblyEntry (_root_entry, assembly.Name.Name, true);
+			asmEntry.SetSize (size);
 
 			ReportDetailed (context, assembly, asmEntry);
 		}
@@ -670,6 +709,20 @@ namespace Mono.Linker.Optimizer
 
 				methods.Add (name, new MethodEntry (this, name, method.Body.CodeSize));
 				return true;
+			}
+
+			public MethodEntry GetMethod (MethodDefinition method, bool add)
+			{
+				LazyInitializer.EnsureInitialized (ref methods);
+
+				var name = method.Name + CecilHelper.GetMethodSignature (method);
+				if (methods.TryGetValue (name, out var entry))
+					return entry;
+				if (!add)
+					return null;
+				entry = new MethodEntry (this, name, method.Body.CodeSize);
+				methods.Add (name, entry);
+				return entry;
 			}
 
 			public List<MethodEntry> GetMethods ()

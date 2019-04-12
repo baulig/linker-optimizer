@@ -37,6 +37,7 @@ namespace Mono.Linker.Optimizer
 	{
 		readonly Dictionary<string, TypeEntry> _namespace_hash = new Dictionary<string, TypeEntry> ();
 
+		[Obsolete ("KILL", true)]
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
 			if (method.DeclaringType.DeclaringType != null)
