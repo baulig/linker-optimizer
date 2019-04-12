@@ -59,11 +59,11 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
-		public string SizeCheckConfiguration {
+		public string ReportConfiguration {
 			get; set;
 		}
 
-		public string SizeCheckProfile {
+		public string ReportProfile {
 			get; set;
 		}
 
@@ -84,10 +84,6 @@ namespace Mono.Linker.Optimizer
 		}
 
 		public string ReportFileName {
-			get; set;
-		}
-
-		public string ProfileName {
 			get; set;
 		}
 
@@ -135,11 +131,11 @@ namespace Mono.Linker.Optimizer
 					case "preprocess":
 						SetPreprocessorMode (value);
 						continue;
-					case "profile":
-						ProfileName = value;
+					case "report-configuration":
+						ReportConfiguration = value;
 						continue;
-					case "size-check-configuration":
-						SizeCheckConfiguration = value;
+					case "report-profile":
+						ReportProfile = value;
 						continue;
 					case "size-check-tolerance":
 						SizeCheckTolerance = value;

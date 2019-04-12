@@ -96,7 +96,7 @@ namespace Mono.Linker.Optimizer
 			}
 
 			if (!File.Exists (file))
-				throw ThrowError ($"Include file `{file}` does not exist.");	
+				throw ThrowError ($"Include file `{file}` does not exist.");
 			Read (Options, file);
 		}
 
@@ -110,11 +110,10 @@ namespace Mono.Linker.Optimizer
 			CheckAttribute (nav, "ignore-resolution-errors", value => Options.IgnoreResolutionErrors = value);
 			CheckAttribute (nav, "check-size", value => Options.CheckSize = value);
 			CheckAttribute (nav, "report-mode", value => Options.SetReportMode (value));
-			CheckAttribute (nav, "size-check-configuration", value => Options.SizeCheckConfiguration = value);
-			CheckAttribute (nav, "size-check-profile", value => Options.SizeCheckProfile = value);
+			CheckAttribute (nav, "report-configuration", value => Options.ReportConfiguration = value);
+			CheckAttribute (nav, "report-profile", value => Options.ReportProfile = value);
 			CheckAttribute (nav, "size-check-tolerance", value => Options.SizeCheckTolerance = value);
 			CheckAttribute (nav, "compare-size-with", value => Options.CompareSizeWith = value);
-			CheckAttribute (nav, "profile", value => Options.ProfileName = value);
 			CheckAttribute (nav, "disable-all", value => Options.DisableAll = value);
 		}
 

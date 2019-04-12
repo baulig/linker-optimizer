@@ -116,8 +116,6 @@ namespace Mono.Linker.Optimizer
 
 		void Initialize (string mainModule)
 		{
-			Options.Report.Logger = Context.Logger;
-
 			LogMessage (MessageImportance.High, $"Initializing {Program.ProgramName}.");
 
 			var mainName = Path.GetFileNameWithoutExtension (mainModule);
@@ -157,6 +155,8 @@ namespace Mono.Linker.Optimizer
 				() => _platform_not_support_exception.Value.Methods.FirstOrDefault (m => m.Name == ".ctor") ?? throw new OptimizerException ($"Can't find `System.PlatformNotSupportedException`."));
 
 			_tracer_stack_field = typeof (Tracer).GetField ("dependency_stack", BindingFlags.Instance | BindingFlags.NonPublic);
+
+			Options.Report.Initialize (this);
 		}
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)

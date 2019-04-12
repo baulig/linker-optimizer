@@ -44,7 +44,8 @@ namespace Mono.Linker.Optimizer
 		}
 
 		public ILogger Logger {
-			get; set;
+			get;
+			private set;
 		}
 
 		public ReportMode Mode => Options.ReportMode;
@@ -53,6 +54,7 @@ namespace Mono.Linker.Optimizer
 
 		readonly List<ConfigurationEntry> _configuration_entries;
 		readonly List<FailListEntry> _fail_list;
+		ProfileEntry _root_entry;
 
 		public OptimizerReport (OptimizerOptions options)
 		{
@@ -60,6 +62,19 @@ namespace Mono.Linker.Optimizer
 
 			_configuration_entries = new List<ConfigurationEntry> ();
 			_fail_list = new List<FailListEntry> ();
+		}
+
+		public void Initialize (OptimizerContext context)
+		{
+			Logger = context.Context.Logger;
+
+			_root_entry = GetProfileEntry (Options.ReportConfiguration, Options.ReportProfile, false);
+
+			if (_root_entry == null) {
+				if (Options.CheckSize)
+					LogWarning ($"Cannot find size entries for configuration `{Options.ReportConfiguration}`, profile `{Options.ReportProfile}`.");
+				_root_entry = GetProfileEntry (null, null, true);
+			}
 		}
 
 		public void Read (XPathNavigator nav)
@@ -157,13 +172,13 @@ namespace Mono.Linker.Optimizer
 		{
 			var profile = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<profile> requires `name` attribute.");
 
-			var entry = new SizeReportEntry (profile);
-			configuration.SizeReportEntries.Add (entry);
+			var entry = new ProfileEntry (profile);
+			configuration.ProfileEntries.Add (entry);
 
 			OptionsReader.ProcessChildren (nav, "assembly", child => OnAssemblyEntry (child, entry));
 		}
 
-		void OnAssemblyEntry (XPathNavigator nav, SizeReportEntry entry)
+		void OnAssemblyEntry (XPathNavigator nav, ProfileEntry entry)
 		{
 			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
 			var sizeAttr = OptionsReader.GetAttribute (nav, "size");
@@ -171,13 +186,13 @@ namespace Mono.Linker.Optimizer
 				throw OptionsReader.ThrowError ("<assembly> requires `size` attribute.");
 			var toleranceAttr = OptionsReader.GetAttribute (nav, "tolerance");
 
-			var assembly = new AssemblySizeEntry (name, size, toleranceAttr);
+			var assembly = new AssemblyEntry (name, size, toleranceAttr);
 			entry.Assemblies.Add (assembly);
 
 			OptionsReader.ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, assembly));
 		}
 
-		void OnNamespaceEntry (XPathNavigator nav, AssemblySizeEntry assembly)
+		void OnNamespaceEntry (XPathNavigator nav, AssemblyEntry assembly)
 		{
 			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<namespace> requires `name` attribute.");
 
@@ -193,12 +208,17 @@ namespace Mono.Linker.Optimizer
 			parent.GetType (name, fullName);
 		}
 
-		SizeReportEntry GetSizeReportEntry (string configuration, string profile)
+		ProfileEntry GetProfileEntry (string configuration, string profile, bool add)
 		{
-			var configEntry = GetConfigurationEntry (configuration, false);
+			var configEntry = GetConfigurationEntry (configuration, add);
 			if (configEntry == null)
 				return null;
-			return configEntry.SizeReportEntries.FirstOrDefault (e => e.Profile == profile);
+			var profileEntry = configEntry.ProfileEntries.FirstOrDefault (e => e.Profile == profile);
+			if (add && profileEntry == null) {
+				profileEntry = new ProfileEntry (profile);
+				configEntry.ProfileEntries.Add (profileEntry);
+			}
+			return profileEntry;
 		}
 
 		ConfigurationEntry GetConfigurationEntry (string configuration, bool add)
@@ -216,13 +236,7 @@ namespace Mono.Linker.Optimizer
 			if (!Options.CheckSize)
 				return true;
 
-			var entry = GetSizeReportEntry (Options.SizeCheckConfiguration, Options.SizeCheckProfile);
-			if (entry == null) {
-				LogWarning ($"Cannot find size entries for profile `{Options.SizeCheckProfile}`.");
-				return false;
-			}
-
-			var asmEntry = entry.Assemblies.FirstOrDefault (e => e.Name == assembly);
+			var asmEntry = _root_entry.Assemblies.FirstOrDefault (e => e.Name == assembly);
 			if (asmEntry == null)
 				return true;
 
@@ -252,16 +266,16 @@ namespace Mono.Linker.Optimizer
 
 		void ReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
-			var configEntry = GetConfigurationEntry (Options.SizeCheckConfiguration, true);
-			var sizeEntry = configEntry.SizeReportEntries.FirstOrDefault (e => e.Profile == Options.SizeCheckProfile);
+			var configEntry = GetConfigurationEntry (Options.ReportConfiguration, true);
+			var sizeEntry = configEntry.ProfileEntries.FirstOrDefault (e => e.Profile == Options.ReportProfile);
 			if (sizeEntry == null) {
-				sizeEntry = new SizeReportEntry (Options.SizeCheckProfile);
-				configEntry.SizeReportEntries.Add (sizeEntry);
+				sizeEntry = new ProfileEntry (Options.ReportProfile);
+				configEntry.ProfileEntries.Add (sizeEntry);
 			}
 
 			var asmEntry = sizeEntry.Assemblies.FirstOrDefault (e => e.Name == assembly.Name.Name);
 			if (asmEntry == null) {
-				asmEntry = new AssemblySizeEntry (assembly.Name.Name, size, null);
+				asmEntry = new AssemblyEntry (assembly.Name.Name, size, null);
 				sizeEntry.Assemblies.Add (asmEntry);
 			} else {
 				asmEntry.Size = size;
@@ -270,7 +284,7 @@ namespace Mono.Linker.Optimizer
 			ReportDetailed (context, assembly, asmEntry);
 		}
 
-		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, AssemblySizeEntry entry)
+		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, AssemblyEntry entry)
 		{
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (context, entry, type);
@@ -283,7 +297,7 @@ namespace Mono.Linker.Optimizer
 				xml.WriteStartElement ("size-check");
 				xml.WriteAttributeString ("configuration", configuration.Configuration);
 
-				foreach (var entry in configuration.SizeReportEntries) {
+				foreach (var entry in configuration.ProfileEntries) {
 					xml.WriteStartElement ("profile");
 					xml.WriteAttributeString ("name", entry.Profile);
 					foreach (var asm in entry.Assemblies) {
@@ -337,7 +351,7 @@ namespace Mono.Linker.Optimizer
 			xml.WriteEndElement ();
 		}
 
-		void WriteDetailedReport (XmlWriter xml, AssemblySizeEntry assembly)
+		void WriteDetailedReport (XmlWriter xml, AssemblyEntry assembly)
 		{
 			foreach (var ns in assembly.GetNamespaces ()) {
 				if (string.IsNullOrEmpty (ns.Name))
@@ -388,7 +402,7 @@ namespace Mono.Linker.Optimizer
 			xml.WriteEndElement ();
 		}
 
-		void CompareSize (XmlWriter xml, AssemblySizeEntry assembly)
+		void CompareSize (XmlWriter xml, AssemblyEntry assembly)
 		{
 			xml.WriteStartElement ("removed-types");
 			foreach (var ns in assembly.GetNamespaces ()) {
@@ -422,7 +436,7 @@ namespace Mono.Linker.Optimizer
 			xml.WriteEndElement ();
 		}
 
-		void ProcessType (OptimizerContext context, AssemblySizeEntry parent, TypeDefinition type)
+		void ProcessType (OptimizerContext context, AssemblyEntry parent, TypeDefinition type)
 		{
 			if (type.Name == "<Module>")
 				return;
@@ -472,37 +486,37 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			public List<SizeReportEntry> SizeReportEntries {
+			public List<ProfileEntry> ProfileEntries {
 				get;
 			}
 
 			public ConfigurationEntry (string configuration)
 			{
 				Configuration = configuration;
-				SizeReportEntries = new List<SizeReportEntry> ();
+				ProfileEntries = new List<ProfileEntry> ();
 			}
 		}
 
-		class SizeReportEntry
+		class ProfileEntry
 		{
 			public string Profile {
 				get;
 			}
 
-			public List<AssemblySizeEntry> Assemblies {
+			public List<AssemblyEntry> Assemblies {
 				get;
 			}
 
-			public SizeReportEntry (string profile)
+			public ProfileEntry (string profile)
 			{
 				Profile = profile;
-				Assemblies = new List<AssemblySizeEntry> ();
+				Assemblies = new List<AssemblyEntry> ();
 			}
 		}
 
-		abstract class SizeEntry : IComparable<SizeEntry>
+		abstract class ReportEntry : IComparable<ReportEntry>
 		{
-			public SizeEntry Parent {
+			public ReportEntry Parent {
 				get;
 			}
 
@@ -524,7 +538,7 @@ namespace Mono.Linker.Optimizer
 				Parent?.AddSize (size);
 			}
 
-			protected SizeEntry (SizeEntry parent, string name, int size)
+			protected ReportEntry (ReportEntry parent, string name, int size)
 			{
 				Parent = parent;
 				Name = name;
@@ -532,7 +546,7 @@ namespace Mono.Linker.Optimizer
 				AddSize (size);
 			}
 
-			public int CompareTo (SizeEntry obj)
+			public int CompareTo (ReportEntry obj)
 			{
 				return Size.CompareTo (obj.Size);
 			}
@@ -543,7 +557,7 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		class AssemblySizeEntry : SizeEntry
+		class AssemblyEntry : ReportEntry
 		{
 			public string Tolerance {
 				get;
@@ -574,7 +588,7 @@ namespace Mono.Linker.Optimizer
 				return list;
 			}
 
-			public AssemblySizeEntry (string name, int size, string tolerance)
+			public AssemblyEntry (string name, int size, string tolerance)
 				: base (null, name, size)
 			{
 				Tolerance = tolerance;
@@ -586,9 +600,9 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		abstract class AbstractTypeEntry : SizeEntry
+		abstract class AbstractTypeEntry : ReportEntry
 		{
-			protected AbstractTypeEntry (SizeEntry parent, string name)
+			protected AbstractTypeEntry (ReportEntry parent, string name)
 				: base (parent, name, 0)
 			{
 			}
@@ -628,7 +642,7 @@ namespace Mono.Linker.Optimizer
 
 		class NamespaceEntry : AbstractTypeEntry
 		{
-			public NamespaceEntry (AssemblySizeEntry parent, string name)
+			public NamespaceEntry (AssemblyEntry parent, string name)
 				: base (parent, name)
 			{
 			}
@@ -671,14 +685,14 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			public TypeEntry (SizeEntry parent, string name, string fullName)
+			public TypeEntry (ReportEntry parent, string name, string fullName)
 				: base (parent, name)
 			{
 				FullName = fullName;
 			}
 		}
 
-		class MethodEntry : SizeEntry
+		class MethodEntry : ReportEntry
 		{
 			public MethodEntry (TypeEntry parent, string name, int size)
 				: base (parent, name, size)
