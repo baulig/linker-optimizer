@@ -67,18 +67,11 @@ namespace Mono.Linker.Optimizer
 		{
 			Logger = context.Context.Logger;
 
-			if (false && Options.ReportConfiguration == null && Options.ReportProfile == null) {
-				Root.AssemblyList = new SizeReportEntry ();
-			} else {
-				Root.AssemblyList = Root.GetProfile (Options.ReportConfiguration, Options.ReportProfile, false);
+			if (Root.Initialize (Options.ReportConfiguration, Options.ReportProfile, Options.CheckSize))
+				return;
 
-				if (Root.AssemblyList == null) {
-					if (Options.CheckSize)
-						LogWarning ($"Cannot find size entries for configuration `{Options.ReportConfiguration}`, profile `{Options.ReportProfile}`.");
-					Root.AssemblyList = new SizeReportEntry ();
-					Root.AssemblyList = Root.GetProfile (Options.ReportConfiguration, Options.ReportProfile, true);
-				}
-			}
+			if (Options.CheckSize)
+				LogWarning ($"Cannot find size entries for configuration `{Options.ReportConfiguration}`, profile `{Options.ReportProfile}`.");
 		}
 
 		public void Read (XPathNavigator nav)
@@ -506,8 +499,32 @@ namespace Mono.Linker.Optimizer
 
 			public List<ConfigurationEntry> ConfigurationEntries { get; } = new List<ConfigurationEntry> ();
 
+			public ProfileEntry DefaultProfile {
+				get;
+				private set;
+			}
+
 			public AssemblyListEntry AssemblyList {
-				get; set;
+				get;
+				private set;
+			}
+
+			public SizeReportEntry SizeReport {
+				get;
+				private set;
+			}
+
+			public bool Initialize (string configuration, string profile, bool add)
+			{
+				DefaultProfile = GetProfile (configuration, profile, add);
+				if (DefaultProfile != null) {
+					AssemblyList = DefaultProfile;
+					return true;
+				}
+
+				SizeReport = new SizeReportEntry ();
+				AssemblyList = SizeReport;
+				return false;
 			}
 
 			public ConfigurationEntry GetConfiguration (string configuration, bool add)
@@ -537,7 +554,7 @@ namespace Mono.Linker.Optimizer
 			public override void VisitChildren (IVisitor visitor)
 			{
 				ConfigurationEntries.ForEach (configuration => configuration.Visit (visitor));
-				AssemblyList?.Visit (visitor);
+				SizeReport?.Visit (visitor);
 			}
 		}
 
