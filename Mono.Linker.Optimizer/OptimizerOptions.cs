@@ -59,7 +59,7 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
-		public string CheckSize {
+		public bool CheckSize {
 			get; set;
 		}
 
@@ -76,10 +76,6 @@ namespace Mono.Linker.Optimizer
 		}
 
 		public string SizeCheckTolerance {
-			get; set;
-		}
-
-		public bool DetailedSizeReport {
 			get; set;
 		}
 
@@ -146,9 +142,6 @@ namespace Mono.Linker.Optimizer
 					case "profile":
 						ProfileName = value;
 						continue;
-					case "check-size":
-						CheckSize = value;
-						continue;
 					case "size-check-configuration":
 						SizeCheckConfiguration = value;
 						continue;
@@ -194,14 +187,14 @@ namespace Mono.Linker.Optimizer
 				case "report-size":
 					ReportSize = enabled ?? true;
 					break;
+				case "check-size":
+					CheckSize = enabled ?? true;
+					continue;
 				case "disable-module":
 					DisableModule = enabled ?? true;
 					break;
 				case "disable-all":
 					DisableAll = enabled ?? true;
-					break;
-				case "detailed-size-report":
-					DetailedSizeReport = enabled ?? true;
 					break;
 				default:
 					SetFeatureEnabled (part, enabled ?? false);

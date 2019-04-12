@@ -141,23 +141,9 @@ namespace Mono.Linker.Optimizer
 			return entry;
 		}
 
-		string XGetProfileName ()
-		{
-			switch (Options.CheckSize) {
-			case null:
-			case "false":
-				return null;
-			case "true":
-				return Options.ProfileName ?? "default";
-			default:
-				return Options.CheckSize;
-			}
-		}
-
 		bool CheckAssemblySize (string assembly, int size)
 		{
-			var xprofile = XGetProfileName ();
-			if (xprofile == null)
+			if (!Options.CheckSize)
 				return true;
 
 			var entry = GetSizeReportEntry (Options.SizeCheckConfiguration, Options.SizeCheckProfile);
@@ -230,7 +216,7 @@ namespace Mono.Linker.Optimizer
 						if (asm.Tolerance != null)
 							xml.WriteAttributeString ("tolerance", asm.Tolerance);
 
-						if (Options.DetailedSizeReport)
+						if (IsEnabled (ReportMode.Detailed))
 							WriteDetailedReport (xml, asm);
 
 						if (Options.CompareSizeWith != null)

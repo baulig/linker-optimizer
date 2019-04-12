@@ -84,7 +84,7 @@ namespace Mono.Linker.Optimizer
 
 			context.Initialize (mainModule);
 
-			if (options.DetailedSizeReport) {
+			if (options.Report.IsEnabled (ReportMode.Detailed)) {
 				options.AnalyzeAll = options.ScanAllModules = options.ReportSize = true;
 				if (options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
 					options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
