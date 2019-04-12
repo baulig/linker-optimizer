@@ -30,6 +30,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.XPath;
 using Mono.Cecil;
 
@@ -231,8 +232,7 @@ namespace Mono.Linker.Optimizer
 			if (type == null)
 				return null;
 
-			type.AddMethod (method);
-			return null;
+			return type.GetMethod (method, add);
 		}
 
 		bool CheckAssemblySize (string assembly, int size)
@@ -425,6 +425,10 @@ namespace Mono.Linker.Optimizer
 				Writer.WriteStartElement (entry.ElementName);
 				entry.WriteElement (Writer);
 
+				var actionReport = new ActionReportWriter ();
+				entry.Visit (actionReport);
+				actionReport.Root.WriteTo (Writer);
+
 				Write (entry, "action-report", WriteMode.Action);
 
 				WriteMode = WriteMode.Size;
@@ -500,6 +504,168 @@ namespace Mono.Linker.Optimizer
 			void IVisitor.Visit (FailListEntry entry)
 			{
 				Write (entry);
+			}
+		}
+
+		abstract class XElementVisitor : IVisitor
+		{
+			public XElement Root {
+				get;
+			}
+
+			public bool IsEmpty => !Root.IsEmpty || Root.HasElements || Root.HasAttributes;
+
+			Stack<XElement> CurrentNode { get; } = new Stack<XElement> ();
+
+			protected XElementVisitor (string name)
+			{
+				Root = new XElement (name);
+				CurrentNode.Push (Root);
+			}
+
+			void VisitEntry<T> (T entry, Func<T, XElement, bool> func)
+				where T : AbstractReportEntry
+			{
+				var element = new XElement (entry.ElementName);
+
+				if (!func (entry, element))
+					return;
+
+				CurrentNode.Push (element);
+				entry.VisitChildren (this);
+				CurrentNode.Pop ();
+
+				if (!element.IsEmpty || element.HasAttributes || element.HasElements)
+					CurrentNode.Peek ().Add (element);
+			}
+
+			void IVisitor.Visit (RootEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (SizeReportEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (ConfigurationEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (ProfileEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (AssemblyEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (NamespaceEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (TypeEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (MethodEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (FailList entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			void IVisitor.Visit (FailListEntry entry)
+			{
+				VisitEntry (entry, Visit);
+			}
+
+			protected abstract bool Visit (RootEntry entry, XElement element);
+
+			protected abstract bool Visit (SizeReportEntry entry, XElement element);
+
+			protected abstract bool Visit (ConfigurationEntry entry, XElement element);
+
+			protected abstract bool Visit (ProfileEntry entry, XElement element);
+
+			protected abstract bool Visit (AssemblyEntry entry, XElement element);
+
+			protected abstract bool Visit (NamespaceEntry entry, XElement element);
+
+			protected abstract bool Visit (TypeEntry entry, XElement element);
+
+			protected abstract bool Visit (MethodEntry entry, XElement element);
+
+			protected abstract bool Visit (FailList entry, XElement element);
+
+			protected abstract bool Visit (FailListEntry entry, XElement element);
+		}
+
+		class ActionReportWriter : XElementVisitor
+		{
+			public ActionReportWriter ()
+				: base ("the-action-report")
+			{
+			}
+
+			protected override bool Visit (MethodEntry entry, XElement element)
+			{
+				element.SetAttributeValue ("name", entry.Name);
+				return true;
+			}
+
+			protected override bool Visit (RootEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (SizeReportEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (ConfigurationEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (ProfileEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (AssemblyEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (NamespaceEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (TypeEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (FailList entry, XElement element)
+			{
+				throw new NotImplementedException ();
+			}
+
+			protected override bool Visit (FailListEntry entry, XElement element)
+			{
+				throw new NotImplementedException ();
 			}
 		}
 
