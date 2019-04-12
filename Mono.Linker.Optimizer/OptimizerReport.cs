@@ -523,7 +523,7 @@ namespace Mono.Linker.Optimizer
 				CurrentNode.Push (Root);
 			}
 
-			void VisitEntry<T> (T entry, Func<T, XElement, bool> func)
+			void Visit<T> (T entry, Func<T, XElement, bool> func)
 				where T : AbstractReportEntry
 			{
 				var element = new XElement (entry.ElementName);
@@ -539,55 +539,25 @@ namespace Mono.Linker.Optimizer
 					CurrentNode.Peek ().Add (element);
 			}
 
-			void IVisitor.Visit (RootEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit (RootEntry entry) => Visit (entry, Visit);
 
-			void IVisitor.Visit (SizeReportEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit (SizeReportEntry entry) => Visit (entry, Visit);
 
-			void IVisitor.Visit (ConfigurationEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit(ConfigurationEntry entry) => Visit(entry, Visit);
 
-			void IVisitor.Visit (ProfileEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit(ProfileEntry entry) => Visit(entry, Visit);
 
-			void IVisitor.Visit (AssemblyEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit(AssemblyEntry entry) => Visit(entry, Visit);
 
-			void IVisitor.Visit (NamespaceEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit (NamespaceEntry entry) => Visit (entry, Visit);
 
-			void IVisitor.Visit (TypeEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit (TypeEntry entry) => Visit (entry, Visit);
 
-			void IVisitor.Visit (MethodEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit (MethodEntry entry) => Visit (entry, Visit);
 
-			void IVisitor.Visit (FailList entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit (FailList entry) => Visit (entry, Visit);
 
-			void IVisitor.Visit (FailListEntry entry)
-			{
-				VisitEntry (entry, Visit);
-			}
+			void IVisitor.Visit (FailListEntry entry) => Visit (entry, Visit);
 
 			protected abstract bool Visit (RootEntry entry, XElement element);
 
@@ -625,47 +595,47 @@ namespace Mono.Linker.Optimizer
 
 			protected override bool Visit (RootEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (SizeReportEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (ConfigurationEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (ProfileEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (AssemblyEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (NamespaceEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (TypeEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (FailList entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 
 			protected override bool Visit (FailListEntry entry, XElement element)
 			{
-				throw new NotImplementedException ();
+				return true;
 			}
 		}
 
