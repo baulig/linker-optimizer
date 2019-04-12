@@ -4,7 +4,7 @@
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
-	<include filename="test-remoting-4-size.xml" />
+	<x-include filename="test-remoting-4-size.xml" />
 
 	<features>
 		<feature name="remoting" enabled="false" />

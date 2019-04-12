@@ -271,7 +271,7 @@ namespace Mono.Linker.Optimizer
 				asmEntry = new AssemblyEntry (assembly.Name.Name, size, null);
 				_root_entry.Assemblies.Add (asmEntry);
 			} else {
-				asmEntry.Size = size;
+				asmEntry.SetSize (size);
 			}
 
 			ReportDetailed (context, assembly, asmEntry);
@@ -288,11 +288,13 @@ namespace Mono.Linker.Optimizer
 		{
 			foreach (var configuration in _configuration_entries) {
 				xml.WriteStartElement ("size-check");
-				xml.WriteAttributeString ("configuration", configuration.Configuration);
+				if (!string.IsNullOrEmpty (configuration.Configuration))
+					xml.WriteAttributeString ("configuration", configuration.Configuration);
 
 				foreach (var entry in configuration.ProfileEntries) {
 					xml.WriteStartElement ("profile");
-					xml.WriteAttributeString ("name", entry.Profile);
+					if (!string.IsNullOrEmpty (entry.Profile))
+						xml.WriteAttributeString ("name", entry.Profile);
 					foreach (var asm in entry.Assemblies) {
 						xml.WriteStartElement ("assembly");
 						xml.WriteAttributeString ("name", asm.Name);
@@ -360,7 +362,8 @@ namespace Mono.Linker.Optimizer
 
 			xml.WriteStartElement ("namespace");
 			xml.WriteAttributeString ("name", entry.Name);
-			xml.WriteAttributeString ("size", entry.Size.ToString ());
+			if (entry.Size != 0)
+				xml.WriteAttributeString ("size", entry.Size.ToString ());
 
 			foreach (var type in entry.GetTypes ())
 				WriteDetailedReport (xml, type);
@@ -376,7 +379,8 @@ namespace Mono.Linker.Optimizer
 			xml.WriteStartElement ("type");
 			xml.WriteAttributeString ("name", entry.Name);
 			xml.WriteAttributeString ("full-name", entry.FullName);
-			xml.WriteAttributeString ("size", entry.Size.ToString ());
+			if (entry.Size != 0)
+				xml.WriteAttributeString ("size", entry.Size.ToString ());
 
 			foreach (var type in entry.GetNestedTypes ())
 				WriteDetailedReport (xml, type);
@@ -518,7 +522,8 @@ namespace Mono.Linker.Optimizer
 			}
 
 			public int Size {
-				get; set;
+				get;
+				protected set;
 			}
 
 			public bool Marked {
@@ -528,7 +533,8 @@ namespace Mono.Linker.Optimizer
 			void AddSize (int size)
 			{
 				Size += size;
-				Parent?.AddSize (size);
+				if (Parent is AbstractTypeEntry parent)
+					parent.AddSize (size);
 			}
 
 			protected ReportEntry (ReportEntry parent, string name, int size)
@@ -554,6 +560,11 @@ namespace Mono.Linker.Optimizer
 		{
 			public string Tolerance {
 				get;
+			}
+
+			internal void SetSize (int size)
+			{
+				Size = size;
 			}
 
 			Dictionary<string, NamespaceEntry> namespaces;
