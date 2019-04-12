@@ -53,14 +53,14 @@ namespace Mono.Linker.Optimizer
 		public bool IsEnabled (ReportMode mode) => (Mode & mode) != 0;
 
 		List<ConfigurationEntry> _configuration_entries;
-		readonly List<FailListEntry> _fail_list;
+		readonly FailList _fail_list;
 		AssemblyListEntry _root_entry;
 
 		public OptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
 
-			_fail_list = new List<FailListEntry> ();
+			_fail_list = new FailList ();
 		}
 
 		public void Initialize (OptimizerContext context)
@@ -76,7 +76,7 @@ namespace Mono.Linker.Optimizer
 				if (_root_entry == null) {
 					if (Options.CheckSize)
 						LogWarning ($"Cannot find size entries for configuration `{Options.ReportConfiguration}`, profile `{Options.ReportProfile}`.");
-					_root_entry = GetProfileEntry (null, null, true);
+					_root_entry = new SizeReportEntry ();
 				}
 			}
 		}
@@ -105,7 +105,7 @@ namespace Mono.Linker.Optimizer
 				Original = original
 			};
 			fail.TracerStack.AddRange (stack);
-			_fail_list.Add (fail);
+			_fail_list.FailListEntries.Add (fail);
 
 			while (entry != null) {
 				fail.EntryStack.Add (entry.ToString ());
@@ -117,7 +117,7 @@ namespace Mono.Linker.Optimizer
 		{
 			var fail = new FailListEntry (method.FullName);
 			fail.TracerStack.AddRange (stack);
-			_fail_list.Add (fail);
+			_fail_list.FailListEntries.Add (fail);
 
 			if (entry != null) {
 				fail.EntryStack.Add (entry.ToString ());
@@ -161,11 +161,17 @@ namespace Mono.Linker.Optimizer
 
 		public void Write (XmlWriter xml)
 		{
-			WriteSizeReport (xml);
+			var writer = new ReportWriter (xml, Mode);
 
-			WriteActionReport (xml);
+			if (_configuration_entries != null && _configuration_entries.Count > 0) {
+				foreach (var configuration in _configuration_entries)
+					configuration.Visit (writer);
+			} else {
+				_root_entry.Visit (writer);
+			}
 
-			WriteFailReport (xml);
+			if (IsEnabled (ReportMode.Warnings))
+				_fail_list.Visit (writer);
 		}
 
 		void LogMessage (string message)
@@ -226,6 +232,7 @@ namespace Mono.Linker.Optimizer
 
 		ConfigurationEntry GetConfigurationEntry (string configuration, bool add)
 		{
+			LazyInitializer.EnsureInitialized (ref _configuration_entries);
 			var entry = _configuration_entries.FirstOrDefault (e => e.Configuration == configuration);
 			if (add && entry == null) {
 				entry = new ConfigurationEntry (configuration);
@@ -331,53 +338,6 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		void WriteSizeReport (XmlWriter xml)
-		{
-			var writer = new ReportWriter (xml, Mode);
-
-			if (_configuration_entries != null) {
-				foreach (var configuration in _configuration_entries)
-					configuration.Visit (writer);
-			} else {
-				_root_entry.Visit (writer);
-			}
-		}
-
-		void WriteActionReport (XmlWriter xml)
-		{
-			xml.WriteStartElement ("action-report");
-
-			xml.WriteEndElement ();
-		}
-
-		void WriteFailReport (XmlWriter xml)
-		{
-			if (_fail_list == null || _fail_list.Count == 0)
-				return;
-
-			xml.WriteStartElement ("fail-list");
-
-			foreach (var fail in _fail_list) {
-				xml.WriteStartElement ("fail");
-				xml.WriteAttributeString ("name", fail.Name);
-				if (fail.Original != null)
-					xml.WriteAttributeString ("full-name", fail.Original);
-				foreach (var entry in fail.EntryStack) {
-					xml.WriteStartElement ("entry");
-					xml.WriteAttributeString ("name", entry);
-					xml.WriteEndElement ();
-				}
-				foreach (var entry in fail.TracerStack) {
-					xml.WriteStartElement ("stack");
-					xml.WriteAttributeString ("name", entry);
-					xml.WriteEndElement ();
-				}
-				xml.WriteEndElement ();
-			}
-
-			xml.WriteEndElement ();
-		}
-
 		void CompareSize (XmlWriter xml, AssemblyEntry assembly)
 		{
 			xml.WriteStartElement ("removed-types");
@@ -471,6 +431,10 @@ namespace Mono.Linker.Optimizer
 			public abstract void Visit (TypeEntry entry);
 
 			public abstract void Visit (MethodEntry entry);
+
+			public abstract void Visit (FailList entry);
+
+			public abstract void Visit (FailListEntry entry);
 		}
 
 		class ReportWriter : Visitor
@@ -529,6 +493,16 @@ namespace Mono.Linker.Optimizer
 			}
 
 			public override void Visit (MethodEntry entry)
+			{
+				Write (entry);
+			}
+
+			public override void Visit (FailList entry)
+			{
+				Write (entry);
+			}
+
+			public override void Visit (FailListEntry entry)
 			{
 				Write (entry);
 			}
@@ -901,18 +875,67 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		class FailListEntry
+		class FailList : AbstractReportEntry
+		{
+			public List<FailListEntry> FailListEntries { get; } = new List<FailListEntry> ();
+
+			public override string ElementName => "fail-list";
+
+			public override void Visit (Visitor visitor)
+			{
+				visitor.Visit (this);
+			}
+
+			public override void VisitChildren (Visitor visitor)
+			{
+				FailListEntries.ForEach (entry => entry.Visit (visitor));
+			}
+
+			public override void WriteElement (XmlWriter xml)
+			{
+			}
+		}
+
+		class FailListEntry : AbstractReportEntry
 		{
 			public readonly string Name;
 			public string Original;
 			public readonly List<string> EntryStack;
 			public readonly List<string> TracerStack;
 
+			public override string ElementName => "fail";
+
 			public FailListEntry (string name)
 			{
 				Name = name;
 				EntryStack = new List<string> ();
 				TracerStack = new List<string> ();
+			}
+
+			public override void WriteElement (XmlWriter xml)
+			{
+				xml.WriteAttributeString ("name", Name);
+				if (Original != null)
+					xml.WriteAttributeString ("full-name", Original);
+				foreach (var entry in EntryStack) {
+					xml.WriteStartElement ("entry");
+					xml.WriteAttributeString ("name", entry);
+					xml.WriteEndElement ();
+				}
+				foreach (var entry in TracerStack) {
+					xml.WriteStartElement ("stack");
+					xml.WriteAttributeString ("name", entry);
+					xml.WriteEndElement ();
+				}
+			}
+
+			public override void Visit (Visitor visitor)
+			{
+				visitor.Visit (this);
+			}
+
+			public override void VisitChildren (Visitor visitor)
+			{
 			}
 		}
 	}

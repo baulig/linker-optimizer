@@ -126,6 +126,8 @@ namespace Mono.Linker.Optimizer
 				if (pos > 0) {
 					var name = part.Substring (0, pos);
 					var value = part.Substring (pos + 1);
+					if (string.IsNullOrWhiteSpace (value))
+						value = null;
 
 					switch (name) {
 					case "preprocess":
