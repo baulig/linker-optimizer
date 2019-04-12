@@ -89,7 +89,7 @@ namespace Mono.Linker.Optimizer
 			if (method.DeclaringType.DeclaringType != null)
 				throw new OptimizerAssertionException ($"Conditionals in nested classes are not supported yet.");
 
-			var entry = GetMethodEntry (method, true);
+			GetMethodEntry (method, true).HasAction = true;
 		}
 
 		public void ReportFailListEntry (TypeDefinition type, OptimizerOptions.TypeEntry entry, string original, List<string> stack)
@@ -384,38 +384,72 @@ namespace Mono.Linker.Optimizer
 			void Visit (FailListEntry entry);
 		}
 
+		enum WriteMode
+		{
+			Root,
+			Size,
+			Detailed,
+			Action
+		}
+
 		class ReportWriter : IVisitor
 		{
-			readonly XmlWriter xml;
-			readonly ReportMode mode;
+			XmlWriter Writer { get; }
+
+			ReportMode ReportMode { get; }
+
+			WriteMode WriteMode { get; set; }
 
 			ReportWriter (XmlWriter xml, ReportMode mode)
 			{
-				this.xml = xml;
-				this.mode = mode;
+				Writer = xml;
+				ReportMode = mode;
 			}
 
 			public static void Write (XmlWriter xml, RootEntry root, ReportMode mode)
 			{
-				root.Visit (new ReportWriter (xml, mode));
+				var writer = new ReportWriter (xml, mode);
+				root.Visit (writer);
 			}
 
 			void Write (AbstractReportEntry entry)
 			{
-				xml.WriteStartElement (entry.ElementName);
-				entry.WriteElement (xml);
+				Writer.WriteStartElement (entry.ElementName);
+				entry.WriteElement (Writer);
 				entry.VisitChildren (this);
-				xml.WriteEndElement ();
+				Writer.WriteEndElement ();
 			}
 
 			void IVisitor.Visit (RootEntry entry)
 			{
-				Write (entry);
+				Writer.WriteStartElement (entry.ElementName);
+				entry.WriteElement (Writer);
+
+				Write (entry, "action-report", WriteMode.Action);
+
+				WriteMode = WriteMode.Size;
+				entry.VisitChildren (this);
+
+				if ((ReportMode & ReportMode.Detailed) != 0)
+					Write (entry, "type-list", WriteMode.Detailed);
+
+				Writer.WriteEndElement ();
+			}
+
+			void Write (RootEntry root, string element, WriteMode mode)
+			{
+				WriteMode = mode;
+				Writer.WriteStartElement (element);
+				root.VisitChildren (this);
+				Writer.WriteEndElement ();
 			}
 
 			void IVisitor.Visit (SizeReportEntry entry)
 			{
-				Write (entry);
+				if (WriteMode == WriteMode.Action)
+					entry.VisitChildren (this);
+				else
+					Write (entry);
 			}
 
 			void IVisitor.Visit (ConfigurationEntry entry)
@@ -430,13 +464,17 @@ namespace Mono.Linker.Optimizer
 
 			void IVisitor.Visit (AssemblyEntry entry)
 			{
-				xml.WriteStartElement (entry.ElementName);
-				entry.WriteElement (xml);
+				Writer.WriteStartElement (entry.ElementName);
+				entry.WriteElement (Writer);
 
-				if ((mode & ReportMode.Detailed) != 0)
+				switch (WriteMode) {
+				case WriteMode.Action:
+				case WriteMode.Detailed:
 					entry.VisitChildren (this);
+					break;
+				}
 
-				xml.WriteEndElement ();
+				Writer.WriteEndElement ();
 			}
 
 			void IVisitor.Visit (NamespaceEntry entry)
@@ -899,6 +937,10 @@ namespace Mono.Linker.Optimizer
 		class MethodEntry : ReportEntry
 		{
 			public override string ElementName => "method";
+
+			public bool HasAction {
+				get; set;
+			}
 
 			public MethodEntry (TypeEntry parent, string name, int size)
 				: base (parent, name, size)
