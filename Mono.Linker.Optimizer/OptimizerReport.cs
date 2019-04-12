@@ -348,9 +348,6 @@ namespace Mono.Linker.Optimizer
 						if (IsEnabled (ReportMode.Detailed))
 							assembly.Write (xml);
 
-						if (Options.CompareSizeWith != null)
-							CompareSize (xml, assembly);
-
 						xml.WriteEndElement ();
 
 					}
@@ -474,9 +471,33 @@ namespace Mono.Linker.Optimizer
 				LogMessage ($"SIZE: {method.FullName} {method.Body.CodeSize}");
 		}
 
+		abstract class Visitor
+		{
+			public abstract void Visit (AssemblyEntry assembly);
+		}
+
 		abstract class AbstractReportEntry
 		{
+			protected abstract string ElementName {
+				get;
+			}
 
+			public void Write (XmlWriter xml)
+			{
+				xml.WriteStartElement (ElementName);
+				WriteElement (xml);
+				WriteChildren (xml);
+				xml.WriteEndElement ();
+			}
+
+			protected abstract void WriteElement (XmlWriter xml);
+
+			protected abstract void WriteChildren (XmlWriter xml);
+
+			public void Visit (Visitor visitor)
+			{
+
+			}
 		}
 
 		class ConfigurationEntry
@@ -513,7 +534,7 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		abstract class ReportEntry : IComparable<ReportEntry>
+		abstract class ReportEntry : AbstractReportEntry, IComparable<ReportEntry>
 		{
 			public ReportEntry Parent {
 				get;
@@ -552,27 +573,11 @@ namespace Mono.Linker.Optimizer
 				return Size.CompareTo (obj.Size);
 			}
 
-			protected abstract string ElementName {
-				get;
-			}
-
-			public void Write (XmlWriter xml)
-			{
-				xml.WriteStartElement (ElementName);
-				WriteElement (xml);
-				WriteChildren (xml);
-				xml.WriteEndElement ();
-			}
-
-			protected virtual void WriteElement (XmlWriter xml)
+			protected override void WriteElement (XmlWriter xml)
 			{
 				xml.WriteAttributeString ("name", Name);
 				if (Size != 0)
 					xml.WriteAttributeString ("size", Size.ToString ());
-			}
-
-			protected virtual void WriteChildren (XmlWriter xml)
-			{
 			}
 
 			public override string ToString ()
@@ -629,7 +634,6 @@ namespace Mono.Linker.Optimizer
 			protected override void WriteChildren (XmlWriter xml)
 			{
 				GetNamespaces ().ForEach (ns => ns.Write (xml));
-				base.WriteChildren (xml);
 			}
 
 			public AssemblyEntry (string name, int size, string tolerance)
@@ -686,7 +690,6 @@ namespace Mono.Linker.Optimizer
 			protected override void WriteChildren (XmlWriter xml)
 			{
 				GetTypes ().ForEach (type => type.Write (xml));
-				base.WriteChildren (xml);
 			}
 		}
 
@@ -773,6 +776,10 @@ namespace Mono.Linker.Optimizer
 
 			public MethodEntry (TypeEntry parent, string name, int size)
 				: base (parent, name, size)
+			{
+			}
+
+			protected override void WriteChildren (XmlWriter xml)
 			{
 			}
 		}
