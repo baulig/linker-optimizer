@@ -416,28 +416,28 @@ namespace Mono.Linker.Optimizer
 				LogMessage ($"SIZE: {method.FullName} {method.Body.CodeSize}");
 		}
 
-		abstract class Visitor
+		interface IVisitor
 		{
-			public abstract void Visit (SizeReportEntry entry);
+			void Visit (SizeReportEntry entry);
 
-			public abstract void Visit (ConfigurationEntry entry);
+			void Visit (ConfigurationEntry entry);
 
-			public abstract void Visit (ProfileEntry entry);
+			void Visit (ProfileEntry entry);
 
-			public abstract void Visit (AssemblyEntry entry);
+			void Visit (AssemblyEntry entry);
 
-			public abstract void Visit (NamespaceEntry entry);
+			void Visit (NamespaceEntry entry);
 
-			public abstract void Visit (TypeEntry entry);
+			void Visit (TypeEntry entry);
 
-			public abstract void Visit (MethodEntry entry);
+			void Visit (MethodEntry entry);
 
-			public abstract void Visit (FailList entry);
+			void Visit (FailList entry);
 
-			public abstract void Visit (FailListEntry entry);
+			void Visit (FailListEntry entry);
 		}
 
-		class ReportWriter : Visitor
+		class ReportWriter : IVisitor
 		{
 			readonly XmlWriter xml;
 			readonly ReportMode mode;
@@ -456,22 +456,22 @@ namespace Mono.Linker.Optimizer
 				xml.WriteEndElement ();
 			}
 
-			public override void Visit (SizeReportEntry entry)
+			void IVisitor.Visit (SizeReportEntry entry)
 			{
 				Write (entry);
 			}
 
-			public override void Visit (ConfigurationEntry entry)
+			void IVisitor.Visit (ConfigurationEntry entry)
 			{
 				Write (entry);
 			}
 
-			public override void Visit (ProfileEntry entry)
+			void IVisitor.Visit (ProfileEntry entry)
 			{
 				Write (entry);
 			}
 
-			public override void Visit (AssemblyEntry entry)
+			void IVisitor.Visit (AssemblyEntry entry)
 			{
 				xml.WriteStartElement (entry.ElementName);
 				entry.WriteElement (xml);
@@ -482,27 +482,27 @@ namespace Mono.Linker.Optimizer
 				xml.WriteEndElement ();
 			}
 
-			public override void Visit (NamespaceEntry entry)
+			void IVisitor.Visit (NamespaceEntry entry)
 			{
 				Write (entry);
 			}
 
-			public override void Visit (TypeEntry entry)
+			void IVisitor.Visit (TypeEntry entry)
 			{
 				Write (entry);
 			}
 
-			public override void Visit (MethodEntry entry)
+			void IVisitor.Visit (MethodEntry entry)
 			{
 				Write (entry);
 			}
 
-			public override void Visit (FailList entry)
+			void IVisitor.Visit (FailList entry)
 			{
 				Write (entry);
 			}
 
-			public override void Visit (FailListEntry entry)
+			void IVisitor.Visit (FailListEntry entry)
 			{
 				Write (entry);
 			}
@@ -516,9 +516,9 @@ namespace Mono.Linker.Optimizer
 
 			public abstract void WriteElement (XmlWriter xml);
 
-			public abstract void Visit (Visitor visitor);
+			public abstract void Visit (IVisitor visitor);
 
-			public abstract void VisitChildren (Visitor visitor);
+			public abstract void VisitChildren (IVisitor visitor);
 		}
 
 		class ConfigurationEntry : AbstractReportEntry
@@ -545,12 +545,12 @@ namespace Mono.Linker.Optimizer
 					xml.WriteAttributeString ("name", Configuration);
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
 
-			public override void VisitChildren (Visitor visitor)
+			public override void VisitChildren (IVisitor visitor)
 			{
 				ProfileEntries.ForEach (profile => profile.Visit (visitor));
 			}
@@ -560,7 +560,7 @@ namespace Mono.Linker.Optimizer
 		{
 			public List<AssemblyEntry> Assemblies { get; } = new List<AssemblyEntry> ();
 
-			public sealed override void VisitChildren (Visitor visitor)
+			public sealed override void VisitChildren (IVisitor visitor)
 			{
 				Assemblies.ForEach (assembly => assembly.Visit (visitor));
 			}
@@ -574,7 +574,7 @@ namespace Mono.Linker.Optimizer
 			{
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
@@ -599,7 +599,7 @@ namespace Mono.Linker.Optimizer
 					xml.WriteAttributeString ("name", Profile);
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
@@ -708,12 +708,12 @@ namespace Mono.Linker.Optimizer
 				Tolerance = tolerance;
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
 
-			public override void VisitChildren (Visitor visitor)
+			public override void VisitChildren (IVisitor visitor)
 			{
 				GetNamespaces ().ForEach (ns => ns.Visit (visitor));
 			}
@@ -763,7 +763,7 @@ namespace Mono.Linker.Optimizer
 				return list;
 			}
 
-			public override void VisitChildren (Visitor visitor)
+			public override void VisitChildren (IVisitor visitor)
 			{
 				GetTypes ().ForEach (ns => ns.Visit (visitor));
 			}
@@ -778,7 +778,7 @@ namespace Mono.Linker.Optimizer
 			{
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
@@ -844,12 +844,12 @@ namespace Mono.Linker.Optimizer
 					xml.WriteAttributeString ("full-name", FullName);
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
 
-			public override void VisitChildren (Visitor visitor)
+			public override void VisitChildren (IVisitor visitor)
 			{
 				base.VisitChildren (visitor);
 				GetMethods ().ForEach (method => method.Visit (visitor));
@@ -865,12 +865,12 @@ namespace Mono.Linker.Optimizer
 			{
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
 
-			public override void VisitChildren (Visitor visitor)
+			public override void VisitChildren (IVisitor visitor)
 			{
 			}
 		}
@@ -881,12 +881,12 @@ namespace Mono.Linker.Optimizer
 
 			public override string ElementName => "fail-list";
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
 
-			public override void VisitChildren (Visitor visitor)
+			public override void VisitChildren (IVisitor visitor)
 			{
 				FailListEntries.ForEach (entry => entry.Visit (visitor));
 			}
@@ -929,12 +929,12 @@ namespace Mono.Linker.Optimizer
 				}
 			}
 
-			public override void Visit (Visitor visitor)
+			public override void Visit (IVisitor visitor)
 			{
 				visitor.Visit (this);
 			}
 
-			public override void VisitChildren (Visitor visitor)
+			public override void VisitChildren (IVisitor visitor)
 			{
 			}
 		}
