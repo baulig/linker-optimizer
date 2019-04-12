@@ -52,10 +52,6 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		public OptimizerReport Report {
-			get;
-		}
-
 		public AnnotationStore Annotations => Context.Annotations;
 
 		OptimizerContext (LinkContext context, OptimizerOptions options)
@@ -87,7 +83,7 @@ namespace Mono.Linker.Optimizer
 			if (options.CheckSize)
 				options.ReportMode |= ReportMode.Size;
 
-			if (options.Report.IsEnabled (ReportMode.Detailed)) {
+			if (options.Report.IsEnabled (ReportMode.Detailed) || options.Report.IsEnabled (ReportMode.Size)) {
 				options.AnalyzeAll = options.ScanAllModules = true;
 				if (options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
 					options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;

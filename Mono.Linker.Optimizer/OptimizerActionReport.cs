@@ -123,8 +123,6 @@ namespace Mono.Linker.Optimizer
 
 				WriteActionReport (xml);
 
-				context.Report.Write (xml);
-
 				xml.WriteEndElement ();
 				xml.WriteEndDocument ();
 			}

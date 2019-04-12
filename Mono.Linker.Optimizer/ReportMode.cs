@@ -34,6 +34,8 @@ namespace Mono.Linker.Optimizer
 		Actions		= 1,
 		Warnings	= 2,
 		Size		= 4,
-		Detailed	= 8
+		Detailed	= 8,
+
+		All		= 15
 	}
 }

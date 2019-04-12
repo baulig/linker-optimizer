@@ -201,9 +201,12 @@ namespace Mono.Linker.Optimizer
 
 		public void SetReportMode (string argument)
 		{
-			if (!Enum.TryParse (argument, true, out ReportMode mode))
-				throw new OptimizerException ($"Invalid report mode: `{argument}`.");
-			ReportMode = mode;
+			var parts = argument.Split ('+');
+			for (int i = 0; i < parts.Length; i++) {
+				if (!Enum.TryParse (parts[i], true, out ReportMode mode))
+					throw new OptimizerException ($"Invalid report mode: `{argument}`.");
+				ReportMode |= mode;
+			}
 		}
 
 		public bool IsFeatureEnabled (MonoLinkerFeature feature)
