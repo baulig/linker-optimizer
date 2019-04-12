@@ -52,15 +52,14 @@ namespace Mono.Linker.Optimizer
 
 		public bool IsEnabled (ReportMode mode) => (Mode & mode) != 0;
 
-		readonly List<ConfigurationEntry> _configuration_entries;
+		List<ConfigurationEntry> _configuration_entries;
 		readonly List<FailListEntry> _fail_list;
-		ProfileEntry _root_entry;
+		AssemblyListEntry _root_entry;
 
 		public OptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
 
-			_configuration_entries = new List<ConfigurationEntry> ();
 			_fail_list = new List<FailListEntry> ();
 		}
 
@@ -68,12 +67,17 @@ namespace Mono.Linker.Optimizer
 		{
 			Logger = context.Context.Logger;
 
-			_root_entry = GetProfileEntry (Options.ReportConfiguration, Options.ReportProfile, false);
+			if (Options.ReportConfiguration == null && Options.ReportProfile == null) {
+				_root_entry = new SizeReportEntry ();
+			} else {
+				_configuration_entries = new List<ConfigurationEntry> ();
+				_root_entry = GetProfileEntry (Options.ReportConfiguration, Options.ReportProfile, false);
 
-			if (_root_entry == null) {
-				if (Options.CheckSize)
-					LogWarning ($"Cannot find size entries for configuration `{Options.ReportConfiguration}`, profile `{Options.ReportProfile}`.");
-				_root_entry = GetProfileEntry (null, null, true);
+				if (_root_entry == null) {
+					if (Options.CheckSize)
+						LogWarning ($"Cannot find size entries for configuration `{Options.ReportConfiguration}`, profile `{Options.ReportProfile}`.");
+					_root_entry = GetProfileEntry (null, null, true);
+				}
 			}
 		}
 
@@ -243,22 +247,22 @@ namespace Mono.Linker.Optimizer
 			return profileEntry;
 		}
 
-		AssemblyEntry GetAssemblyEntry (ProfileEntry profile, string name, bool add)
+		AssemblyEntry GetAssemblyEntry (AssemblyListEntry root, string name, bool add)
 		{
-			var assembly = profile.Assemblies.FirstOrDefault (e => e.Name == name);
+			var assembly = root.Assemblies.FirstOrDefault (e => e.Name == name);
 			if (add && assembly == null) {
 				assembly = new AssemblyEntry (name, 0, null);
-				profile.Assemblies.Add (assembly);
+				root.Assemblies.Add (assembly);
 			}
 			return assembly;
 		}
 
-		TypeEntry GetTypeEntry (ProfileEntry profile, TypeDefinition type, bool add)
+		TypeEntry GetTypeEntry (AssemblyListEntry root, TypeDefinition type, bool add)
 		{
 			if (type.DeclaringType != null)
 				throw DebugHelpers.AssertFail ("Nested types are not supported yet.");
 
-			var assembly = GetAssemblyEntry (profile, type.Module.Assembly.Name.Name, add);
+			var assembly = GetAssemblyEntry (root, type.Module.Assembly.Name.Name, add);
 			if (assembly == null)
 				return null;
 
@@ -269,9 +273,9 @@ namespace Mono.Linker.Optimizer
 			return ns.GetType (type, add);
 		}
 
-		MethodEntry GetMethodEntry (ProfileEntry profile, MethodDefinition method, bool add)
+		MethodEntry GetMethodEntry (AssemblyListEntry root, MethodDefinition method, bool add)
 		{
-			var type = GetTypeEntry (profile, method.DeclaringType, add);
+			var type = GetTypeEntry (root, method.DeclaringType, add);
 			if (type == null)
 				return null;
 
@@ -329,22 +333,13 @@ namespace Mono.Linker.Optimizer
 
 		void WriteSizeReport (XmlWriter xml)
 		{
-			foreach (var configuration in _configuration_entries) {
-				xml.WriteStartElement ("size-check");
-				if (!string.IsNullOrEmpty (configuration.Configuration))
-					xml.WriteAttributeString ("configuration", configuration.Configuration);
+			var writer = new ReportWriter (xml, Mode);
 
-				foreach (var entry in configuration.ProfileEntries) {
-					xml.WriteStartElement ("profile");
-					if (!string.IsNullOrEmpty (entry.Profile))
-						xml.WriteAttributeString ("name", entry.Profile);
-					foreach (var assembly in entry.Assemblies) {
-						ReportWriter.Write (xml, Mode, assembly);
-					}
-					xml.WriteEndElement ();
-				}
-
-				xml.WriteEndElement ();
+			if (_configuration_entries != null) {
+				foreach (var configuration in _configuration_entries)
+					configuration.Visit (writer);
+			} else {
+				_root_entry.Visit (writer);
 			}
 		}
 
@@ -463,6 +458,12 @@ namespace Mono.Linker.Optimizer
 
 		abstract class Visitor
 		{
+			public abstract void Visit (SizeReportEntry entry);
+
+			public abstract void Visit (ConfigurationEntry entry);
+
+			public abstract void Visit (ProfileEntry entry);
+
 			public abstract void Visit (AssemblyEntry entry);
 
 			public abstract void Visit (NamespaceEntry entry);
@@ -477,75 +478,76 @@ namespace Mono.Linker.Optimizer
 			readonly XmlWriter xml;
 			readonly ReportMode mode;
 
-			ReportWriter (XmlWriter xml, ReportMode mode)
+			public ReportWriter (XmlWriter xml, ReportMode mode)
 			{
 				this.xml = xml;
 				this.mode = mode;
 			}
 
-			public static void Write (XmlWriter xml, ReportMode mode, AssemblyEntry root)
+			void Write (AbstractReportEntry entry)
 			{
-				var writer = new ReportWriter (xml, mode);
-				root.Visit (writer);
+				xml.WriteStartElement (entry.ElementName);
+				entry.WriteElement (xml);
+				entry.VisitChildren (this);
+				xml.WriteEndElement ();
+			}
+
+			public override void Visit (SizeReportEntry entry)
+			{
+				Write (entry);
+			}
+
+			public override void Visit (ConfigurationEntry entry)
+			{
+				Write (entry);
+			}
+
+			public override void Visit (ProfileEntry entry)
+			{
+				Write (entry);
 			}
 
 			public override void Visit (AssemblyEntry entry)
 			{
-				entry.Write (xml);
+				xml.WriteStartElement (entry.ElementName);
+				entry.WriteElement (xml);
 
 				if ((mode & ReportMode.Detailed) != 0)
 					entry.VisitChildren (this);
+
+				xml.WriteEndElement ();
 			}
 
 			public override void Visit (NamespaceEntry entry)
 			{
-				if (!entry.Marked)
-					return;
-				entry.Write (xml);
-				entry.VisitChildren (this);
+				Write (entry);
 			}
 
 			public override void Visit (TypeEntry entry)
 			{
-				if (!entry.Marked)
-					return;
-				entry.Write (xml);
-				entry.VisitChildren (this);
+				Write (entry);
 			}
 
 			public override void Visit (MethodEntry entry)
 			{
-				if (!entry.Marked)
-					return;
-				entry.Write (xml);
-				entry.VisitChildren (this);
+				Write (entry);
 			}
 		}
 
 		abstract class AbstractReportEntry
 		{
-			protected abstract string ElementName {
+			public abstract string ElementName {
 				get;
 			}
 
-			public void Write (XmlWriter xml)
-			{
-				xml.WriteStartElement (ElementName);
-				WriteElement (xml);
-				WriteChildren (xml);
-				xml.WriteEndElement ();
-			}
-
-			protected abstract void WriteElement (XmlWriter xml);
-
-			protected abstract void WriteChildren (XmlWriter xml);
+			public abstract void WriteElement (XmlWriter xml);
 
 			public abstract void Visit (Visitor visitor);
 
 			public abstract void VisitChildren (Visitor visitor);
 		}
 
-		class ConfigurationEntry
+		class ConfigurationEntry : AbstractReportEntry
 		{
 			public string Configuration {
 				get;
@@ -555,27 +557,77 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
+			public override string ElementName => "configuration";
+
 			public ConfigurationEntry (string configuration)
 			{
 				Configuration = configuration;
 				ProfileEntries = new List<ProfileEntry> ();
 			}
+
+			public override void WriteElement (XmlWriter xml)
+			{
+				if (!string.IsNullOrEmpty (Configuration))
+					xml.WriteAttributeString ("name", Configuration);
+			}
+
+			public override void Visit (Visitor visitor)
+			{
+				visitor.Visit (this);
+			}
+
+			public override void VisitChildren (Visitor visitor)
+			{
+				ProfileEntries.ForEach (profile => profile.Visit (visitor));
+			}
 		}
 
-		class ProfileEntry
+		abstract class AssemblyListEntry : AbstractReportEntry
+		{
+			public List<AssemblyEntry> Assemblies { get; } = new List<AssemblyEntry> ();
+
+			public sealed override void VisitChildren (Visitor visitor)
+			{
+				Assemblies.ForEach (assembly => assembly.Visit (visitor));
+			}
+		}
+
+		class SizeReportEntry : AssemblyListEntry
+		{
+			public override string ElementName => "size-report";
+
+			public override void WriteElement (XmlWriter xml)
+			{
+			}
+
+			public override void Visit (Visitor visitor)
+			{
+				visitor.Visit (this);
+			}
+		}
+
+		class ProfileEntry : AssemblyListEntry
 		{
 			public string Profile {
 				get;
 			}
 
-			public List<AssemblyEntry> Assemblies {
-				get;
-			}
+			public override string ElementName => "profile";
 
 			public ProfileEntry (string profile)
 			{
 				Profile = profile;
-				Assemblies = new List<AssemblyEntry> ();
+			}
+
+			public override void WriteElement (XmlWriter xml)
+			{
+				if (!string.IsNullOrEmpty (Profile))
+					xml.WriteAttributeString ("name", Profile);
+			}
+
+			public override void Visit (Visitor visitor)
+			{
+				visitor.Visit (this);
 			}
 		}
 
@@ -618,7 +670,7 @@ namespace Mono.Linker.Optimizer
 				return Size.CompareTo (obj.Size);
 			}
 
-			protected override void WriteElement (XmlWriter xml)
+			public override void WriteElement (XmlWriter xml)
 			{
 				xml.WriteAttributeString ("name", Name);
 				if (Size != 0)
@@ -637,7 +689,7 @@ namespace Mono.Linker.Optimizer
 				get;
 			}
 
-			protected override string ElementName => "assembly";
+			public override string ElementName => "assembly";
 
 			internal void SetSize (int size)
 			{
@@ -669,16 +721,11 @@ namespace Mono.Linker.Optimizer
 				return list;
 			}
 
-			protected override void WriteElement (XmlWriter xml)
+			public override void WriteElement (XmlWriter xml)
 			{
 				if (!string.IsNullOrEmpty (Tolerance))
 					xml.WriteAttributeString ("tolerance", Tolerance);
 				base.WriteElement (xml);
-			}
-
-			protected override void WriteChildren (XmlWriter xml)
-			{
-				GetNamespaces ().ForEach (ns => ns.Write (xml));
 			}
 
 			public AssemblyEntry (string name, int size, string tolerance)
@@ -742,11 +789,6 @@ namespace Mono.Linker.Optimizer
 				return list;
 			}
 
-			protected override void WriteChildren (XmlWriter xml)
-			{
-				GetTypes ().ForEach (type => type.Write (xml));
-			}
-
 			public override void VisitChildren (Visitor visitor)
 			{
 				GetTypes ().ForEach (ns => ns.Visit (visitor));
@@ -755,7 +797,7 @@ namespace Mono.Linker.Optimizer
 
 		class NamespaceEntry : AbstractTypeEntry
 		{
-			protected override string ElementName => "namespace";
+			public override string ElementName => "namespace";
 
 			public NamespaceEntry (AssemblyEntry parent, string name)
 				: base (parent, name)
@@ -770,7 +812,7 @@ namespace Mono.Linker.Optimizer
 
 		class TypeEntry : AbstractTypeEntry
 		{
-			protected override string ElementName => "type";
+			public override string ElementName => "type";
 
 			public bool AddMethod (MethodDefinition method)
 			{
@@ -821,35 +863,31 @@ namespace Mono.Linker.Optimizer
 				FullName = fullName;
 			}
 
-			protected override void WriteElement (XmlWriter xml)
+			public override void WriteElement (XmlWriter xml)
 			{
 				base.WriteElement (xml);
 				if (!string.IsNullOrEmpty (FullName))
 					xml.WriteAttributeString ("full-name", FullName);
 			}
 
-			protected override void WriteChildren (XmlWriter xml)
-			{
-				base.WriteChildren (xml);
-				GetMethods ().ForEach (method => method.Write (xml));
-			}
-
 			public override void Visit (Visitor visitor)
 			{
 				visitor.Visit (this);
+			}
+
+			public override void VisitChildren (Visitor visitor)
+			{
+				base.VisitChildren (visitor);
+				GetMethods ().ForEach (method => method.Visit (visitor));
 			}
 		}
 
 		class MethodEntry : ReportEntry
 		{
-			protected override string ElementName => "method";
+			public override string ElementName => "method";
 
 			public MethodEntry (TypeEntry parent, string name, int size)
 				: base (parent, name, size)
-			{
-			}
-
-			protected override void WriteChildren (XmlWriter xml)
 			{
 			}
 
