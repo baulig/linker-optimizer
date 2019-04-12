@@ -351,29 +351,22 @@ namespace Mono.Linker.Optimizer
 			if (type.Name == "<Module>")
 				return;
 			if (!context.Annotations.IsMarked (type))
-				return;
+				throw DebugHelpers.AssertFail ($"Type `{type}` is not marked.");
 			if (type.FullName.StartsWith ("<PrivateImplementationDetails>", StringComparison.Ordinal))
 				return;
 
 			var ns = parent.GetNamespace (type.Namespace);
-			ns.Marked = true;
-
-			var entry = ns.GetType (type);
-			entry.Marked = true;
-
-			foreach (var method in type.Methods)
-				ProcessMethod (context, entry, method);
-
-			foreach (var nested in type.NestedTypes)
-				ProcessType (context, entry, nested);
+			ProcessType (context, ns, type);
 		}
 
-		void ProcessType (OptimizerContext context, TypeEntry parent, TypeDefinition type)
+		void ProcessType (OptimizerContext context, AbstractTypeEntry parent, TypeDefinition type)
 		{
 			if (!context.Annotations.IsMarked (type))
-				return;
+				throw DebugHelpers.AssertFail ($"Type `{type}` is not marked.");
 
-			var entry = parent.GetNestedType (type, true);
+			parent.Marked = true;
+
+			var entry = parent.GetType (type, true);
 			entry.Marked = true;
 
 			foreach (var method in type.Methods)
@@ -385,8 +378,10 @@ namespace Mono.Linker.Optimizer
 
 		void ProcessMethod (OptimizerContext context, TypeEntry parent, MethodDefinition method)
 		{
-			if (!method.HasBody || !context.Annotations.IsMarked (method))
+			if (!method.HasBody)
 				return;
+			if (!context.Annotations.IsMarked (method))
+				throw DebugHelpers.AssertFail ($"Method `{method}` is not marked.");
 
 			if (!parent.AddMethod (method))
 				return;
@@ -515,9 +510,16 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		class NamespaceEntry : SizeEntry
+		abstract class AbstractTypeEntry : SizeEntry
 		{
+			protected AbstractTypeEntry (SizeEntry parent, string name)
+				: base (parent, name, 0)
+			{
+			}
+
 			Dictionary<string, TypeEntry> types;
+
+			public bool HasTypes => types != null && types.Count > 0;
 
 			public TypeEntry GetType (TypeDefinition type, bool add = true)
 			{
@@ -546,39 +548,23 @@ namespace Mono.Linker.Optimizer
 				}
 				return list;
 			}
+		}
 
+		class NamespaceEntry : AbstractTypeEntry
+		{
 			public NamespaceEntry (AssemblySizeEntry parent, string name)
-				: base (parent, name, 0)
+				: base (parent, name)
 			{
 			}
 		}
 
-		class TypeEntry : SizeEntry
+		class TypeEntry : AbstractTypeEntry
 		{
-			public bool HasNestedTypes => nested != null;
+			public bool HasNestedTypes => HasTypes;
 
-			public TypeEntry GetNestedType (TypeDefinition type, bool add)
-			{
-				LazyInitializer.EnsureInitialized (ref nested);
-				if (nested.TryGetValue (type.Name, out var entry))
-					return entry;
-				if (!add)
-					return null;
-				entry = new TypeEntry (this, type.Name, type.FullName);
-				nested.Add (type.Name, entry);
-				return entry;
-			}
+			public TypeEntry GetNestedType (TypeDefinition type, bool add) => GetType (type, add);
 
-			public List<TypeEntry> GetNestedTypes ()
-			{
-				var list = new List<TypeEntry> ();
-				if (nested != null) {
-					foreach (var type in nested.Values)
-						list.Add (type);
-					list.Sort ();
-				}
-				return list;
-			}
+			public List<TypeEntry> GetNestedTypes () => GetTypes ();
 
 			public bool AddMethod (MethodDefinition method)
 			{
@@ -603,7 +589,6 @@ namespace Mono.Linker.Optimizer
 				return list;
 			}
 
-			Dictionary<string, TypeEntry> nested;
 			Dictionary<string, MethodEntry> methods;
 
 			public string FullName {
@@ -611,7 +596,7 @@ namespace Mono.Linker.Optimizer
 			}
 
 			public TypeEntry (SizeEntry parent, string name, string fullName)
-				: base (parent, name, 0)
+				: base (parent, name)
 			{
 				FullName = fullName;
 			}
