@@ -105,6 +105,7 @@ namespace Mono.Linker.Optimizer
 			CheckAttribute (nav, "ignore-resolution-errors", value => Options.IgnoreResolutionErrors = value);
 			CheckAttribute (nav, "report-size", value => Options.ReportSize = value);
 			CheckAttribute (nav, "check-size", value => Options.CheckSize = value);
+			CheckAttribute (nav, "report-mode", value => Options.SetReportMode (value));
 			CheckAttribute (nav, "size-check-configuration", value => Options.SizeCheckConfiguration = value);
 			CheckAttribute (nav, "compare-size-with", value => Options.CompareSizeWith = value);
 			CheckAttribute (nav, "size-check-tolerance", value => Options.SizeCheckTolerance = value);

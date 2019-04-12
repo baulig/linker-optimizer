@@ -103,6 +103,10 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
+		public ReportMode ReportMode {
+			get; set;
+		}
+
 		readonly List<TypeEntry> _type_actions;
 		readonly List<MethodEntry> _method_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
@@ -131,6 +135,9 @@ namespace Mono.Linker.Optimizer
 					var value = part.Substring (pos + 1);
 
 					switch (name) {
+					case "preprocess":
+						SetPreprocessorMode (value);
+						continue;
 					case "profile":
 						ProfileName = value;
 						continue;
@@ -146,15 +153,12 @@ namespace Mono.Linker.Optimizer
 					case "compare-size-with":
 						CompareSizeWith = value;
 						continue;
+					case "report-mode":
+						SetReportMode (value);
+						continue;
 					default:
 						throw new OptimizerException ($"Unknown option `{part}`.");
 					}
-				}
-
-				switch (part) {
-				case "preprocess":
-					SetPreprocessorMode (part);
-					continue;
 				}
 
 				bool? enabled = null;
@@ -204,8 +208,15 @@ namespace Mono.Linker.Optimizer
 		public void SetPreprocessorMode (string argument)
 		{
 			if (!Enum.TryParse (argument, true, out PreprocessorMode mode))
-			throw new OptimizerException ($"Invalid preprocessor mode: `{argument}`.");
+				throw new OptimizerException ($"Invalid preprocessor mode: `{argument}`.");
 			Preprocessor = mode;
+		}
+
+		public void SetReportMode (string argument)
+		{
+			if (!Enum.TryParse (argument, true, out ReportMode mode))
+				throw new OptimizerException ($"Invalid report mode: `{argument}`.");
+			ReportMode = mode;
 		}
 
 		public bool IsFeatureEnabled (MonoLinkerFeature feature)
