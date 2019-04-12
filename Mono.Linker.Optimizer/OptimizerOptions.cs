@@ -99,10 +99,6 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
-		public SizeReport SizeReport {
-			get;
-		}
-
 		public ReportMode ReportMode {
 			get; set;
 		}
@@ -120,7 +116,6 @@ namespace Mono.Linker.Optimizer
 				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Martin] = false
 			};
-			SizeReport = new SizeReport (this);
 		}
 
 		internal void ParseOptions (string options)

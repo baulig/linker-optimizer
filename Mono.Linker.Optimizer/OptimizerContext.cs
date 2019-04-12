@@ -67,7 +67,7 @@ namespace Mono.Linker.Optimizer
 				ReportWriter = new ReportWriter (this);
 
 			if (options.ReportMode != ReportMode.None)
-				Report = new OptimizerReport (this, options.ReportMode);
+				Report = new OptimizerReport (this);
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
