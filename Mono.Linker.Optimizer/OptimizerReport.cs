@@ -143,22 +143,9 @@ namespace Mono.Linker.Optimizer
 
 			using (var xml = XmlWriter.Create (filename, settings)) {
 				xml.WriteStartDocument ();
-				xml.WriteStartElement ("optimizer-report");
-
-				Write (xml);
-
-				xml.WriteEndElement ();
+				ReportWriter.Write (xml, Root, Mode);
 				xml.WriteEndDocument ();
 			}
-		}
-
-		public void Write (XmlWriter xml)
-		{
-			var writer = new ReportWriter (xml, WriteMode.Size);
-			Root.Visit (writer);
-
-			if (IsEnabled (ReportMode.Warnings))
-				_fail_list.Visit (writer);
 		}
 
 		void LogMessage (string message)
@@ -397,22 +384,20 @@ namespace Mono.Linker.Optimizer
 			void Visit (FailListEntry entry);
 		}
 
-		enum WriteMode
-		{
-			Size,
-			Detailed,
-			Action
-		}
-
 		class ReportWriter : IVisitor
 		{
 			readonly XmlWriter xml;
-			readonly WriteMode mode;
+			readonly ReportMode mode;
 
-			public ReportWriter (XmlWriter xml, WriteMode mode)
+			ReportWriter (XmlWriter xml, ReportMode mode)
 			{
 				this.xml = xml;
 				this.mode = mode;
+			}
+
+			public static void Write (XmlWriter xml, RootEntry root, ReportMode mode)
+			{
+				root.Visit (new ReportWriter (xml, mode));
 			}
 
 			void Write (AbstractReportEntry entry)
@@ -448,7 +433,7 @@ namespace Mono.Linker.Optimizer
 				xml.WriteStartElement (entry.ElementName);
 				entry.WriteElement (xml);
 
-				if (mode == WriteMode.Detailed)
+				if ((mode & ReportMode.Detailed) != 0)
 					entry.VisitChildren (this);
 
 				xml.WriteEndElement ();
