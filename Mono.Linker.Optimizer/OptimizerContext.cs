@@ -84,18 +84,18 @@ namespace Mono.Linker.Optimizer
 
 			context.Initialize (mainModule);
 
+			if (options.CheckSize)
+				options.ReportMode |= ReportMode.Size;
+
 			if (options.Report.IsEnabled (ReportMode.Detailed)) {
-				options.AnalyzeAll = options.ScanAllModules = options.ReportSize = true;
+				options.AnalyzeAll = options.ScanAllModules = true;
 				if (options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
 					options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
 			}
 
 			linkContext.Pipeline.AddStepBefore (typeof (MarkStep), new PreprocessStep (context));
 			linkContext.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (context));
-			if (options.ReportSize || options.CheckSize != null)
-				linkContext.Pipeline.AddStepAfter (typeof (OutputStep), new SizeReportStep (context));
-			if (options.ReportFileName != null)
-				linkContext.Pipeline.AppendStep (new WriteReportStep (context));
+			linkContext.Pipeline.AppendStep (new WriteReportStep (context));
 		}
 
 		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";

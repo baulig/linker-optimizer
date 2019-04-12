@@ -24,9 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using System.Text;
-using System.Xml;
-using System.Xml.XPath;
+using System.IO;
+using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer
 {
@@ -39,7 +38,42 @@ namespace Mono.Linker.Optimizer
 
 		protected override void Process ()
 		{
+			bool result = true;
+
+			if (Options.Report.IsEnabled (ReportMode.Size)) {
+				foreach (var assembly in GetAssemblies ()) {
+					result &= CheckAndReportSize (assembly);
+				}
+			}
+
 			Context.ReportWriter.WriteReport ();
+
+			if (!result)
+				throw new OptimizerException ("Size check failed.");
+		}
+
+		bool CheckAndReportSize (AssemblyDefinition assembly)
+		{
+			var action = Annotations.GetAction (assembly);
+			switch (action) {
+			case AssemblyAction.Save:
+			case AssemblyAction.Link:
+			case AssemblyAction.AddBypassNGen:
+			case AssemblyAction.Copy:
+				break;
+			default:
+				return true;
+			}
+
+			var file = new FileInfo (assembly.MainModule.FileName).Name;
+			var output = Path.Combine (Context.Context.OutputDirectory, file);
+			if (!File.Exists (output)) {
+				Context.LogMessage (MessageImportance.High, $"Output file does not exist: {output}");
+				return true;
+			}
+
+			var size = (int)new FileInfo (output).Length;
+			return Context.Report.CheckAndReportAssemblySize (Context, assembly, size);
 		}
 	}
 }

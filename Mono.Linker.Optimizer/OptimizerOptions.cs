@@ -55,10 +55,6 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
-		public bool ReportSize {
-			get; set;
-		}
-
 		public bool CheckSize {
 			get; set;
 		}
@@ -183,9 +179,6 @@ namespace Mono.Linker.Optimizer
 					break;
 				case "ignore-resolution-errors":
 					IgnoreResolutionErrors = enabled ?? true;
-					break;
-				case "report-size":
-					ReportSize = enabled ?? true;
 					break;
 				case "check-size":
 					CheckSize = enabled ?? true;

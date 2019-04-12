@@ -108,7 +108,6 @@ namespace Mono.Linker.Optimizer
 			CheckAttribute (nav, "preprocessor", value => Options.SetPreprocessorMode (value));
 			CheckAttribute (nav, "no-conditional-redefinition", value => Options.NoConditionalRedefinition = value);
 			CheckAttribute (nav, "ignore-resolution-errors", value => Options.IgnoreResolutionErrors = value);
-			CheckAttribute (nav, "report-size", value => Options.ReportSize = value);
 			CheckAttribute (nav, "check-size", value => Options.CheckSize = value);
 			CheckAttribute (nav, "report-mode", value => Options.SetReportMode (value));
 			CheckAttribute (nav, "size-check-configuration", value => Options.SizeCheckConfiguration = value);
