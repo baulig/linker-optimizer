@@ -87,6 +87,8 @@ namespace Mono.Linker.Optimizer
 
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
+			if (!IsEnabled (ReportMode.Actions))
+				return;
 			if (method.DeclaringType.DeclaringType != null)
 				throw new OptimizerAssertionException ($"Conditionals in nested classes are not supported yet.");
 
@@ -156,6 +158,8 @@ namespace Mono.Linker.Optimizer
 		public void Write (XmlWriter xml)
 		{
 			WriteSizeReport (xml);
+
+			WriteActionReport (xml);
 
 			WriteFailReport (xml);
 		}
@@ -355,6 +359,13 @@ namespace Mono.Linker.Optimizer
 
 				xml.WriteEndElement ();
 			}
+		}
+
+		void WriteActionReport (XmlWriter xml)
+		{
+			xml.WriteStartElement ("action-report");
+
+			xml.WriteEndElement ();
 		}
 
 		void WriteFailReport (XmlWriter xml)
