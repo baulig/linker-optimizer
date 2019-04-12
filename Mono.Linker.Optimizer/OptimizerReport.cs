@@ -266,17 +266,10 @@ namespace Mono.Linker.Optimizer
 
 		void ReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
-			var configEntry = GetConfigurationEntry (Options.ReportConfiguration, true);
-			var sizeEntry = configEntry.ProfileEntries.FirstOrDefault (e => e.Profile == Options.ReportProfile);
-			if (sizeEntry == null) {
-				sizeEntry = new ProfileEntry (Options.ReportProfile);
-				configEntry.ProfileEntries.Add (sizeEntry);
-			}
-
-			var asmEntry = sizeEntry.Assemblies.FirstOrDefault (e => e.Name == assembly.Name.Name);
+			var asmEntry = _root_entry.Assemblies.FirstOrDefault (e => e.Name == assembly.Name.Name);
 			if (asmEntry == null) {
 				asmEntry = new AssemblyEntry (assembly.Name.Name, size, null);
-				sizeEntry.Assemblies.Add (asmEntry);
+				_root_entry.Assemblies.Add (asmEntry);
 			} else {
 				asmEntry.Size = size;
 			}
