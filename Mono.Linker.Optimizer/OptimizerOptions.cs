@@ -67,6 +67,10 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
+		public string SizeCheckProfile {
+			get; set;
+		}
+
 		public string CompareSizeWith {
 			get; set;
 		}
@@ -103,6 +107,10 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
+		public OptimizerReport Report {
+			get;
+		}
+
 		readonly List<TypeEntry> _type_actions;
 		readonly List<MethodEntry> _method_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
@@ -116,6 +124,8 @@ namespace Mono.Linker.Optimizer
 				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Martin] = false
 			};
+
+			Report = new OptimizerReport (this);
 		}
 
 		internal void ParseOptions (string options)

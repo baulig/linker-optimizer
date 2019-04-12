@@ -26,6 +26,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Xml;
 using System.Xml.XPath;
@@ -37,12 +38,12 @@ namespace Mono.Linker.Optimizer
 
 	public class OptimizerReport
 	{
-		public OptimizerContext Context {
+		public OptimizerOptions Options {
 			get;
 		}
 
-		public OptimizerOptions Options {
-			get;
+		public ILogger Logger {
+			get; set;
 		}
 
 		public ReportMode Mode => Options.ReportMode;
@@ -54,11 +55,6 @@ namespace Mono.Linker.Optimizer
 		public OptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
-		}
-
-		public OptimizerReport (OptimizerContext context)
-		{
-			Context = context;
 
 			_configuration_entries = new List<ConfigurationEntry> ();
 		}
@@ -69,6 +65,23 @@ namespace Mono.Linker.Optimizer
 			var configuration = GetConfigurationEntry (name, true);
 
 			OptionsReader.ProcessChildren (nav, "profile", child => OnProfileEntry (child, configuration));
+		}
+
+		[Obsolete]
+		void LogMessage (MessageImportance importance, string message)
+		{
+			Logger.LogMessage (importance, message);
+		}
+
+		void LogWarning (string message)
+		{
+			Logger.LogMessage (MessageImportance.High, message);
+		}
+
+		[Conditional ("DEBUG")]
+		void LogDebug (string message)
+		{
+			Logger.LogMessage (MessageImportance.Low, message);
 		}
 
 		void OnProfileEntry (XPathNavigator nav, ConfigurationEntry configuration)
@@ -129,28 +142,28 @@ namespace Mono.Linker.Optimizer
 			return entry;
 		}
 
-		string SizeReportProfile {
-			get {
-				switch (Options.CheckSize) {
-				case null:
-				case "false":
-					return null;
-				case "true":
-					return Options.ProfileName ?? "default";
-				default:
-					return Options.CheckSize;
-				}
+		string XGetProfileName ()
+		{
+			switch (Options.CheckSize) {
+			case null:
+			case "false":
+				return null;
+			case "true":
+				return Options.ProfileName ?? "default";
+			default:
+				return Options.CheckSize;
 			}
 		}
 
-		bool CheckAssemblySize (OptimizerContext context, string assembly, int size)
+		bool CheckAssemblySize (string assembly, int size)
 		{
-			if (SizeReportProfile == null)
+			var xprofile = XGetProfileName ();
+			if (xprofile == null)
 				return true;
 
-			var entry = GetSizeReportEntry (Options.SizeCheckConfiguration, SizeReportProfile);
+			var entry = GetSizeReportEntry (Options.SizeCheckConfiguration, Options.SizeCheckProfile);
 			if (entry == null) {
-				context.LogMessage (MessageImportance.High, $"Cannot find size entries for profile `{SizeReportProfile}`.");
+				LogWarning ($"Cannot find size entries for profile `{Options.SizeCheckProfile}`.");
 				return false;
 			}
 
@@ -168,14 +181,14 @@ namespace Mono.Linker.Optimizer
 				tolerance = int.Parse (toleranceValue);
 			}
 
-			context.LogDebug ($"Size check: {asmEntry.Name}, actual={size}, expected={asmEntry.Size} (tolerance {toleranceValue})");
+			LogDebug ($"Size check: {asmEntry.Name}, actual={size}, expected={asmEntry.Size} (tolerance {toleranceValue})");
 
 			if (size < asmEntry.Size - tolerance) {
-				context.LogMessage (MessageImportance.High, $"Assembly `{asmEntry.Name}` size below minimum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
+				LogWarning ($"Assembly `{asmEntry.Name}` size below minimum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
 				return false;
 			}
 			if (size > asmEntry.Size + tolerance) {
-				context.LogMessage (MessageImportance.High, $"Assembly `{asmEntry.Name}` size above maximum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
+				LogWarning ($"Assembly `{asmEntry.Name}` size above maximum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
 				return false;
 			}
 
@@ -185,9 +198,9 @@ namespace Mono.Linker.Optimizer
 		void ReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
 			var configEntry = GetConfigurationEntry (Options.SizeCheckConfiguration, true);
-			var sizeEntry = configEntry.SizeReportEntries.FirstOrDefault (e => e.Profile == SizeReportProfile);
+			var sizeEntry = configEntry.SizeReportEntries.FirstOrDefault (e => e.Profile == Options.SizeCheckProfile);
 			if (sizeEntry == null) {
-				sizeEntry = new SizeReportEntry (SizeReportProfile);
+				sizeEntry = new SizeReportEntry (Options.SizeCheckProfile);
 				configEntry.SizeReportEntries.Add (sizeEntry);
 			}
 
@@ -238,7 +251,7 @@ namespace Mono.Linker.Optimizer
 		{
 			ReportAssemblySize (context, assembly, size);
 
-			return CheckAssemblySize (context, assembly.Name.Name, size);
+			return CheckAssemblySize (assembly.Name.Name, size);
 		}
 
 		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, AssemblySizeEntry entry)

@@ -65,9 +65,6 @@ namespace Mono.Linker.Optimizer
 
 			if (options.ReportFileName != null)
 				ReportWriter = new ReportWriter (this);
-
-			if (options.ReportMode != ReportMode.None)
-				Report = new OptimizerReport (this);
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
@@ -119,6 +116,8 @@ namespace Mono.Linker.Optimizer
 
 		void Initialize (string mainModule)
 		{
+			Options.Report.Logger = Context.Logger;
+
 			LogMessage (MessageImportance.High, $"Initializing {Program.ProgramName}.");
 
 			var mainName = Path.GetFileNameWithoutExtension (mainModule);
