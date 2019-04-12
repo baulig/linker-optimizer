@@ -36,7 +36,6 @@ namespace Mono.Linker.Optimizer
 	public class OptimizerActionReport
 	{
 		readonly Dictionary<string, TypeEntry> _namespace_hash = new Dictionary<string, TypeEntry> ();
-		readonly List<FailListEntry> _fail_list = new List<FailListEntry> ();
 
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
@@ -77,37 +76,6 @@ namespace Mono.Linker.Optimizer
 		public void RemovedDeadVariables (MethodDefinition method)
 		{
 			GetMethodEntry (method).DeadCodeMode |= DeadCodeMode.RemovedDeadVariables;
-		}
-
-		public void ReportFailListEntry (TypeDefinition type, OptimizerOptions.TypeEntry entry, string original, List<string> stack)
-		{
-			var fail = new FailListEntry (type.FullName) {
-				Original = original
-			};
-			fail.TracerStack.AddRange (stack);
-			_fail_list.Add (fail);
-
-			while (entry != null) {
-				fail.EntryStack.Add (entry.ToString ());
-				entry = entry.Parent;
-			}
-		}
-
-		public void ReportFailListEntry (MethodDefinition method, OptimizerOptions.MethodEntry entry, List<string> stack)
-		{
-			var fail = new FailListEntry (method.FullName);
-			fail.TracerStack.AddRange (stack);
-			_fail_list.Add (fail);
-
-			if (entry != null) {
-				fail.EntryStack.Add (entry.ToString ());
-
-				var type = entry.Parent;
-				while (type != null) {
-					fail.EntryStack.Add (type.ToString ());
-					type = type.Parent;
-				}
-			}
 		}
 
 		TypeEntry GetTypeEntry (TypeDefinition type)
@@ -155,8 +123,6 @@ namespace Mono.Linker.Optimizer
 
 				WriteActionReport (xml);
 
-				WriteFailReport (xml);
-
 				context.Report.Write (xml);
 
 				xml.WriteEndElement ();
@@ -186,34 +152,6 @@ namespace Mono.Linker.Optimizer
 					foreach (var item in type.Methods.Values)
 						WriteMethodEntry (xml, item);
 
-					xml.WriteEndElement ();
-				}
-				xml.WriteEndElement ();
-			}
-
-			xml.WriteEndElement ();
-		}
-
-		void WriteFailReport (XmlWriter xml)
-		{
-			if (_fail_list == null || _fail_list.Count == 0)
-				return;
-
-			xml.WriteStartElement ("fail-list");
-
-			foreach (var fail in _fail_list) {
-				xml.WriteStartElement ("fail");
-				xml.WriteAttributeString ("name", fail.Name);
-				if (fail.Original != null)
-					xml.WriteAttributeString ("full-name", fail.Original);
-				foreach (var entry in fail.EntryStack) {
-					xml.WriteStartElement ("entry");
-					xml.WriteAttributeString ("name", entry);
-					xml.WriteEndElement ();
-				}
-				foreach (var entry in fail.TracerStack) {
-					xml.WriteStartElement ("stack");
-					xml.WriteAttributeString ("name", entry);
 					xml.WriteEndElement ();
 				}
 				xml.WriteEndElement ();
@@ -307,21 +245,6 @@ namespace Mono.Linker.Optimizer
 			RemovedDeadJumps		= 4,
 			RemovedConstantJumps		= 8,
 			RemovedDeadVariables		= 16
-		}
-
-		class FailListEntry
-		{
-			public readonly string Name;
-			public string Original;
-			public readonly List<string> EntryStack;
-			public readonly List<string> TracerStack;
-
-			public FailListEntry (string name)
-			{
-				Name = name;
-				EntryStack = new List<string> ();
-				TracerStack = new List<string> ();
-			}
 		}
 	}
 }

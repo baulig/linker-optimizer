@@ -51,12 +51,14 @@ namespace Mono.Linker.Optimizer
 		public bool IsEnabled (ReportMode mode) => (Mode & mode) != 0;
 
 		readonly List<ConfigurationEntry> _configuration_entries;
+		readonly List<FailListEntry> _fail_list;
 
 		public OptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
 
 			_configuration_entries = new List<ConfigurationEntry> ();
+			_fail_list = new List<FailListEntry> ();
 		}
 
 		public void Read (XPathNavigator nav)
@@ -65,6 +67,76 @@ namespace Mono.Linker.Optimizer
 			var configuration = GetConfigurationEntry (name, true);
 
 			OptionsReader.ProcessChildren (nav, "profile", child => OnProfileEntry (child, configuration));
+		}
+
+		public void ReportFailListEntry (TypeDefinition type, OptimizerOptions.TypeEntry entry, string original, List<string> stack)
+		{
+			var fail = new FailListEntry (type.FullName) {
+				Original = original
+			};
+			fail.TracerStack.AddRange (stack);
+			_fail_list.Add (fail);
+
+			while (entry != null) {
+				fail.EntryStack.Add (entry.ToString ());
+				entry = entry.Parent;
+			}
+		}
+
+		public void ReportFailListEntry (MethodDefinition method, OptimizerOptions.MethodEntry entry, List<string> stack)
+		{
+			var fail = new FailListEntry (method.FullName);
+			fail.TracerStack.AddRange (stack);
+			_fail_list.Add (fail);
+
+			if (entry != null) {
+				fail.EntryStack.Add (entry.ToString ());
+
+				var type = entry.Parent;
+				while (type != null) {
+					fail.EntryStack.Add (type.ToString ());
+					type = type.Parent;
+				}
+			}
+		}
+
+		public bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
+		{
+			ReportAssemblySize (context, assembly, size);
+
+			return CheckAssemblySize (assembly.Name.Name, size);
+		}
+
+		public void Write (XmlWriter xml)
+		{
+			foreach (var configuration in _configuration_entries) {
+				xml.WriteStartElement ("size-check");
+				xml.WriteAttributeString ("configuration", configuration.Configuration);
+
+				foreach (var entry in configuration.SizeReportEntries) {
+					xml.WriteStartElement ("profile");
+					xml.WriteAttributeString ("name", entry.Profile);
+					foreach (var asm in entry.Assemblies) {
+						xml.WriteStartElement ("assembly");
+						xml.WriteAttributeString ("name", asm.Name);
+						xml.WriteAttributeString ("size", asm.Size.ToString ());
+						if (asm.Tolerance != null)
+							xml.WriteAttributeString ("tolerance", asm.Tolerance);
+
+						if (IsEnabled (ReportMode.Detailed))
+							WriteDetailedReport (xml, asm);
+
+						if (Options.CompareSizeWith != null)
+							CompareSize (xml, asm);
+
+						xml.WriteEndElement ();
+
+					}
+					xml.WriteEndElement ();
+				}
+
+				xml.WriteEndElement ();
+			}
 		}
 
 		void LogMessage (string message)
@@ -200,50 +272,39 @@ namespace Mono.Linker.Optimizer
 			ReportDetailed (context, assembly, asmEntry);
 		}
 
-		public void Write (XmlWriter xml)
-		{
-			foreach (var configuration in _configuration_entries) {
-				xml.WriteStartElement ("size-check");
-				xml.WriteAttributeString ("configuration", configuration.Configuration);
-
-				foreach (var entry in configuration.SizeReportEntries) {
-					xml.WriteStartElement ("profile");
-					xml.WriteAttributeString ("name", entry.Profile);
-					foreach (var asm in entry.Assemblies) {
-						xml.WriteStartElement ("assembly");
-						xml.WriteAttributeString ("name", asm.Name);
-						xml.WriteAttributeString ("size", asm.Size.ToString ());
-						if (asm.Tolerance != null)
-							xml.WriteAttributeString ("tolerance", asm.Tolerance);
-
-						if (IsEnabled (ReportMode.Detailed))
-							WriteDetailedReport (xml, asm);
-
-						if (Options.CompareSizeWith != null)
-							CompareSize (xml, asm);
-
-						xml.WriteEndElement ();
-
-					}
-					xml.WriteEndElement ();
-				}
-
-				xml.WriteEndElement ();
-			}
-		}
-
-		internal bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
-		{
-			ReportAssemblySize (context, assembly, size);
-
-			return CheckAssemblySize (assembly.Name.Name, size);
-		}
-
 		void ReportDetailed (OptimizerContext context, AssemblyDefinition assembly, AssemblySizeEntry entry)
 		{
 			foreach (var type in assembly.MainModule.Types) {
 				ProcessType (context, entry, type);
 			}
+		}
+
+		void WriteFailReport (XmlWriter xml)
+		{
+			if (_fail_list == null || _fail_list.Count == 0)
+				return;
+
+			xml.WriteStartElement ("fail-list");
+
+			foreach (var fail in _fail_list) {
+				xml.WriteStartElement ("fail");
+				xml.WriteAttributeString ("name", fail.Name);
+				if (fail.Original != null)
+					xml.WriteAttributeString ("full-name", fail.Original);
+				foreach (var entry in fail.EntryStack) {
+					xml.WriteStartElement ("entry");
+					xml.WriteAttributeString ("name", entry);
+					xml.WriteEndElement ();
+				}
+				foreach (var entry in fail.TracerStack) {
+					xml.WriteStartElement ("stack");
+					xml.WriteAttributeString ("name", entry);
+					xml.WriteEndElement ();
+				}
+				xml.WriteEndElement ();
+			}
+
+			xml.WriteEndElement ();
 		}
 
 		void WriteDetailedReport (XmlWriter xml, AssemblySizeEntry assembly)
@@ -592,6 +653,21 @@ namespace Mono.Linker.Optimizer
 			public MethodEntry (TypeEntry parent, string name, int size)
 				: base (parent, name, size)
 			{
+			}
+		}
+
+		class FailListEntry
+		{
+			public readonly string Name;
+			public string Original;
+			public readonly List<string> EntryStack;
+			public readonly List<string> TracerStack;
+
+			public FailListEntry (string name)
+			{
+				Name = name;
+				EntryStack = new List<string> ();
+				TracerStack = new List<string> ();
 			}
 		}
 	}
