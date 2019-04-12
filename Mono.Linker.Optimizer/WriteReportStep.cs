@@ -46,7 +46,8 @@ namespace Mono.Linker.Optimizer
 				}
 			}
 
-			Context.ReportWriter.WriteReport ();
+			if (Options.ReportFileName != null)
+				Context.ReportWriter.WriteReport (Context, Options.ReportFileName);
 
 			if (!result)
 				throw new OptimizerException ("Size check failed.");

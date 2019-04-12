@@ -35,22 +35,8 @@ namespace Mono.Linker.Optimizer
 
 	public class ReportWriter
 	{
-		public OptimizerContext Context {
-			get;
-		}
-
-		public OptimizerOptions Options => Context.Options;
-
-		readonly Dictionary<string, TypeEntry> _namespace_hash;
-		readonly List<FailListEntry> _fail_list;
-
-		public ReportWriter (OptimizerContext context)
-		{
-			Context = context;
-
-			_namespace_hash = new Dictionary<string, TypeEntry> ();
-			_fail_list = new List<FailListEntry> ();
-		}
+		readonly Dictionary<string, TypeEntry> _namespace_hash = new Dictionary<string, TypeEntry> ();
+		readonly List<FailListEntry> _fail_list = new List<FailListEntry> ();
 
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
@@ -152,7 +138,7 @@ namespace Mono.Linker.Optimizer
 			return entry;
 		}
 
-		public void WriteReport ()
+		public void WriteReport (OptimizerContext context, string filename)
 		{
 			var settings = new XmlWriterSettings {
 				Indent = true,
@@ -163,22 +149,19 @@ namespace Mono.Linker.Optimizer
 				Encoding = Encoding.Default
 			};
 
-			using (var xml = XmlWriter.Create (Options.ReportFileName, settings)) {
+			using (var xml = XmlWriter.Create (filename, settings)) {
 				xml.WriteStartDocument ();
 				xml.WriteStartElement ("optimizer-report");
-				WriteReport (xml);
+
+				WriteActionReport (xml);
+
+				WriteFailReport (xml);
+
+				context.Report.Write (xml);
+
 				xml.WriteEndElement ();
 				xml.WriteEndDocument ();
 			}
-		}
-
-		void WriteReport (XmlWriter xml)
-		{
-			WriteActionReport (xml);
-
-			WriteFailReport (xml);
-
-			Context.Report.Write (xml);
 		}
 
 		void WriteActionReport (XmlWriter xml)
