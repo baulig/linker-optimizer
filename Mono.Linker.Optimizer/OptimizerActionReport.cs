@@ -1,5 +1,5 @@
 ﻿//
-// ReportWriter.cs
+// OptimizerActionReport.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -33,7 +33,7 @@ namespace Mono.Linker.Optimizer
 {
 	using BasicBlocks;
 
-	public class ReportWriter
+	public class OptimizerActionReport
 	{
 		readonly Dictionary<string, TypeEntry> _namespace_hash = new Dictionary<string, TypeEntry> ();
 		readonly List<FailListEntry> _fail_list = new List<FailListEntry> ();

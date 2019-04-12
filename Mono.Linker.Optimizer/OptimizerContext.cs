@@ -48,7 +48,7 @@ namespace Mono.Linker.Optimizer
 		}
 
 		[Obsolete]
-		public ReportWriter ReportWriter {
+		public OptimizerActionReport ReportWriter {
 			get;
 		}
 
@@ -64,7 +64,7 @@ namespace Mono.Linker.Optimizer
 			Options = options;
 
 			if (options.ReportFileName != null)
-				ReportWriter = new ReportWriter ();
+				ReportWriter = new OptimizerActionReport ();
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
