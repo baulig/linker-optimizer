@@ -26,7 +26,24 @@
 using System;
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class Method
+	public class Method : Node
 	{
+		public string Name {
+			get;
+		}
+
+		public Method (string name)
+		{
+			Name = name;
+		}
+
+		public override void Visit (IVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
+
+		public override void VisitChildren (IVisitor visitor)
+		{
+		}
 	}
 }

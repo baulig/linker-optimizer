@@ -23,13 +23,32 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class Type
+	public class Type : Node
 	{
-		public Type ()
+		public string Name {
+			get;
+		}
+
+		public NodeList<Type> NestedTypes { get; } = new NodeList<Type> ();
+
+		public NodeList<Method> Methods { get; } = new NodeList<Method> ();
+
+		public Type (string name)
 		{
+			Name = name;
+		}
+
+		public override void Visit (IVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
+
+		public override void VisitChildren (IVisitor visitor)
+		{
+			NestedTypes.VisitChildren (visitor);
+			Methods.VisitChildren (visitor);
 		}
 	}
 }

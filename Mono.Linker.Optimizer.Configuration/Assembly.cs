@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
 	public class Assembly : Node
@@ -31,6 +32,8 @@ namespace Mono.Linker.Optimizer.Configuration
 		public string Name {
 			get;
 		}
+
+		public NodeList<Namespace> Namespaces { get; } = new NodeList<Namespace> ();
 
 		public Assembly (string name)
 		{
@@ -44,7 +47,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
-			throw new NotImplementedException ();
+			Namespaces.VisitChildren (visitor);
 		}
 	}
 }
