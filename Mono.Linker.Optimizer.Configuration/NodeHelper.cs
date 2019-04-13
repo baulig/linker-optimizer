@@ -23,13 +23,47 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
+	using BasicBlocks;
+
 	static class NodeHelper
 	{
+		internal static Assembly GetAssembly (this NodeList<Assembly> list, AssemblyDefinition assembly, bool add)
+		{
+			return GetAssembly (list, assembly.Name.Name, add);
+		}
+
 		internal static Assembly GetAssembly (this NodeList<Assembly> list, string name, bool add)
 		{
 			return list.GetChild (a => a.Name == name, () => add ? new Assembly (name) : null);
+		}
+
+		internal static Namespace GetNamespace (this NodeList<Namespace> list, string name, bool add)
+		{
+			return list.GetChild (n => n.Name == name, () => add ? new Namespace (name) : null);
+		}
+
+		internal static Type GetType (this NodeList<Type> list, TypeDefinition type, bool add)
+		{
+			return GetType (list, type.Name, type.FullName, add);
+		}
+
+		internal static Type GetType (this NodeList<Type> list, string name, string fullName, bool add)
+		{
+			return list.GetChild (t => t.Name == name, () => add ? new Type (name, fullName) : null);
+		}
+
+		internal static Method GetMethod (this NodeList<Method> list, MethodDefinition method, bool add)
+		{
+			return GetMethod (list, method.Name + CecilHelper.GetMethodSignature (method), add);
+		}
+
+		internal static Method GetMethod (this NodeList<Method> list, string name, bool add)
+		{
+			return list.GetChild (m => m.Name == name, () => add ? new Method (name) : null);
 		}
 	}
 }

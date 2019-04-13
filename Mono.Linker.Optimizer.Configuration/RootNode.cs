@@ -23,11 +23,18 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
 	public class RootNode : Node
 	{
 		public SizeReport SizeReport { get; } = new SizeReport ();
+
+		public Assembly GetAssembly (AssemblyDefinition assembly, bool add)
+		{
+			return GetAssembly (assembly.Name.Name, add);
+		}
 
 		public Assembly GetAssembly (string name, bool add)
 		{

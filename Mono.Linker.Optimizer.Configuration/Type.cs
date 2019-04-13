@@ -31,13 +31,18 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
+		public string FullName {
+			get;
+		}
+
 		public NodeList<Type> NestedTypes { get; } = new NodeList<Type> ();
 
 		public NodeList<Method> Methods { get; } = new NodeList<Method> ();
 
-		public Type (string name)
+		public Type (string name, string fullName)
 		{
 			Name = name;
+			FullName = fullName;
 		}
 
 		public override void Visit (IVisitor visitor)

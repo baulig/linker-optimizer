@@ -210,33 +210,32 @@ namespace Mono.Linker.Optimizer
 
 		AssemblyEntry GetAssemblyEntry (string name, bool add)
 		{
-			var assembly = RootNode.GetAssembly (name, add);
 			return Root.AssemblyList.GetAssembly (name, add);
 		}
 
-		TypeEntry GetTypeEntry (TypeDefinition type, bool add)
+		Type GetTypeEntry (TypeDefinition type, bool add)
 		{
 			if (type.DeclaringType != null)
 				throw DebugHelpers.AssertFail ("Nested types are not supported yet.");
 
-			var assembly = GetAssemblyEntry (type.Module.Assembly.Name.Name, add);
+			var assembly = RootNode.GetAssembly (type.Module.Assembly, add);
 			if (assembly == null)
 				return null;
 
-			var ns = assembly.GetNamespace (type.Name, add);
+			var ns = assembly.Namespaces.GetNamespace (type.Name, add);
 			if (ns == null)
 				return null;
 
-			return ns.GetType (type, add);
+			return ns.Types.GetType (type, add);
 		}
 
-		MethodEntry GetMethodEntry (MethodDefinition method, bool add)
+		Method GetMethodEntry (MethodDefinition method, bool add)
 		{
 			var type = GetTypeEntry (method.DeclaringType, add);
 			if (type == null)
 				return null;
 
-			return type.GetMethod (method, add);
+			return type.Methods.GetMethod (method, add);
 		}
 
 		bool CheckAssemblySize (string assembly, int size)
