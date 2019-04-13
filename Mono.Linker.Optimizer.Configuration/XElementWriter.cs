@@ -83,6 +83,9 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (Assembly node)
 		{
+			var element = new XElement ("assembly");
+
+			CurrentNode.Peek ().Add (element);
 			// throw new NotImplementedException ();
 		}
 
