@@ -1,5 +1,5 @@
 ﻿//
-// IVisitor.cs
+// ActionList.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -23,28 +23,17 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public interface IVisitor
+	public class ActionList : Node
 	{
-		void Visit (RootNode node);
+		public override void Visit (IVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
 
-		void Visit (ActionList node);
-
-		void Visit (SizeReport node);
-
-		void Visit (Assembly node);
-
-		void Visit (Namespace node);
-
-		void Visit (Type node);
-
-		void Visit (Method node);
-
-		void Visit (FailList node);
-
-		void Visit (FailListEntry node);
+		public override void VisitChildren (IVisitor visitor)
+		{
+		}
 	}
 }

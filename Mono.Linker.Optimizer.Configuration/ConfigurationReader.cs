@@ -1,5 +1,5 @@
 ﻿//
-// IVisitor.cs
+// ConfigurationReader.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -27,24 +27,15 @@ using System;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public interface IVisitor
+	public class ConfigurationReader
 	{
-		void Visit (RootNode node);
+		public RootNode Root {
+			get;
+		}
 
-		void Visit (ActionList node);
-
-		void Visit (SizeReport node);
-
-		void Visit (Assembly node);
-
-		void Visit (Namespace node);
-
-		void Visit (Type node);
-
-		void Visit (Method node);
-
-		void Visit (FailList node);
-
-		void Visit (FailListEntry node);
+		public ConfigurationReader (RootNode root)
+		{
+			Root = root;
+		}
 	}
 }

@@ -26,7 +26,6 @@
 using System;
 using System.Xml.Linq;
 using System.Collections.Generic;
-using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
@@ -88,6 +87,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (RootNode node) => Visit (node, "root", Visit);
 
+		void IVisitor.Visit (ActionList node) => Visit (node, "action-list", Visit);
+
 		void IVisitor.Visit (SizeReport node) => Visit (node, "size-report", Visit);
 
 		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
@@ -116,7 +117,12 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected bool Visit (SizeReport node, XElement element)
 		{
 			node.VisitChildren (this);
-			return false;
+			return true;
+		}
+
+		protected bool Visit (ActionList node, XElement element)
+		{
+			return true;
 		}
 
 		protected bool Visit (Assembly node, XElement element)
