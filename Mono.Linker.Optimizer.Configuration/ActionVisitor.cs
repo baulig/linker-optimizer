@@ -46,7 +46,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (RootNode node)
 		{
-			throw new NotImplementedException ();
+			node.VisitChildren (this);
 		}
 
 		public void Visit (ActionList node)
@@ -66,7 +66,11 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (Namespace node)
 		{
-			throw new NotImplementedException ();
+			if (!node.Matches (Type))
+				return;
+			if (node.Action != TypeAction.None)
+				Action (node.Action);
+			node.VisitChildren (this);
 		}
 
 		public void Visit (Type node)

@@ -23,6 +23,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using System;
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
 	public abstract class AbstractType : Node
@@ -42,6 +45,23 @@ namespace Mono.Linker.Optimizer.Configuration
 		public NodeList<Type> Types { get; } = new NodeList<Type> ();
 
 		public NodeList<Method> Methods { get; } = new NodeList<Method> ();
+
+		public bool Matches (TypeDefinition type, TypeAction? action = null)
+		{
+			if (action != null && action.Value != Action)
+				return false;
+
+			switch (Match) {
+			case MatchKind.FullName:
+				return type.FullName == Name;
+			case MatchKind.Substring:
+				return type.FullName.Contains (Name);
+			case MatchKind.Namespace:
+				return type.Namespace.StartsWith (Name, StringComparison.InvariantCulture);
+			default:
+				return type.Name == Name;
+			}
+		}
 
 		protected AbstractType (string name, MatchKind match, TypeAction action)
 		{
