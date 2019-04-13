@@ -587,55 +587,59 @@ namespace Mono.Linker.Optimizer
 			{
 			}
 
+			protected override bool Visit (RootEntry entry, XElement element)
+			{
+				entry.AssemblyList.VisitChildren (this);
+				return false;
+			}
+
+			protected override bool Visit (SizeReportEntry entry, XElement element)
+			{
+				throw new InvalidOperationException ();
+			}
+
+			protected override bool Visit (ConfigurationEntry entry, XElement element)
+			{
+				throw new InvalidOperationException ();
+			}
+
+			protected override bool Visit (ProfileEntry entry, XElement element)
+			{
+				throw new InvalidOperationException ();
+			}
+
+			protected override bool Visit (AssemblyEntry entry, XElement element)
+			{
+				element.SetAttributeValue ("name", entry.Name);
+				return true;
+			}
+
+			protected override bool Visit (NamespaceEntry entry, XElement element)
+			{
+				element.SetAttributeValue ("name", entry.Name);
+				return true;
+			}
+
+			protected override bool Visit (TypeEntry entry, XElement element)
+			{
+				element.SetAttributeValue ("name", entry.Name);
+				return true;
+			}
+
 			protected override bool Visit (MethodEntry entry, XElement element)
 			{
 				element.SetAttributeValue ("name", entry.Name);
 				return true;
 			}
 
-			protected override bool Visit (RootEntry entry, XElement element)
-			{
-				return true;
-			}
-
-			protected override bool Visit (SizeReportEntry entry, XElement element)
-			{
-				return true;
-			}
-
-			protected override bool Visit (ConfigurationEntry entry, XElement element)
-			{
-				return true;
-			}
-
-			protected override bool Visit (ProfileEntry entry, XElement element)
-			{
-				return true;
-			}
-
-			protected override bool Visit (AssemblyEntry entry, XElement element)
-			{
-				return true;
-			}
-
-			protected override bool Visit (NamespaceEntry entry, XElement element)
-			{
-				return true;
-			}
-
-			protected override bool Visit (TypeEntry entry, XElement element)
-			{
-				return true;
-			}
-
 			protected override bool Visit (FailList entry, XElement element)
 			{
-				return true;
+				throw new InvalidOperationException ();
 			}
 
 			protected override bool Visit (FailListEntry entry, XElement element)
 			{
-				return true;
+				throw new InvalidOperationException ();
 			}
 		}
 
