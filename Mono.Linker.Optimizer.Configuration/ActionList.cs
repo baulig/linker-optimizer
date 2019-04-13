@@ -30,7 +30,25 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public class ActionList : Node
 	{
+		public string Conditional {
+			get;
+		}
+
 		readonly List<Node> children = new List<Node> ();
+
+		public ActionList ()
+		{
+		}
+
+		public ActionList (string conditional)
+		{
+			Conditional = conditional;
+		}
+
+		public void Add (Type type)
+		{
+			children.Add (type);
+		}
 
 		public override void Visit (IVisitor visitor)
 		{

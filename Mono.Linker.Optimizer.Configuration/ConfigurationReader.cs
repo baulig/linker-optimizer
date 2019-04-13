@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Xml.XPath;
+using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
@@ -36,6 +38,79 @@ namespace Mono.Linker.Optimizer.Configuration
 		public ConfigurationReader (RootNode root)
 		{
 			Root = root;
+		}
+
+		public void Read (XPathNavigator nav)
+		{
+			nav.ProcessChildren ("conditional", OnConditional);
+
+			var list = new ActionList ();
+
+			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, list));
+
+			//			ProcessChildren (root, "type", child => OnTypeEntry (child, null));
+//			ProcessChildren (root, "method", child => OnMethodEntry (child));
+
+		}
+
+		void OnConditional (XPathNavigator nav)
+		{
+			var name = nav.GetAttribute ("feature");
+			if (name == null || !nav.GetBoolAttribute ("enabled", out var enabled))
+				throw ThrowError ("<conditional> needs both `feature` and `enabled` arguments.");
+
+			var feature = OptimizerOptions.FeatureByName (name);
+
+			var conditional = new ActionList (name);
+			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, conditional));
+
+			// ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, Conditional));
+			// ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
+			// ProcessChildren (nav, "method", child => OnMethodEntry (child, null, Conditional));
+
+			// bool Conditional (MemberReference reference) => Options.IsFeatureEnabled (feature) == enabled;
+		}
+
+		void OnNamespaceEntry (XPathNavigator nav, ActionList parent)
+		{
+			var name = nav.GetAttribute ("name") ?? throw ThrowError ("<namespace> entry needs `name` attribute.");
+
+			var action = nav.GetTypeAction ("action");
+			var type = new Type (name, MatchKind.Namespace, action);
+			parent.Add (type);
+			
+#if FIXME
+			if (action != null)
+				entry = AddTypeEntry (name, MatchKind.Namespace, action, null, conditional);
+			else
+				entry = Options.AddTypeEntry (name, MatchKind.Namespace, TypeAction.None, null, conditional);
+
+			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
+			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
+#endif
+		}
+
+
+		internal static bool TryParseMethodAction (string name, out MethodAction action)
+		{
+			switch (name.ToLowerInvariant ()) {
+			case "return-null":
+				action = MethodAction.ReturnNull;
+				return true;
+			case "return-false":
+				action = MethodAction.ReturnFalse;
+				return true;
+			case "return-true":
+				action = MethodAction.ReturnTrue;
+				return true;
+			default:
+				return Enum.TryParse (name, true, out action);
+			}
+		}
+
+		internal static Exception ThrowError (string message)
+		{
+			throw new OptimizerException ($"Invalid XML: {message}");
 		}
 	}
 }

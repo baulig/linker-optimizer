@@ -23,6 +23,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using System;
+using System.Xml.XPath;
 using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
@@ -64,6 +66,45 @@ namespace Mono.Linker.Optimizer.Configuration
 		internal static Method GetMethod (this NodeList<Method> list, string name, bool add)
 		{
 			return list.GetChild (m => m.Name == name, () => add ? new Method (name) : null);
+		}
+
+		internal static void ProcessChildren (this XPathNavigator nav, string children, Action<XPathNavigator> action)
+		{
+			var iterator = nav.Select (children);
+			while (iterator.MoveNext ())
+				action (iterator.Current);
+		}
+
+		internal static bool GetBoolAttribute (this XPathNavigator nav, string name, out bool value)
+		{
+			var attr = GetAttribute (nav, name);
+			if (attr != null && bool.TryParse (attr, out value))
+				return true;
+			value = false;
+			return false;
+		}
+
+		internal static string GetAttribute (this XPathNavigator nav, string attribute)
+		{
+			var attr = nav.GetAttribute (attribute, string.Empty);
+			return string.IsNullOrWhiteSpace (attr) ? null : attr;
+		}
+
+		internal static TypeAction GetTypeAction (this XPathNavigator nav, string name)
+		{
+			if (TryGetTypeAction (nav, name, out var action))
+				return action;
+			return TypeAction.None;
+		}
+
+		internal static bool TryGetTypeAction (this XPathNavigator nav, string name, out TypeAction action)
+		{
+			var attribute = GetAttribute (nav, name);
+			if (attribute == null) {
+				action = TypeAction.None;
+				return false;
+			}
+			return Enum.TryParse (name, true, out action);
 		}
 	}
 }

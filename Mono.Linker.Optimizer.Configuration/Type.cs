@@ -35,6 +35,14 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
+		public MatchKind Match {
+			get;
+		}
+
+		public TypeAction Action {
+			get;
+		}
+
 		public NodeList<Type> NestedTypes { get; } = new NodeList<Type> ();
 
 		public NodeList<Method> Methods { get; } = new NodeList<Method> ();
@@ -43,6 +51,13 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			Name = name;
 			FullName = fullName;
+		}
+
+		public Type (string name, MatchKind match, TypeAction action)
+		{
+			Name = name;
+			Match = match;
+			Action = action;
 		}
 
 		public override void Visit (IVisitor visitor)
