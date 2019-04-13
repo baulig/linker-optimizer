@@ -81,6 +81,9 @@ namespace Mono.Linker.Optimizer
 			ProcessChildren (root, "method", child => OnMethodEntry (child));
 
 			ProcessChildren (root, "size-check", OnSizeCheck);
+
+			var reader = new ConfigurationReader (Options.Report.RootNode);
+			reader.Read (root);
 		}
 
 		void OnSizeCheck (XPathNavigator nav)

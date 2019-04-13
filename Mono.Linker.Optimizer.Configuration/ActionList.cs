@@ -45,9 +45,14 @@ namespace Mono.Linker.Optimizer.Configuration
 			Conditional = conditional;
 		}
 
-		public void Add (Type type)
+		public void Add (Namespace node)
 		{
-			children.Add (type);
+			children.Add (node);
+		}
+
+		public void Add (Type node)
+		{
+			children.Add (node);
 		}
 
 		public override void Visit (IVisitor visitor)

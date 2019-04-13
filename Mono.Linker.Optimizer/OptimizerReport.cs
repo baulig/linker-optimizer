@@ -58,7 +58,7 @@ namespace Mono.Linker.Optimizer
 
 		RootEntry Root { get; } = new RootEntry ();
 
-		protected RootNode RootNode { get; } = new RootNode ();
+		public RootNode RootNode { get; } = new RootNode ();
 
 		public OptimizerReport (OptimizerOptions options)
 		{

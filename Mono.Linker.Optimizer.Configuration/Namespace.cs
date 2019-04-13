@@ -31,11 +31,21 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
+		public TypeAction Action {
+			get;
+		}
+
 		public NodeList<Type> Types { get; } = new NodeList<Type> ();
 
 		public Namespace (string name)
 		{
 			Name = name;
+		}
+
+		public Namespace (string name, TypeAction action)
+		{
+			Name = name;
+			Action = action;
 		}
 
 		public override void Visit (IVisitor visitor)

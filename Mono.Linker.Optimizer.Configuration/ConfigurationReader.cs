@@ -63,6 +63,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 			var conditional = new ActionList (name);
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, conditional));
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, conditional));
 
 			// ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, Conditional));
 			// ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
@@ -76,9 +77,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			var name = nav.GetAttribute ("name") ?? throw ThrowError ("<namespace> entry needs `name` attribute.");
 
 			var action = nav.GetTypeAction ("action");
-			var type = new Type (name, MatchKind.Namespace, action);
-			parent.Add (type);
-			
+			var node = new Namespace (name, action);
+			parent.Add (node);
+
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, parent));
+
 #if FIXME
 			if (action != null)
 				entry = AddTypeEntry (name, MatchKind.Namespace, action, null, conditional);
@@ -90,6 +93,43 @@ namespace Mono.Linker.Optimizer.Configuration
 #endif
 		}
 
+		void OnTypeEntry (XPathNavigator nav, ActionList parent)
+		{
+			if (!GetName (nav, out var name, out var match))
+				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
+
+			var action = nav.GetTypeAction ("action");
+			var type = new Type (name, match, action);
+			parent.Add (type);
+		}
+
+		bool GetName (XPathNavigator nav, out string name, out MatchKind match)
+		{
+			name = nav.GetAttribute ("name");
+			var fullname = nav.GetAttribute ("fullname");
+			var substring = nav.GetAttribute ("substring");
+
+			if (fullname != null) {
+				match = MatchKind.FullName;
+				if (name != null || substring != null)
+					return false;
+				name = fullname;
+			} else if (name != null) {
+				match = MatchKind.Name;
+				if (fullname != null || substring != null)
+					return false;
+			} else if (substring != null) {
+				match = MatchKind.Substring;
+				if (name != null || fullname != null)
+					return false;
+				name = substring;
+			} else {
+				match = MatchKind.Name;
+				return false;
+			}
+
+			return true;
+		}
 
 		internal static bool TryParseMethodAction (string name, out MethodAction action)
 		{
