@@ -46,13 +46,13 @@ namespace Mono.Linker.Optimizer.Configuration
 			CurrentNode.Push (Root);
 		}
 
-		void Visit<T> (T node, string elementName, Func<T, XElement, bool> func)
+		int Visit<T> (T node, string elementName, Func<T, XElement, bool> func)
 			where T : Node
 		{
 			var element = new XElement (elementName);
 
 			if (!func (node, element))
-				return;
+				return 0;
 
 			CurrentNode.Push (element);
 			node.VisitChildren (this);
@@ -60,6 +60,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 			if (!element.IsEmpty || element.HasAttributes || element.HasElements)
 				CurrentNode.Peek ().Add (element);
+
+			return 0;
 		}
 
 		void IVisitor.Visit (RootNode node) => Visit (node, "root", Visit);
@@ -71,7 +73,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
 
-		void IVisitor.Visit (Namespace node) => Visit (node, "namespace", Visit);
+		int IVisitor.Visit (Namespace node) => Visit (node, "namespace", Visit);
 
 		void IVisitor.Visit (Type node)
 		{
