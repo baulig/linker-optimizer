@@ -75,7 +75,6 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\Type.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Namespace.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Assembly.cs" />
-    <Compile Include="Mono.Linker.Optimizer.Configuration\AssemblyList.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\RootNode.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailList.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailListEntry.cs" />
@@ -83,6 +82,7 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\TypeAction.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\MethodAction.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\MatchKind.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\NodeList.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">

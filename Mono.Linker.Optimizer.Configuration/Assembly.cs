@@ -26,10 +26,25 @@
 using System;
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class Assembly
+	public class Assembly : Node
 	{
-		public Assembly ()
+		public string Name {
+			get;
+		}
+
+		public Assembly (string name)
 		{
+			Name = name;
+		}
+
+		public override void Visit (IVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
+
+		public override void VisitChildren (IVisitor visitor)
+		{
+			throw new NotImplementedException ();
 		}
 	}
 }

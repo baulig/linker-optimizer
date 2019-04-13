@@ -1,5 +1,5 @@
 ﻿//
-// AssemblyList.cs
+// NodeList.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -24,12 +24,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
+using System.Threading;
+using System.Collections.Generic;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class AssemblyList
+	public class NodeList<T>
+		where T : Node
 	{
-		public AssemblyList ()
+		public bool HasChildren => children != null;
+
+		public List<T> Children => children;
+
+		List<T> children;
+
+		public T GetChild (Func<T, bool> func, Func<T> create)
 		{
+			LazyInitializer.EnsureInitialized (ref children);
+			var child = children.FirstOrDefault (func);
+			if (child != null)
+				return child;
+			if (child == null && create != null) {
+				child = create ();
+				children.Add (child);
+			}
+			return child;
+		}
+
+		public void VisitChildren (IVisitor visitor)
+		{
+			children?.ForEach (child => child.Visit (visitor));
 		}
 	}
 }

@@ -29,18 +29,20 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public interface IVisitor
 	{
-		void Visit (RootNode entry);
+		void Visit (RootNode none);
 
-		void Visit (Assembly entry);
+		void Visit (SizeReport node);
 
-		void Visit (Namespace entry);
+		void Visit (Assembly node);
 
-		void Visit (Type entry);
+		void Visit (Namespace node);
 
-		void Visit (Method entry);
+		void Visit (Type node);
 
-		void Visit (FailList entry);
+		void Visit (Method node);
 
-		void Visit (FailListEntry entry);
+		void Visit (FailList node);
+
+		void Visit (FailListEntry node);
 	}
 }

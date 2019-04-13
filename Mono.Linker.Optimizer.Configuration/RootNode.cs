@@ -26,9 +26,14 @@
 using System;
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class RootNode
+	public class RootNode : Node
 	{
-		public RootNode ()
+		public override void Visit (IVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
+
+		public override void VisitChildren (IVisitor visitor)
 		{
 		}
 	}

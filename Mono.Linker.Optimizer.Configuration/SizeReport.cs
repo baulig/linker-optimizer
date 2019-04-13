@@ -26,10 +26,18 @@
 using System;
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class SizeReport
+	public class SizeReport : Node
 	{
-		public SizeReport ()
+		public NodeList<Assembly> Assemblies { get; } = new NodeList<Assembly> ();
+
+		public override void Visit (IVisitor visitor)
 		{
+			visitor.Visit (this);
+		}
+
+		public override void VisitChildren (IVisitor visitor)
+		{
+			Assemblies.VisitChildren (visitor);
 		}
 	}
 }
