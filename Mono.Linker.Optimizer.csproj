@@ -80,6 +80,9 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailList.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailListEntry.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\SizeReport.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\TypeAction.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\MethodAction.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\MatchKind.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">

@@ -37,6 +37,7 @@ using Mono.Cecil;
 namespace Mono.Linker.Optimizer
 {
 	using BasicBlocks;
+	using Configuration;
 
 	public class OptimizerReport
 	{
@@ -357,7 +358,7 @@ namespace Mono.Linker.Optimizer
 			if (!parent.AddMethod (method))
 				return;
 
-			if (Options.HasTypeEntry (method.DeclaringType, OptimizerOptions.TypeAction.Size))
+			if (Options.HasTypeEntry (method.DeclaringType, TypeAction.Size))
 				LogMessage ($"SIZE: {method.FullName} {method.Body.CodeSize}");
 		}
 

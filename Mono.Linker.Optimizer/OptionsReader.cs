@@ -31,6 +31,8 @@ using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer
 {
+	using Configuration;
+
 	class OptionsReader
 	{
 		public OptimizerOptions Options {
@@ -169,28 +171,28 @@ namespace Mono.Linker.Optimizer
 			return false;
 		}
 
-		bool GetName (XPathNavigator nav, out string name, out OptimizerOptions.MatchKind match)
+		bool GetName (XPathNavigator nav, out string name, out MatchKind match)
 		{
 			name = GetAttribute (nav, "name");
 			var fullname = GetAttribute (nav, "fullname");
 			var substring = GetAttribute (nav, "substring");
 
 			if (fullname != null) {
-				match = OptimizerOptions.MatchKind.FullName;
+				match = MatchKind.FullName;
 				if (name != null || substring != null)
 					return false;
 				name = fullname;
 			} else if (name != null) {
-				match = OptimizerOptions.MatchKind.Name;
+				match = MatchKind.Name;
 				if (fullname != null || substring != null)
 					return false;
 			} else if (substring != null) {
-				match = OptimizerOptions.MatchKind.Substring;
+				match = MatchKind.Substring;
 				if (name != null || fullname != null)
 					return false;
 				name = substring;
 			} else {
-				match = OptimizerOptions.MatchKind.Name;
+				match = MatchKind.Name;
 				return false;
 			}
 
@@ -204,9 +206,9 @@ namespace Mono.Linker.Optimizer
 			OptimizerOptions.TypeEntry entry;
 			var action = GetAttribute (nav, "action");
 			if (action != null)
-				entry = AddTypeEntry (name, OptimizerOptions.MatchKind.Namespace, action, null, conditional);
+				entry = AddTypeEntry (name, MatchKind.Namespace, action, null, conditional);
 			else
-				entry = Options.AddTypeEntry (name, OptimizerOptions.MatchKind.Namespace, OptimizerOptions.TypeAction.None, null, conditional);
+				entry = Options.AddTypeEntry (name, MatchKind.Namespace, TypeAction.None, null, conditional);
 
 			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
@@ -222,12 +224,12 @@ namespace Mono.Linker.Optimizer
 			if (action != null)
 				entry = AddTypeEntry (name, match, action, parent, conditional);
 			else
-				entry = Options.AddTypeEntry (name, match, OptimizerOptions.TypeAction.None, parent, conditional);
+				entry = Options.AddTypeEntry (name, match, TypeAction.None, parent, conditional);
 
 			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
 		}
 
-		OptimizerOptions.TypeEntry AddTypeEntry (string name, OptimizerOptions.MatchKind match, string action, OptimizerOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
+		OptimizerOptions.TypeEntry AddTypeEntry (string name, MatchKind match, string action, OptimizerOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
 			if (!OptimizerOptions.TryParseTypeAction (action, out var typeAction))
 				throw ThrowError ($"Invalid `action` attribute: `{action}`.");

@@ -27,10 +27,13 @@ using System;
 using Mono.Cecil;
 using System.Runtime.CompilerServices;
 
-namespace Mono.Linker.Optimizer {
+namespace Mono.Linker.Optimizer
+{
 	using BasicBlocks;
+	using Configuration;
 
-	public class PreprocessStep : OptimizerBaseStep {
+	public class PreprocessStep : OptimizerBaseStep
+	{
 		public PreprocessStep (OptimizerContext context)
 			: base (context)
 		{
@@ -56,7 +59,7 @@ namespace Mono.Linker.Optimizer {
 				RemoveCollatorResources ();
 		}
 
-		readonly static string [] MonoCollationResources = {
+		readonly static string[] MonoCollationResources = {
 			"collation.cjkCHS.bin",
 			"collation.cjkCHT.bin",
 			"collation.cjkJA.bin",
@@ -135,42 +138,42 @@ namespace Mono.Linker.Optimizer {
 			Context.Debug ();
 		}
 
-		void ProcessTypeActions (TypeDefinition type, OptimizerOptions.TypeAction action)
+		void ProcessTypeActions (TypeDefinition type, TypeAction action)
 		{
 			switch (action) {
-			case OptimizerOptions.TypeAction.Debug:
+			case TypeAction.Debug:
 				Context.LogMessage (MessageImportance.High, $"Debug type: {type} {action}");
 				Context.Debug ();
 				break;
 
-			case OptimizerOptions.TypeAction.Preserve:
+			case TypeAction.Preserve:
 				Context.Annotations.SetPreserve (type, TypePreserve.All);
 				Context.Annotations.Mark (type);
 				break;
 			}
 		}
 
-		void ProcessMethodActions (MethodDefinition method, OptimizerOptions.MethodAction action)
+		void ProcessMethodActions (MethodDefinition method, MethodAction action)
 		{
 			switch (action) {
-			case OptimizerOptions.MethodAction.Debug:
+			case MethodAction.Debug:
 				Context.LogMessage (MessageImportance.High, $"Debug method: {method} {action}");
 				Context.Debug ();
 				break;
 
-			case OptimizerOptions.MethodAction.Throw:
+			case MethodAction.Throw:
 				CodeRewriter.ReplaceWithPlatformNotSupportedException (Context, method);
 				break;
 
-			case OptimizerOptions.MethodAction.ReturnFalse:
+			case MethodAction.ReturnFalse:
 				CodeRewriter.ReplaceWithReturnFalse (Context, method);
 				break;
 
-			case OptimizerOptions.MethodAction.ReturnTrue:
+			case MethodAction.ReturnTrue:
 				CodeRewriter.ReplaceWithReturnTrue (Context, method);
 				break;
 
-			case OptimizerOptions.MethodAction.ReturnNull:
+			case MethodAction.ReturnNull:
 				CodeRewriter.ReplaceWithReturnNull (Context, method);
 				break;
 			}

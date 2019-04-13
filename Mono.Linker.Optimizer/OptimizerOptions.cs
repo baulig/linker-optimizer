@@ -32,6 +32,7 @@ using Mono.Cecil;
 namespace Mono.Linker.Optimizer
 {
 	using BasicBlocks;
+	using Configuration;
 
 	public class OptimizerOptions
 	{
@@ -450,36 +451,6 @@ namespace Mono.Linker.Optimizer
 				if (entry.Action == filter && entry.Matches (method))
 					action ();
 			}
-		}
-
-		public enum TypeAction
-		{
-			None,
-			Debug,
-			Fail,
-			Warn,
-			Size,
-			Preserve
-		}
-
-		public enum MethodAction
-		{
-			None,
-			Debug,
-			Fail,
-			Warn,
-			Throw,
-			ReturnFalse,
-			ReturnTrue,
-			ReturnNull
-		}
-
-		public enum MatchKind
-		{
-			Name,
-			FullName,
-			Substring,
-			Namespace
 		}
 
 		public class TypeEntry
