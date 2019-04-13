@@ -1,5 +1,5 @@
 ﻿//
-// RootNode.cs
+// NodeHelper.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -25,23 +25,11 @@
 // THE SOFTWARE.
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class RootNode : Node
+	static class NodeHelper
 	{
-		public SizeReport SizeReport { get; } = new SizeReport ();
-
-		public Assembly GetAssembly (string name, bool add)
+		internal static Assembly GetAssembly (this NodeList<Assembly> list, string name, bool add)
 		{
-			return SizeReport.Assemblies.GetAssembly (name, add);
-		}
-
-		public override void Visit (IVisitor visitor)
-		{
-			visitor.Visit (this);
-		}
-
-		public override void VisitChildren (IVisitor visitor)
-		{
-			SizeReport.Visit (visitor);
+			return list.GetChild (a => a.Name == name, () => add ? new Assembly (name) : null);
 		}
 	}
 }

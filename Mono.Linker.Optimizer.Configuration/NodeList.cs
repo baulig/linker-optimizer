@@ -47,7 +47,8 @@ namespace Mono.Linker.Optimizer.Configuration
 				return child;
 			if (child == null && create != null) {
 				child = create ();
-				children.Add (child);
+				if (child != null)
+					children.Add (child);
 			}
 			return child;
 		}

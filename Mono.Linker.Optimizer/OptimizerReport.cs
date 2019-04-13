@@ -58,6 +58,8 @@ namespace Mono.Linker.Optimizer
 
 		RootEntry Root { get; } = new RootEntry ();
 
+		protected RootNode RootNode { get; } = new RootNode ();
+
 		public OptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
@@ -208,6 +210,7 @@ namespace Mono.Linker.Optimizer
 
 		AssemblyEntry GetAssemblyEntry (string name, bool add)
 		{
+			var assembly = RootNode.GetAssembly (name, add);
 			return Root.AssemblyList.GetAssembly (name, add);
 		}
 
