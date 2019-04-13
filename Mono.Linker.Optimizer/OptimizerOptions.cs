@@ -422,6 +422,7 @@ namespace Mono.Linker.Optimizer
 
 			var visitor = new ActionVisitor (type, action);
 			Report.RootNode.Visit (visitor);
+			return;
 
 			foreach (var entry in _type_actions) {
 				if (entry.Action != TypeAction.None && entry.Matches (type))

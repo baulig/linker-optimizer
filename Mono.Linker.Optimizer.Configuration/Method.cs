@@ -23,8 +23,14 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using System;
+using System.Linq;
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
+	using BasicBlocks;
+
 	public class Method : Node
 	{
 		public string Name {
@@ -41,6 +47,23 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public bool HasAction {
 			get; set;
+		}
+
+		public bool Matches (MethodDefinition method, MethodAction? action = null)
+		{
+			if (action != null && action.Value != Action)
+				return false;
+
+			switch (Match) {
+			case MatchKind.FullName:
+				return method.FullName == Name;
+			case MatchKind.Substring:
+				return method.FullName.Contains (Name);
+			default:
+				if (Name.Contains ('('))
+					return method.Name + CecilHelper.GetMethodSignature (method) == Name;
+				return method.Name == Name;
+			}
 		}
 
 		public Method (string name)

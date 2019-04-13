@@ -56,12 +56,10 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (SizeReport node)
 		{
-			throw new NotImplementedException ();
 		}
 
 		public void Visit (Assembly node)
 		{
-			throw new NotImplementedException ();
 		}
 
 		public void Visit (Namespace node)
@@ -75,22 +73,23 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (Type node)
 		{
-			throw new NotImplementedException ();
+			if (!node.Matches (Type))
+				return;
+			if (node.Action != TypeAction.None)
+				Action (node.Action);
+			node.VisitChildren (this);
 		}
 
 		public void Visit (Method node)
 		{
-			throw new NotImplementedException ();
 		}
 
 		public void Visit (FailList node)
 		{
-			throw new NotImplementedException ();
 		}
 
 		public void Visit (FailListEntry node)
 		{
-			throw new NotImplementedException ();
 		}
 	}
 }
