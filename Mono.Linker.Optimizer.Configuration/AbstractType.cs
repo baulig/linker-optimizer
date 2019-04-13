@@ -1,5 +1,5 @@
 ﻿//
-// NodeList.cs
+// AbstractType.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -23,45 +23,36 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using System.Linq;
-using System.Threading;
-using System.Collections.Generic;
-
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class NodeList<T>
-		where T : Node
+	public abstract class AbstractType : Node
 	{
-		public bool HasChildren => children != null;
-
-		public List<T> Children => children;
-
-		List<T> children;
-
-		public T GetChild (Func<T, bool> func, Func<T> create)
-		{
-			LazyInitializer.EnsureInitialized (ref children);
-			var child = children.FirstOrDefault (func);
-			if (child != null)
-				return child;
-			if (child == null && create != null) {
-				child = create ();
-				if (child != null)
-					children.Add (child);
-			}
-			return child;
+		public string Name {
+			get;
 		}
 
-		public void Add (T item)
-		{
-			LazyInitializer.EnsureInitialized (ref children);
-			children.Add (item);
+		public MatchKind Match {
+			get;
 		}
 
-		public void VisitChildren (IVisitor visitor)
+		public TypeAction Action {
+			get;
+		}
+
+		public NodeList<Type> Types { get; } = new NodeList<Type> ();
+
+		public NodeList<Method> Methods { get; } = new NodeList<Method> ();
+
+		protected AbstractType (string name, MatchKind match, TypeAction action)
 		{
-			children?.ForEach (child => child.Visit (visitor));
+			Name = name;
+			Match = match;
+			Action = action;
+		}
+
+		public sealed override void VisitChildren (IVisitor visitor)
+		{
+			Types.VisitChildren (visitor);
 		}
 	}
 }

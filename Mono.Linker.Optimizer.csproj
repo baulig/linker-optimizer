@@ -87,6 +87,7 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\XElementWriter.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\ConfigurationReader.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\ActionList.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\AbstractType.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">

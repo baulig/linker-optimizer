@@ -106,5 +106,28 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 			return Enum.TryParse (name, true, out action);
 		}
+
+		internal static bool TryGetMethodAction (this XPathNavigator nav, string name, out MethodAction action)
+		{
+			var attribute = GetAttribute (nav, name);
+			if (attribute == null) {
+				action = MethodAction.None;
+				return false;
+			}
+
+			switch (attribute.ToLowerInvariant ()) {
+			case "return-null":
+				action = MethodAction.ReturnNull;
+				return true;
+			case "return-false":
+				action = MethodAction.ReturnFalse;
+				return true;
+			case "return-true":
+				action = MethodAction.ReturnTrue;
+				return true;
+			default:
+				return Enum.TryParse (name, true, out action);
+			}
+		}
 	}
 }

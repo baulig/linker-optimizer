@@ -55,6 +55,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			children.Add (node);
 		}
 
+		public void Add (Method node)
+		{
+			children.Add (node);
+		}
+
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);

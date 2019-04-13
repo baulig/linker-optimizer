@@ -25,50 +25,26 @@
 // THE SOFTWARE.
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class Type : Node
+	public class Type : AbstractType
 	{
-		public string Name {
-			get;
-		}
-
 		public string FullName {
 			get;
 		}
 
-		public MatchKind Match {
-			get;
-		}
-
-		public TypeAction Action {
-			get;
-		}
-
-		public NodeList<Type> NestedTypes { get; } = new NodeList<Type> ();
-
-		public NodeList<Method> Methods { get; } = new NodeList<Method> ();
-
 		public Type (string name, string fullName)
+			: base (name, MatchKind.Name, TypeAction.None)
 		{
-			Name = name;
 			FullName = fullName;
 		}
 
 		public Type (string name, MatchKind match, TypeAction action)
+			: base (name, match, action)
 		{
-			Name = name;
-			Match = match;
-			Action = action;
 		}
 
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);
-		}
-
-		public override void VisitChildren (IVisitor visitor)
-		{
-			NestedTypes.VisitChildren (visitor);
-			Methods.VisitChildren (visitor);
 		}
 	}
 }

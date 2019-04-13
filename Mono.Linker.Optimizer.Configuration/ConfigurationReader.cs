@@ -63,7 +63,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 			var conditional = new ActionList (name);
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, conditional));
-			nav.ProcessChildren ("type", child => OnTypeEntry (child, conditional));
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, conditional, null));
 
 			// ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, Conditional));
 			// ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
@@ -80,27 +80,39 @@ namespace Mono.Linker.Optimizer.Configuration
 			var node = new Namespace (name, action);
 			parent.Add (node);
 
-			nav.ProcessChildren ("type", child => OnTypeEntry (child, parent));
-
-#if FIXME
-			if (action != null)
-				entry = AddTypeEntry (name, MatchKind.Namespace, action, null, conditional);
-			else
-				entry = Options.AddTypeEntry (name, MatchKind.Namespace, TypeAction.None, null, conditional);
-
-			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
-			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
-#endif
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, parent, node));
+			nav.ProcessChildren ("method", child => OnMethodEntry (child, parent, node));
 		}
 
-		void OnTypeEntry (XPathNavigator nav, ActionList parent)
+		void OnTypeEntry (XPathNavigator nav, ActionList list, AbstractType parent)
 		{
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
 
 			var action = nav.GetTypeAction ("action");
 			var type = new Type (name, match, action);
-			parent.Add (type);
+			if (parent != null)
+				parent.Types.Add (type);
+			else
+				list.Add (type);
+
+			nav.ProcessChildren ("type", child => OnTypeEntry (nav, list, type));
+			nav.ProcessChildren ("method", child => OnMethodEntry (child, list, type));
+		}
+
+		void OnMethodEntry (XPathNavigator nav, ActionList list, AbstractType parent)
+		{
+			if (!GetName (nav, out var name, out var match))
+				throw ThrowError ($"Ambiguous name in method entry `{nav.OuterXml}`.");
+
+			if (!nav.TryGetMethodAction ("action", out var action))
+				throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
+
+			var method = new Method (name);
+			if (parent != null)
+				parent.Methods.Add (method);
+			else
+				list.Add (method);
 		}
 
 		bool GetName (XPathNavigator nav, out string name, out MatchKind match)
@@ -129,23 +141,6 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 
 			return true;
-		}
-
-		internal static bool TryParseMethodAction (string name, out MethodAction action)
-		{
-			switch (name.ToLowerInvariant ()) {
-			case "return-null":
-				action = MethodAction.ReturnNull;
-				return true;
-			case "return-false":
-				action = MethodAction.ReturnFalse;
-				return true;
-			case "return-true":
-				action = MethodAction.ReturnTrue;
-				return true;
-			default:
-				return Enum.TryParse (name, true, out action);
-			}
 		}
 
 		internal static Exception ThrowError (string message)

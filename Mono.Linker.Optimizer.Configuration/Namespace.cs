@@ -25,37 +25,21 @@
 // THE SOFTWARE.
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class Namespace : Node
+	public class Namespace : AbstractType
 	{
-		public string Name {
-			get;
-		}
-
-		public TypeAction Action {
-			get;
-		}
-
-		public NodeList<Type> Types { get; } = new NodeList<Type> ();
-
 		public Namespace (string name)
+			: base (name, MatchKind.Namespace, TypeAction.None)
 		{
-			Name = name;
 		}
 
 		public Namespace (string name, TypeAction action)
+			: base (name, MatchKind.Namespace, action)
 		{
-			Name = name;
-			Action = action;
 		}
 
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);
-		}
-
-		public override void VisitChildren (IVisitor visitor)
-		{
-			Types.VisitChildren (visitor);
 		}
 	}
 }
