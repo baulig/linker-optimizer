@@ -46,53 +46,32 @@ namespace Mono.Linker.Optimizer.Configuration
 			CurrentNode.Push (Root);
 		}
 
-#if FIXME
-		void Visit<T> (T entry, Func<T, XElement, bool> func)
+		void Visit<T> (T node, string elementName, Func<T, XElement, bool> func)
 			where T : Node
 		{
-			var element = new XElement (entry.ElementName);
+			var element = new XElement (elementName);
 
-			if (!func (entry, element))
+			if (!func (node, element))
 				return;
 
 			CurrentNode.Push (element);
-			entry.VisitChildren (this);
-			CurrentNode.Pop ();
-
-			if (!element.IsEmpty || element.HasAttributes || element.HasElements)
-				CurrentNode.Peek ().Add (element);
-		}
-#endif
-
-		void IVisitor.Visit (RootNode node)
-		{
-			var element = new XElement ("root");
-			CurrentNode.Push (element);
 			node.VisitChildren (this);
-
 			CurrentNode.Pop ();
 
 			if (!element.IsEmpty || element.HasAttributes || element.HasElements)
 				CurrentNode.Peek ().Add (element);
 		}
+
+		void IVisitor.Visit (RootNode node) => Visit (node, "root", Visit);
 
 		void IVisitor.Visit (SizeReport node)
 		{
 			node.VisitChildren (this);
 		}
 
-		void IVisitor.Visit (Assembly node)
-		{
-			var element = new XElement ("assembly");
+		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
 
-			CurrentNode.Peek ().Add (element);
-			// throw new NotImplementedException ();
-		}
-
-		void IVisitor.Visit (Namespace node)
-		{
-			throw new NotImplementedException ();
-		}
+		void IVisitor.Visit (Namespace node) => Visit (node, "namespace", Visit);
 
 		void IVisitor.Visit (Type node)
 		{
@@ -112,6 +91,23 @@ namespace Mono.Linker.Optimizer.Configuration
 		void IVisitor.Visit (FailListEntry node)
 		{
 			throw new NotImplementedException ();
+		}
+
+		protected bool Visit (RootNode node, XElement element)
+		{
+			return true;
+		}
+
+		protected bool Visit (Assembly node, XElement element)
+		{
+			element.SetAttributeValue ("name", node.Name);
+			return true;
+		}
+
+		protected bool Visit (Namespace node, XElement element)
+		{
+			element.SetAttributeValue ("name", node.Name);
+			return false;
 		}
 	}
 }
