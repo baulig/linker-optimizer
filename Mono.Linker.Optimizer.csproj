@@ -69,6 +69,17 @@
     <Compile Include="Mono.Linker.Optimizer\OptimizerException.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerReport.cs" />
     <Compile Include="Mono.Linker.Optimizer\ReportMode.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\Node.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\IVisitor.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\Method.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\Type.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\Namespace.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\Assembly.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\AssemblyList.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\RootNode.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\FailList.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\FailListEntry.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\SizeReport.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">
@@ -83,6 +94,7 @@
   <ItemGroup>
     <Folder Include="Mono.Linker.Optimizer.Conditionals\" />
     <Folder Include="Mono.Linker.Optimizer.BasicBlocks\" />
+    <Folder Include="Mono.Linker.Optimizer.Configuration\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
