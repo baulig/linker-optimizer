@@ -44,11 +44,9 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			nav.ProcessChildren ("conditional", OnConditional);
 
-			var list = new ActionList ();
-
-			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, list));
-			nav.ProcessChildren ("type", child => OnTypeEntry (child, list, null));
-			nav.ProcessChildren ("method", child => OnMethodEntry (child, list, null));
+			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, Root.ActionList));
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, Root.ActionList, null));
+			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root.ActionList, null));
 		}
 
 		void OnConditional (XPathNavigator nav)

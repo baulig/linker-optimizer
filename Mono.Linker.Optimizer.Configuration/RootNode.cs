@@ -31,6 +31,8 @@ namespace Mono.Linker.Optimizer.Configuration
 	{
 		public SizeReport SizeReport { get; } = new SizeReport ();
 
+		public ActionList ActionList { get; } = new ActionList ();
+
 		public Assembly GetAssembly (AssemblyDefinition assembly, bool add)
 		{
 			return GetAssembly (assembly.Name.Name, add);
@@ -48,6 +50,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
+			ActionList.Visit (visitor);
 			SizeReport.Visit (visitor);
 		}
 	}
