@@ -38,30 +38,51 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public bool IsEmpty => !Root.IsEmpty || Root.HasElements || Root.HasAttributes;
 
-		Stack<XElement> CurrentNode { get; } = new Stack<XElement> ();
+		Stack<CurrentNode> Stack { get; } = new Stack<CurrentNode> ();
+
+		class CurrentNode
+		{
+			public XElement Element {
+				get;
+			}
+
+			public bool IsMarked {
+				get; set;
+			}
+
+			public CurrentNode (XElement element)
+			{
+				Element = element;
+			}
+
+			public CurrentNode (string name)
+			{
+				Element = new XElement (name);
+			}
+		}
 
 		public XElementWriter (string name)
 		{
 			Root = new XElement (name);
-			CurrentNode.Push (Root);
+			Stack.Push (new CurrentNode (Root));
 		}
 
-		int Visit<T> (T node, string elementName, Func<T, XElement, bool> func)
+		void Visit<T> (T node, string elementName, Func<T, XElement, bool> func)
 			where T : Node
 		{
-			var element = new XElement (elementName);
+			var current = new CurrentNode (elementName);
 
-			if (!func (node, element))
-				return 0;
+			if (!func (node, current.Element))
+				return;
 
-			CurrentNode.Push (element);
+			Stack.Push (current);
 			node.VisitChildren (this);
-			CurrentNode.Pop ();
+			Stack.Pop ();
 
-			if (!element.IsEmpty || element.HasAttributes || element.HasElements)
-				CurrentNode.Peek ().Add (element);
-
-			return 0;
+			if (current.IsMarked) {
+				Stack.Peek ().Element.Add (current.Element);
+				Stack.Peek ().IsMarked = true;
+			}
 		}
 
 		void IVisitor.Visit (RootNode node) => Visit (node, "root", Visit);
@@ -73,17 +94,11 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
 
-		int IVisitor.Visit (Namespace node) => Visit (node, "namespace", Visit);
+		void IVisitor.Visit (Namespace node) => Visit (node, "namespace", Visit);
 
-		void IVisitor.Visit (Type node)
-		{
-			throw new NotImplementedException ();
-		}
+		void IVisitor.Visit (Type node) => Visit (node, "type", Visit);
 
-		void IVisitor.Visit (Method node)
-		{
-			throw new NotImplementedException ();
-		}
+		void IVisitor.Visit (Method node) => Visit (node, "method", Visit);
 
 		void IVisitor.Visit (FailList node)
 		{
@@ -109,7 +124,20 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected bool Visit (Namespace node, XElement element)
 		{
 			element.SetAttributeValue ("name", node.Name);
-			return false;
+			return true;
+		}
+
+		protected bool Visit (Type node, XElement element)
+		{
+			element.SetAttributeValue ("name", node.Name);
+			return true;
+		}
+
+		protected bool Visit (Method node, XElement element)
+		{
+			Stack.Peek ().IsMarked = true;
+			element.SetAttributeValue ("name", node.Name);
+			return true;
 		}
 	}
 }
