@@ -104,7 +104,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				action = TypeAction.None;
 				return false;
 			}
-			return Enum.TryParse (name, true, out action);
+			return Enum.TryParse (attribute, true, out action);
 		}
 
 		internal static bool TryGetMethodAction (this XPathNavigator nav, string name, out MethodAction action)
@@ -126,7 +126,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				action = MethodAction.ReturnTrue;
 				return true;
 			default:
-				return Enum.TryParse (name, true, out action);
+				return Enum.TryParse (attribute, true, out action);
 			}
 		}
 	}

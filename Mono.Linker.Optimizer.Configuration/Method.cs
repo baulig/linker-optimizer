@@ -31,6 +31,14 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
+		public MatchKind Match {
+			get;
+		}
+
+		public MethodAction Action {
+			get;
+		}
+
 		public bool HasAction {
 			get; set;
 		}
@@ -38,6 +46,15 @@ namespace Mono.Linker.Optimizer.Configuration
 		public Method (string name)
 		{
 			Name = name;
+			Match = MatchKind.Name;
+			Action = MethodAction.None;
+		}
+
+		public Method (string name, MatchKind match, MethodAction action)
+		{
+			Name = name;
+			Match = match;
+			Action = action;
 		}
 
 		public override void Visit (IVisitor visitor)

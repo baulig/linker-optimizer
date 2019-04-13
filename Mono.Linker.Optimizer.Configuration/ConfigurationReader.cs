@@ -47,10 +47,8 @@ namespace Mono.Linker.Optimizer.Configuration
 			var list = new ActionList ();
 
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, list));
-
-			//			ProcessChildren (root, "type", child => OnTypeEntry (child, null));
-//			ProcessChildren (root, "method", child => OnMethodEntry (child));
-
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, list, null));
+			nav.ProcessChildren ("method", child => OnMethodEntry (child, list, null));
 		}
 
 		void OnConditional (XPathNavigator nav)
@@ -64,12 +62,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			var conditional = new ActionList (name);
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, conditional));
 			nav.ProcessChildren ("type", child => OnTypeEntry (child, conditional, null));
-
-			// ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, Conditional));
-			// ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
-			// ProcessChildren (nav, "method", child => OnMethodEntry (child, null, Conditional));
-
-			// bool Conditional (MemberReference reference) => Options.IsFeatureEnabled (feature) == enabled;
+			nav.ProcessChildren ("method", child => OnMethodEntry (child, conditional, null));
 		}
 
 		void OnNamespaceEntry (XPathNavigator nav, ActionList parent)
@@ -108,7 +101,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			if (!nav.TryGetMethodAction ("action", out var action))
 				throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
 
-			var method = new Method (name);
+			var method = new Method (name, match, action);
 			if (parent != null)
 				parent.Methods.Add (method);
 			else
