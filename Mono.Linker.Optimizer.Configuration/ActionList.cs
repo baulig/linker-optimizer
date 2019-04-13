@@ -23,10 +23,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using System;
+using System.Collections.Generic;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
 	public class ActionList : Node
 	{
+		readonly List<Node> children = new List<Node> ();
+
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);
@@ -34,6 +39,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
+			children.ForEach (node => node.Visit (visitor));
 		}
 	}
 }
