@@ -71,12 +71,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			where T : Node
 		{
 			var current = new CurrentNode (elementName);
-
-			if (!func (node, current.Element))
-				return;
-
 			Stack.Push (current);
-			node.VisitChildren (this);
+
+			if (func (node, current.Element))
+				node.VisitChildren (this);
+
 			Stack.Pop ();
 
 			if (current.IsMarked) {
@@ -85,12 +84,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 		}
 
+		protected void MarkCurrent () => Stack.Peek ().IsMarked = true;
+
 		void IVisitor.Visit (RootNode node) => Visit (node, "root", Visit);
 
-		void IVisitor.Visit (SizeReport node)
-		{
-			node.VisitChildren (this);
-		}
+		void IVisitor.Visit (SizeReport node) => Visit (node, "size-report", Visit);
 
 		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
 
@@ -115,6 +113,12 @@ namespace Mono.Linker.Optimizer.Configuration
 			return true;
 		}
 
+		protected bool Visit (SizeReport node, XElement element)
+		{
+			node.VisitChildren (this);
+			return false;
+		}
+
 		protected bool Visit (Assembly node, XElement element)
 		{
 			element.SetAttributeValue ("name", node.Name);
@@ -135,7 +139,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		protected bool Visit (Method node, XElement element)
 		{
-			Stack.Peek ().IsMarked = true;
+			MarkCurrent ();
 			element.SetAttributeValue ("name", node.Name);
 			return true;
 		}
