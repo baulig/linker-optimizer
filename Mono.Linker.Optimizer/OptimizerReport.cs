@@ -147,7 +147,14 @@ namespace Mono.Linker.Optimizer
 
 			using (var xml = XmlWriter.Create (filename, settings)) {
 				xml.WriteStartDocument ();
-				ReportWriter.Write (xml, Root, Mode);
+
+				xml.WriteStartElement ("test");
+				var writer = new XElementWriter ("the-test");
+				RootNode.Visit (writer);
+				writer.Root.WriteTo (xml);
+				xml.WriteEndElement ();
+
+				// ReportWriter.Write (xml, Root, Mode);
 				xml.WriteEndDocument ();
 			}
 		}

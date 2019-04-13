@@ -29,7 +29,7 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public interface IVisitor
 	{
-		void Visit (RootNode none);
+		void Visit (RootNode node);
 
 		void Visit (SizeReport node);
 

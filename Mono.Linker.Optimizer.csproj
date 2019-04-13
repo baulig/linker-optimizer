@@ -84,6 +84,7 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\MatchKind.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\NodeList.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\NodeHelper.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\XElementWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">
