@@ -419,6 +419,10 @@ namespace Mono.Linker.Optimizer
 				ProcessTypeEntries (type.DeclaringType, action);
 				return;
 			}
+
+			var visitor = new ActionVisitor (type, action);
+			Report.RootNode.Visit (visitor);
+
 			foreach (var entry in _type_actions) {
 				if (entry.Action != TypeAction.None && entry.Matches (type))
 					action (entry.Action);

@@ -1,5 +1,5 @@
 ﻿//
-// ActionList.cs
+// ActionVisitor.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -24,43 +24,69 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using System.Collections.Generic;
+using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class ActionList : Node
+	public class ActionVisitor : IVisitor
 	{
-		public string Conditional {
+		public TypeDefinition Type {
 			get;
 		}
 
-		readonly List<Node> children = new List<Node> ();
-
-		public ActionList ()
-		{
+		public Action<TypeAction> Action {
+			get;
 		}
 
-		public ActionList (string conditional)
+		public ActionVisitor (TypeDefinition type, Action<TypeAction> action)
 		{
-			Conditional = conditional;
+			Type = type;
+			Action = action;
 		}
 
-		public void Add (ActionList node) => children.Add (node);
-
-		public void Add (Namespace node) => children.Add (node);
-
-		public void Add (Type node) => children.Add (node);
-
-		public void Add (Method node) => children.Add (node);
-
-		public override void Visit (IVisitor visitor)
+		public void Visit (RootNode node)
 		{
-			visitor.Visit (this);
+			throw new NotImplementedException ();
 		}
 
-		public override void VisitChildren (IVisitor visitor)
+		public void Visit (ActionList node)
 		{
-			children.ForEach (node => node.Visit (visitor));
+			node.VisitChildren (this);
+		}
+
+		public void Visit (SizeReport node)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public void Visit (Assembly node)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public void Visit (Namespace node)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public void Visit (Type node)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public void Visit (Method node)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public void Visit (FailList node)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public void Visit (FailListEntry node)
+		{
+			throw new NotImplementedException ();
 		}
 	}
 }

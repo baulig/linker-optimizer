@@ -42,14 +42,14 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Read (XPathNavigator nav)
 		{
-			nav.ProcessChildren ("conditional", OnConditional);
+			nav.ProcessChildren ("conditional", child => OnConditional (child, Root.ActionList));
 
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, Root.ActionList));
 			nav.ProcessChildren ("type", child => OnTypeEntry (child, Root.ActionList, null));
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root.ActionList, null));
 		}
 
-		void OnConditional (XPathNavigator nav)
+		void OnConditional (XPathNavigator nav, ActionList parent)
 		{
 			var name = nav.GetAttribute ("feature");
 			if (name == null || !nav.GetBoolAttribute ("enabled", out var enabled))
@@ -58,6 +58,8 @@ namespace Mono.Linker.Optimizer.Configuration
 			var feature = OptimizerOptions.FeatureByName (name);
 
 			var conditional = new ActionList (name);
+			parent.Add (conditional);
+
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, conditional));
 			nav.ProcessChildren ("type", child => OnTypeEntry (child, conditional, null));
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, conditional, null));
