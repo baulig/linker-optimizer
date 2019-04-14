@@ -366,9 +366,6 @@ namespace Mono.Linker.Optimizer
 
 			if (!parent.AddMethod (method))
 				return;
-
-			if (Options.HasTypeEntry (method.DeclaringType, TypeAction.Size))
-				LogMessage ($"SIZE: {method.FullName} {method.Body.CodeSize}");
 		}
 
 		interface IVisitor

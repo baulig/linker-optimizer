@@ -320,14 +320,6 @@ namespace Mono.Linker.Optimizer
 			return _method_actions.Any (e => e.Matches (method, MethodAction.Debug));
 		}
 
-		public bool FailOnMethod (MethodDefinition method)
-		{
-			if (HasTypeEntry (method.DeclaringType, TypeAction.Fail))
-				return true;
-
-			return _method_actions.Any (e => e.Matches (method, MethodAction.Fail));
-		}
-
 		public void CheckFailList (OptimizerContext context, TypeDefinition type, string original = null)
 		{
 			if (type.DeclaringType != null) {
@@ -408,13 +400,6 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		public bool HasTypeEntry (TypeDefinition type, TypeAction action)
-		{
-			if (type.DeclaringType != null)
-				return HasTypeEntry (type.DeclaringType, action);
-			return _type_actions.Any (e => e.Matches (type, action));
-		}
-
 		public void ProcessTypeEntries (TypeDefinition type, Action<TypeAction> action)
 		{
 			if (type.DeclaringType != null) {
@@ -433,8 +418,6 @@ namespace Mono.Linker.Optimizer
 
 		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
 		{
-			if (method.Name.Contains ("get_IsSecuritySupported"))
-				Console.WriteLine ();
 			Report.RootNode.Visit (new ActionVisitor (this, method, action));
 			return;
 			foreach (var entry in _method_actions) {
