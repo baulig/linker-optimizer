@@ -32,40 +32,7 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public class OptimizerReport : Node
 	{
-		FailList _fail_list;
-
-		public void ReportFailListEntry (TypeDefinition type, Type entry, string original, List<string> stack)
-		{
-			LazyInitializer.EnsureInitialized (ref _fail_list);
-
-			var fail = new FailListEntry (type.FullName, original);
-			stack.ForEach (s => fail.TracerStack.Add (new FailListNode (s)));
-			_fail_list.Entries.Add (fail);
-
-			while (entry != null) {
-				fail.EntryStack.Add (new FailListNode (entry.ToString ()));
-				entry = entry.Parent;
-			}
-		}
-
-		public void ReportFailListEntry (MethodDefinition method, Method entry, List<string> stack)
-		{
-			LazyInitializer.EnsureInitialized (ref _fail_list);
-
-			var fail = new FailListEntry (method.FullName, null);
-			stack.ForEach (s => fail.TracerStack.Add (new FailListNode (s)));
-			_fail_list.Entries.Add (fail);
-
-			if (entry != null) {
-				fail.EntryStack.Add (new FailListNode (entry.ToString ()));
-
-				var type = entry.Parent;
-				while (type != null) {
-					fail.EntryStack.Add (new FailListNode (type.ToString ()));
-					type = type.Parent;
-				}
-			}
-		}
+		public FailList FailList { get; } = new FailList ();
 
 		public override void Visit (IVisitor visitor)
 		{
@@ -74,7 +41,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
-			throw new NotImplementedException ();
+			FailList.VisitChildren (visitor);
 		}
 	}
 }

@@ -24,6 +24,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
 	public class FailListEntry : Node
@@ -40,10 +43,34 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public NodeList<FailListNode> EntryStack { get; } = new NodeList<FailListNode> ();
 
-		public FailListEntry (string fullName, string original)
+		public FailListEntry (TypeDefinition type, Type entry, string original, List<string> stack)
 		{
-			FullName = fullName;
+			FullName = type.FullName;
 			Original = original;
+
+			stack.ForEach (s => TracerStack.Add (new FailListNode (s)));
+
+			while (entry != null) {
+				EntryStack.Add (new FailListNode (entry.ToString ()));
+				entry = entry.Parent;
+			}
+		}
+
+		public FailListEntry (MethodDefinition method, Method entry, List<string> stack)
+		{
+			FullName = method.FullName;
+
+			stack.ForEach (s => TracerStack.Add (new FailListNode (s)));
+
+			if (entry != null) {
+				EntryStack.Add (new FailListNode (entry.ToString ()));
+
+				var type = entry.Parent;
+				while (type != null) {
+					EntryStack.Add (new FailListNode (type.ToString ()));
+					type = type.Parent;
+				}
+			}
 		}
 
 		public override void Visit (IVisitor visitor)
@@ -53,7 +80,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
-			throw new NotImplementedException ();
+			TracerStack.VisitChildren (visitor);
+			EntryStack.VisitChildren (visitor);
 		}
 	}
 }

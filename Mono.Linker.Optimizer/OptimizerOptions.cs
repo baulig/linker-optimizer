@@ -100,6 +100,8 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
+		public RootNode Configuration => Report.RootNode;
+
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
 		public OptimizerOptions ()
@@ -333,7 +335,7 @@ namespace Mono.Linker.Optimizer
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, nodes[0]);
 			var stack = context.DumpTracerStack ();
-			Report.RootNode.OptimizerReport.ReportFailListEntry (type, nodes[0], original, stack);
+			Configuration.OptimizerReport.FailList.Add (new FailListEntry (type, nodes[0], original, stack));
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (nodes[0].Action == TypeAction.Fail)
 				throw new OptimizerException (message + original_message + ".");
@@ -352,7 +354,7 @@ namespace Mono.Linker.Optimizer
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, nodes[0]);
 			var stack = context.DumpTracerStack ();
-			Report.RootNode.OptimizerReport.ReportFailListEntry (method, nodes[0], stack);
+			Configuration.OptimizerReport.FailList.Add (new FailListEntry (method, nodes[0], stack));
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (nodes[0].Action == MethodAction.Fail)
 				throw new OptimizerException (message + ".");

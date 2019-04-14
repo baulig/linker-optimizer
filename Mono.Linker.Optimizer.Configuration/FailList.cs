@@ -31,6 +31,8 @@ namespace Mono.Linker.Optimizer.Configuration
 	{
 		public NodeList<FailListEntry> Entries { get; } = new NodeList<FailListEntry> ();
 
+		public void Add (FailListEntry entry) => Entries.Add (entry);
+
 		public override void Visit (IVisitor visitor)
 		{
 			throw new NotImplementedException ();
@@ -38,7 +40,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
-			throw new NotImplementedException ();
+			Entries.VisitChildren (visitor);
 		}
 	}
 }
