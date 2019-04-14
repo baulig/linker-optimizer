@@ -59,7 +59,7 @@ namespace Mono.Linker.Optimizer
 			Context = context;
 			Options = options;
 
-			if (options.ReportFileName != null)
+			if (false && options.ReportFileName != null)
 				ReportWriter = new OptimizerActionReport ();
 		}
 
