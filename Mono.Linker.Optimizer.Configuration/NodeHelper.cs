@@ -43,19 +43,14 @@ namespace Mono.Linker.Optimizer.Configuration
 			return list.GetChild (a => a.Name == name, () => add ? new Assembly (name) : null);
 		}
 
-		internal static Namespace GetNamespace (this NodeList<Namespace> list, string name, bool add)
+		internal static Type GetNamespace (this NodeList<Type> list, string name, bool add)
 		{
-			return list.GetChild (n => n.Name == name, () => add ? new Namespace (name) : null);
+			return list.GetChild (n => n.Name == name, () => add ? new Type (name, MatchKind.Namespace, TypeAction.None) : null);
 		}
 
 		internal static Type GetType (this NodeList<Type> list, TypeDefinition type, bool add)
 		{
-			return GetType (list, type.Name, type.FullName, add);
-		}
-
-		internal static Type GetType (this NodeList<Type> list, string name, string fullName, bool add)
-		{
-			return list.GetChild (t => t.Name == name, () => add ? new Type (name, fullName) : null);
+			return list.GetChild (t => t.Name == type.Name, () => add ? new Type (type.Name, type.FullName) : null);
 		}
 
 		internal static Method GetMethod (this NodeList<Method> list, MethodDefinition method, bool add)

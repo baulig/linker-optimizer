@@ -146,17 +146,6 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 		}
 
-		public void Visit (Namespace node)
-		{
-			if (!node.Matches (Type))
-				return;
-			TypeStack.Push (node);
-			if (TypeCallback != null && node.Action != TypeAction.None)
-				TypeCallback (this, node);
-			node.VisitChildren (this);
-			TypeStack.Pop ();
-		}
-
 		public void Visit (Type node)
 		{
 			if (!node.Matches (Type))

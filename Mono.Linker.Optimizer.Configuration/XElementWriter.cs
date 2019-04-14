@@ -93,8 +93,6 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
 
-		void IVisitor.Visit (Namespace node) => Visit (node, "namespace", Visit);
-
 		void IVisitor.Visit (Type node) => Visit (node, "type", Visit);
 
 		void IVisitor.Visit (Method node) => Visit (node, "method", Visit);
@@ -126,12 +124,6 @@ namespace Mono.Linker.Optimizer.Configuration
 		}
 
 		protected bool Visit (Assembly node, XElement element)
-		{
-			element.SetAttributeValue ("name", node.Name);
-			return true;
-		}
-
-		protected bool Visit (Namespace node, XElement element)
 		{
 			element.SetAttributeValue ("name", node.Name);
 			return true;

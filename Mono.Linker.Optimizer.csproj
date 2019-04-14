@@ -73,7 +73,6 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\IVisitor.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Method.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Type.cs" />
-    <Compile Include="Mono.Linker.Optimizer.Configuration\Namespace.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Assembly.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\RootNode.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailList.cs" />

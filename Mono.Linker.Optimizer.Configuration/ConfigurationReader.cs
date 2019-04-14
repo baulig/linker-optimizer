@@ -75,7 +75,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			var name = nav.GetAttribute ("name") ?? throw ThrowError ("<namespace> entry needs `name` attribute.");
 
 			var action = nav.GetTypeAction ("action");
-			var node = new Namespace (name, action);
+			var node = new Type (name, MatchKind.Namespace, action);
 			parent.Add (node);
 
 			nav.ProcessChildren ("type", child => OnTypeEntry (child, parent, node));

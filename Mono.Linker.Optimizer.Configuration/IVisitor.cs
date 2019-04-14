@@ -37,8 +37,6 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void Visit (Assembly node);
 
-		void Visit (Namespace node);
-
 		void Visit (Type node);
 
 		void Visit (Method node);

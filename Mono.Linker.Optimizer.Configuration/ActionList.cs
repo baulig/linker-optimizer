@@ -52,8 +52,6 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Add (ActionList node) => children.Add (node);
 
-		public void Add (Namespace node) => children.Add (node);
-
 		public void Add (Type node) => children.Add (node);
 
 		public void Add (Method node) => children.Add (node);

@@ -33,7 +33,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public NodeList<Namespace> Namespaces { get; } = new NodeList<Namespace> ();
+		public NodeList<Type> Namespaces { get; } = new NodeList<Type> ();
 
 		public Assembly (string name)
 		{
