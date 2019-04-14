@@ -66,7 +66,6 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		protected override bool Visit (Method node, XElement element)
 		{
-			MarkCurrent ();
 			element.SetAttributeValue ("name", node.Name);
 			return true;
 		}
@@ -78,6 +77,9 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		protected override bool Visit (FailListEntry node, XElement element)
 		{
+			element.SetAttributeValue ("full-name", node.FullName);
+			if (node.Original != null)
+				element.SetAttributeValue ("origin", node.Original);
 			return true;
 		}
 

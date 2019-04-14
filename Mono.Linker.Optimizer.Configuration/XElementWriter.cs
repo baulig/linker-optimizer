@@ -43,10 +43,6 @@ namespace Mono.Linker.Optimizer.Configuration
 				get;
 			}
 
-			public bool IsMarked {
-				get; set;
-			}
-
 			public CurrentNode (XNode node)
 			{
 				Node = node;
@@ -76,14 +72,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				document.Add (current.Node);
 			else
 				((XElement)parent.Node).Add (current.Node);
-
-//			if (current.IsMarked) {
-//				Stack.Peek ().Node.Add (current.Node);
-//				Stack.Peek ().IsMarked = true;
-//			}
 		}
-
-		protected void MarkCurrent () => Stack.Peek ().IsMarked = true;
 
 		void IVisitor.Visit (RootNode node) => Visit (node, "root", Visit);
 
