@@ -318,6 +318,7 @@ namespace Mono.Linker.Optimizer
 
 		public void CheckFailList (OptimizerContext context, TypeDefinition type, string original = null)
 		{
+			return;
 			if (type.DeclaringType != null) {
 				CheckFailList (context, type.DeclaringType, original ?? type.FullName);
 				return;
@@ -351,6 +352,7 @@ namespace Mono.Linker.Optimizer
 
 		public void CheckFailList (OptimizerContext context, MethodDefinition method)
 		{
+			return;
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
 			Method fail = null;
