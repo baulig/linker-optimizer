@@ -310,9 +310,11 @@ namespace Mono.Linker.Optimizer
 
 		internal List<string> DumpTracerStack ()
 		{
-			var stack = (Stack<object>)_tracer_stack_field.GetValue (Context.Tracer);
-			LogMessage (MessageImportance.Normal, "Dependency Stack:");
 			var list = new List<string> ();
+			var stack = (Stack<object>)_tracer_stack_field.GetValue (Context.Tracer);
+			if (stack == null)
+				return list;
+			LogMessage (MessageImportance.Normal, "Dependency Stack:");
 			foreach (var dependency in stack) {
 				var formatted = TokenString (dependency);
 				list.Add (formatted);

@@ -73,6 +73,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		public sealed override void VisitChildren (IVisitor visitor)
 		{
 			Types.VisitChildren (visitor);
+			Methods.VisitChildren (visitor);
 		}
 	}
 }

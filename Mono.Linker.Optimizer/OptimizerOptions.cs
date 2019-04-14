@@ -212,6 +212,8 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
+		public bool IsFeatureEnabled (string feature) => IsFeatureEnabled (FeatureByName (feature));
+
 		public bool IsFeatureEnabled (MonoLinkerFeature feature)
 		{
 			if (_enabled_features.TryGetValue (feature, out var value))
@@ -420,8 +422,7 @@ namespace Mono.Linker.Optimizer
 				return;
 			}
 
-			var visitor = new ActionVisitor (type, action);
-			Report.RootNode.Visit (visitor);
+			Report.RootNode.Visit (new ActionVisitor (this, type, action));
 			return;
 
 			foreach (var entry in _type_actions) {
@@ -432,17 +433,13 @@ namespace Mono.Linker.Optimizer
 
 		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
 		{
+			if (method.Name.Contains ("get_IsSecuritySupported"))
+				Console.WriteLine ();
+			Report.RootNode.Visit (new ActionVisitor (this, method, action));
+			return;
 			foreach (var entry in _method_actions) {
 				if (entry.Action != MethodAction.None && entry.Matches (method))
 					action (entry.Action);
-			}
-		}
-
-		public void ProcessMethodEntries (MethodDefinition method, MethodAction filter, Action action)
-		{
-			foreach (var entry in _method_actions) {
-				if (entry.Action == filter && entry.Matches (method))
-					action ();
 			}
 		}
 

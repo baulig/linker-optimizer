@@ -55,9 +55,9 @@ namespace Mono.Linker.Optimizer.Configuration
 			if (name == null || !nav.GetBoolAttribute ("enabled", out var enabled))
 				throw ThrowError ("<conditional> needs both `feature` and `enabled` arguments.");
 
-			var feature = OptimizerOptions.FeatureByName (name);
+			OptimizerOptions.FeatureByName (name);
 
-			var conditional = new ActionList (name);
+			var conditional = new ActionList (name, enabled);
 			parent.Add (conditional);
 
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, conditional));

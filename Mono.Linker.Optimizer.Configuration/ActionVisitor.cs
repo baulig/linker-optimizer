@@ -30,18 +30,39 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public class ActionVisitor : IVisitor
 	{
+		public OptimizerOptions Options {
+			get;
+		}
+
 		public TypeDefinition Type {
 			get;
 		}
 
-		public Action<TypeAction> Action {
+		public MethodDefinition Method {
 			get;
 		}
 
-		public ActionVisitor (TypeDefinition type, Action<TypeAction> action)
+		public Action<TypeAction> TypeCallback {
+			get;
+		}
+
+		public Action<MethodAction> MethodCallback {
+			get;
+		}
+
+		public ActionVisitor (OptimizerOptions options, TypeDefinition type, Action<TypeAction> callback)
 		{
+			Options = options;
 			Type = type;
-			Action = action;
+			TypeCallback = callback;
+		}
+
+		public ActionVisitor (OptimizerOptions options, MethodDefinition method, Action<MethodAction> callback)
+		{
+			Options = options;
+			Type = method.DeclaringType;
+			Method = method;
+			MethodCallback = callback;
 		}
 
 		public void Visit (RootNode node)
@@ -51,6 +72,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (ActionList node)
 		{
+			if (node.Conditional != null && Options.IsFeatureEnabled (node.Conditional) != node.Enabled)
+				return;
 			node.VisitChildren (this);
 		}
 
@@ -64,24 +87,33 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (Namespace node)
 		{
-			if (!node.Matches (Type))
-				return;
-			if (node.Action != TypeAction.None)
-				Action (node.Action);
+			if (true || TypeCallback != null) {
+				if (!node.Matches (Type))
+					return;
+				if (TypeCallback != null && node.Action != TypeAction.None)
+					TypeCallback (node.Action);
+			}
 			node.VisitChildren (this);
 		}
 
 		public void Visit (Type node)
 		{
-			if (!node.Matches (Type))
-				return;
-			if (node.Action != TypeAction.None)
-				Action (node.Action);
+			if (true || TypeCallback != null) {
+				if (!node.Matches (Type))
+					return;
+				if (TypeCallback != null && node.Action != TypeAction.None)
+					TypeCallback (node.Action);
+			}
 			node.VisitChildren (this);
 		}
 
 		public void Visit (Method node)
 		{
+			if (Method == null || !node.Matches (Method))
+				return;
+			if (MethodCallback != null && node.Action != MethodAction.None)
+				MethodCallback (node.Action);
+			node.VisitChildren (this);
 		}
 
 		public void Visit (FailList node)

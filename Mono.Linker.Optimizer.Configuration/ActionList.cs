@@ -34,15 +34,20 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
+		public bool Enabled {
+			get;
+		}
+
 		readonly List<Node> children = new List<Node> ();
 
 		public ActionList ()
 		{
 		}
 
-		public ActionList (string conditional)
+		public ActionList (string conditional, bool enabled)
 		{
 			Conditional = conditional;
+			Enabled = enabled;
 		}
 
 		public void Add (ActionList node) => children.Add (node);
