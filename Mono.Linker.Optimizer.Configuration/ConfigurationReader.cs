@@ -82,7 +82,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, parent, node));
 		}
 
-		void OnTypeEntry (XPathNavigator nav, ActionList list, AbstractType parent)
+		void OnTypeEntry (XPathNavigator nav, ActionList list, Type parent)
 		{
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
@@ -98,7 +98,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, list, type));
 		}
 
-		void OnMethodEntry (XPathNavigator nav, ActionList list, AbstractType parent)
+		void OnMethodEntry (XPathNavigator nav, ActionList list, Type parent)
 		{
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in method entry `{nav.OuterXml}`.");

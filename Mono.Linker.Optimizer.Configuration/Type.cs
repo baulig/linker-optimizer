@@ -23,28 +23,78 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using System;
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class Type : AbstractType
+	public class Type : Node
 	{
-		public string FullName {
+		public string Name {
 			get;
 		}
 
-		public Type (string name, string fullName)
-			: base (name, MatchKind.Name, TypeAction.None)
+		public string FullName {
+			get;
+		}
+		public MatchKind Match {
+			get;
+		}
+
+		public TypeAction Action {
+			get;
+		}
+
+		public NodeList<Type> Types { get; } = new NodeList<Type> ();
+
+		public NodeList<Method> Methods { get; } = new NodeList<Method> ();
+
+		public bool Matches (TypeDefinition type, TypeAction? action = null)
 		{
+			if (action != null && action.Value != Action)
+				return false;
+
+			switch (Match) {
+			case MatchKind.FullName:
+				return type.FullName == Name;
+			case MatchKind.Substring:
+				return type.FullName.Contains (Name);
+			case MatchKind.Namespace:
+				return type.Namespace.StartsWith (Name, StringComparison.InvariantCulture);
+			default:
+				return type.Name == Name;
+			}
+		}
+
+		public Type (string name, string fullName)
+		{
+			Name = name;
 			FullName = fullName;
+			Match = MatchKind.Name;
+			Action = TypeAction.None;
 		}
 
 		public Type (string name, MatchKind match, TypeAction action)
-			: base (name, match, action)
 		{
+			Name = name;
+			Match = match;
+			Action = action;
 		}
 
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);
+		}
+
+		public sealed override void VisitChildren (IVisitor visitor)
+		{
+			Types.VisitChildren (visitor);
+			Methods.VisitChildren (visitor);
+		}
+
+		public override string ToString ()
+		{
+			return $"[{GetType ().Name} {Name} {Match} {Action}]";
 		}
 	}
 }

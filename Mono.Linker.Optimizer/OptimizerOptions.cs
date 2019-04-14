@@ -323,8 +323,8 @@ namespace Mono.Linker.Optimizer
 				return;
 			}
 
-			AbstractType fail = null;
-			IList<AbstractType> stack = null;
+			Type fail = null;
+			IList<Type> stack = null;
 			ActionVisitor.Visit (this, type, (visitor, node) => {
 				if (fail != null)
 					return;
@@ -354,7 +354,7 @@ namespace Mono.Linker.Optimizer
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
 			Method fail = null;
-			IList<AbstractType> stack = null;
+			IList<Type> stack = null;
 			ActionVisitor.Visit (this, method, (visitor, node) => {
 				if (fail != null)
 					return;
@@ -378,12 +378,12 @@ namespace Mono.Linker.Optimizer
 				throw new OptimizerException (message + ".");
 		}
 
-		static void DumpFailEntry (OptimizerContext context, AbstractType type)
+		static void DumpFailEntry (OptimizerContext context, Type type)
 		{
 			context.LogMessage (MessageImportance.High, "  " + type);
 		}
 
-		static void DumpFailEntry (OptimizerContext context, Method method, IList<AbstractType> stack)
+		static void DumpFailEntry (OptimizerContext context, Method method, IList<Type> stack)
 		{
 			context.LogMessage (MessageImportance.High, "  " + method);
 			foreach (var type in stack)
