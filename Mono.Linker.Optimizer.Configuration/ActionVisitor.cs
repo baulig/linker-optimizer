@@ -138,6 +138,10 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 		}
 
+		public void Visit (OptimizerReport report)
+		{
+		}
+
 		public void Visit (Assembly node)
 		{
 		}
@@ -165,6 +169,10 @@ namespace Mono.Linker.Optimizer.Configuration
 		}
 
 		public void Visit (FailListEntry node)
+		{
+		}
+
+		public void Visit (FailListNode node)
 		{
 		}
 	}

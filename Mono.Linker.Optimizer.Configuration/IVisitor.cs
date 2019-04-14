@@ -35,6 +35,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void Visit (SizeReport node);
 
+		void Visit (OptimizerReport node);
+
 		void Visit (Assembly node);
 
 		void Visit (Type node);
@@ -44,5 +46,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		void Visit (FailList node);
 
 		void Visit (FailListEntry node);
+
+		void Visit (FailListNode node);
 	}
 }

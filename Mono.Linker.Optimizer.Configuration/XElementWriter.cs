@@ -91,6 +91,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (SizeReport node) => Visit (node, "size-report", Visit);
 
+		void IVisitor.Visit (OptimizerReport node) => Visit (node, "optimizer-report", Visit);
+
 		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
 
 		void IVisitor.Visit (Type node) => Visit (node, "type", Visit);
@@ -107,6 +109,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			throw new NotImplementedException ();
 		}
 
+		void IVisitor.Visit (FailListNode node)
+		{
+			throw new NotImplementedException ();
+		}
+
 		protected bool Visit (RootNode node, XElement element)
 		{
 			return true;
@@ -115,6 +122,11 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected bool Visit (SizeReport node, XElement element)
 		{
 			node.VisitChildren (this);
+			return true;
+		}
+
+		protected bool Visit (OptimizerReport node, XElement element)
+		{
 			return true;
 		}
 

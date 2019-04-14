@@ -39,12 +39,11 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void Visit (IVisitor visitor)
 		{
-			throw new NotImplementedException ();
+			visitor.Visit (this);
 		}
 
 		public override void VisitChildren (IVisitor visitor)
 		{
-			throw new NotImplementedException ();
 		}
 	}
 }
