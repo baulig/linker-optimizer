@@ -323,27 +323,19 @@ namespace Mono.Linker.Optimizer
 				return;
 			}
 
-			Type fail = null;
-			ActionVisitor.Visit (this, type, node => {
-				if (fail != null)
-					return;
-				if (node.Action != TypeAction.Fail && node.Action != TypeAction.Warn)
-					return;
-				fail = node;
-			});
-
-			if (fail == null)
+			var nodes = ActionVisitor.GetNodes (this, type, n => n.Action == TypeAction.Fail || n.Action == TypeAction.Warn);
+			if (nodes.Count == 0)
 				return;
 
 			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
 			var message = $"Found fail-listed type `{type.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, fail);
-//			var stack = context.DumpTracerStack ();
-//			Report.ReportFailListEntry (type, fail ?? warn, original, stack);
+			DumpFailEntry (context, nodes[0]);
+			var stack = context.DumpTracerStack ();
+			Report.RootNode.OptimizerReport.ReportFailListEntry (type, nodes[0], original, stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			if (fail.Action == TypeAction.Fail)
+			if (nodes[0].Action == TypeAction.Fail)
 				throw new OptimizerException (message + original_message + ".");
 		}
 
@@ -351,26 +343,18 @@ namespace Mono.Linker.Optimizer
 		{
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
-			Method fail = null;
-			ActionVisitor.Visit (this, method, node => {
-				if (fail != null)
-					return;
-				if (node.Action != MethodAction.Fail && node.Action != MethodAction.Warn)
-					return;
-				fail = node;
-			});
-
-			if (fail == null)
+			var nodes = ActionVisitor.GetNodes (this, method, n => n.Action == MethodAction.Fail || n.Action == MethodAction.Warn);
+			if (nodes.Count == 0)
 				return;
 
 			var message = $"Found fail-listed method `{method.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, fail);
-			// var stack = context.DumpTracerStack ();
-			// Report.ReportFailListEntry (method, fail, stack);
+			DumpFailEntry (context, nodes[0]);
+			var stack = context.DumpTracerStack ();
+			Report.RootNode.OptimizerReport.ReportFailListEntry (method, nodes[0], stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			if (fail.Action == MethodAction.Fail)
+			if (nodes[0].Action == MethodAction.Fail)
 				throw new OptimizerException (message + ".");
 		}
 

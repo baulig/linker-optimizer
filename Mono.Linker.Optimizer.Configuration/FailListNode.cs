@@ -1,5 +1,5 @@
 ﻿//
-// FailListEntry.cs
+// FailListNode.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -26,24 +26,15 @@
 using System;
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class FailListEntry : Node
+	public class FailListNode : Node
 	{
-		public string FullName {
+		public string Text {
 			get;
 		}
 
-		public string Original {
-			get;
-		}
-
-		public NodeList<FailListNode> TracerStack { get; } = new NodeList<FailListNode> ();
-
-		public NodeList<FailListNode> EntryStack { get; } = new NodeList<FailListNode> ();
-
-		public FailListEntry (string fullName, string original)
+		public FailListNode (string text)
 		{
-			FullName = fullName;
-			Original = original;
+			Text = text;
 		}
 
 		public override void Visit (IVisitor visitor)

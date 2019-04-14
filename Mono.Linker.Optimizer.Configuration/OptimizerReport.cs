@@ -1,5 +1,5 @@
 ﻿//
-// FailListEntry.cs
+// OptimizerReport.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -24,26 +24,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Threading;
+using System.Collections.Generic;
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class FailListEntry : Node
+	public class OptimizerReport : Node
 	{
-		public string FullName {
-			get;
-		}
+		FailList _fail_list;
 
-		public string Original {
-			get;
-		}
-
-		public NodeList<FailListNode> TracerStack { get; } = new NodeList<FailListNode> ();
-
-		public NodeList<FailListNode> EntryStack { get; } = new NodeList<FailListNode> ();
-
-		public FailListEntry (string fullName, string original)
+		public void ReportFailListEntry (TypeDefinition type, Type entry, string original, List<string> stack)
 		{
-			FullName = fullName;
-			Original = original;
+			LazyInitializer.EnsureInitialized (ref _fail_list);
+
+			var fail = new FailListEntry (type.FullName, original);
+			stack.ForEach (s => fail.TracerStack.Add (new FailListNode (s)));
+			_fail_list.Entries.Add (fail);
+
+			while (entry != null) {
+				fail.EntryStack.Add (new FailListNode (entry.ToString ()));
+				entry = entry.Parent;
+			}
+		}
+
+		public void ReportFailListEntry (MethodDefinition method, Method entry, List<string> stack)
+		{
+			LazyInitializer.EnsureInitialized (ref _fail_list);
+
+			var fail = new FailListEntry (method.FullName, null);
+			stack.ForEach (s => fail.TracerStack.Add (new FailListNode (s)));
+			_fail_list.Entries.Add (fail);
+
+			if (entry != null) {
+				fail.EntryStack.Add (new FailListNode (entry.ToString ()));
+
+				var type = entry.Parent;
+				while (type != null) {
+					fail.EntryStack.Add (new FailListNode (type.ToString ()));
+					type = type.Parent;
+				}
+			}
 		}
 
 		public override void Visit (IVisitor visitor)

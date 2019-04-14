@@ -24,12 +24,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class FailList
+	public class FailList : Node
 	{
-		public FailList ()
+		public NodeList<FailListEntry> Entries { get; } = new NodeList<FailListEntry> ();
+
+		public override void Visit (IVisitor visitor)
 		{
+			throw new NotImplementedException ();
+		}
+
+		public override void VisitChildren (IVisitor visitor)
+		{
+			throw new NotImplementedException ();
 		}
 	}
 }
