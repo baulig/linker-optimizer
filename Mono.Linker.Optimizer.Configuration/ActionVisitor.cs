@@ -87,23 +87,19 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (Namespace node)
 		{
-			if (true || TypeCallback != null) {
-				if (!node.Matches (Type))
-					return;
-				if (TypeCallback != null && node.Action != TypeAction.None)
-					TypeCallback (node.Action);
-			}
+			if (!node.Matches (Type))
+				return;
+			if (TypeCallback != null && node.Action != TypeAction.None)
+				TypeCallback (node.Action);
 			node.VisitChildren (this);
 		}
 
 		public void Visit (Type node)
 		{
-			if (true || TypeCallback != null) {
-				if (!node.Matches (Type))
-					return;
-				if (TypeCallback != null && node.Action != TypeAction.None)
-					TypeCallback (node.Action);
-			}
+			if (!node.Matches (Type))
+				return;
+			if (TypeCallback != null && node.Action != TypeAction.None)
+				TypeCallback (node.Action);
 			node.VisitChildren (this);
 		}
 
