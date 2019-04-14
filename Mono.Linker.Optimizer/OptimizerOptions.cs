@@ -430,18 +430,6 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		public void ProcessTypeEntries (TypeDefinition type, TypeAction filter, Action action)
-		{
-			if (type.DeclaringType != null) {
-				ProcessTypeEntries (type.DeclaringType, filter, action);
-				return;
-			}
-			foreach (var entry in _type_actions) {
-				if (entry.Action == filter && entry.Matches (type))
-					action ();
-			}
-		}
-
 		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
 		{
 			foreach (var entry in _method_actions) {
