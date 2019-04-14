@@ -39,6 +39,10 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
+		public bool IsFatal {
+			get;
+		}
+
 		public NodeList<FailListNode> TracerStack { get; } = new NodeList<FailListNode> ();
 
 		public NodeList<FailListNode> EntryStack { get; } = new NodeList<FailListNode> ();
@@ -48,10 +52,12 @@ namespace Mono.Linker.Optimizer.Configuration
 			FullName = type.FullName;
 			Original = original;
 
-			stack.ForEach (s => TracerStack.Add (new FailListNode (s)));
+			IsFatal = entry.Action == TypeAction.Fail;
+
+			stack.ForEach (s => TracerStack.Add (new FailListNode ("stack", s)));
 
 			while (entry != null) {
-				EntryStack.Add (new FailListNode (entry.ToString ()));
+				EntryStack.Add (new FailListNode ("type", entry.ToString ()));
 				entry = entry.Parent;
 			}
 		}
@@ -60,14 +66,16 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			FullName = method.FullName;
 
-			stack.ForEach (s => TracerStack.Add (new FailListNode (s)));
+			IsFatal = entry.Action == MethodAction.Fail;
+
+			stack.ForEach (s => TracerStack.Add (new FailListNode ("stack", s)));
 
 			if (entry != null) {
-				EntryStack.Add (new FailListNode (entry.ToString ()));
+				EntryStack.Add (new FailListNode ("method", entry.ToString ()));
 
 				var type = entry.Parent;
 				while (type != null) {
-					EntryStack.Add (new FailListNode (type.ToString ()));
+					EntryStack.Add (new FailListNode ("type", type.ToString ()));
 					type = type.Parent;
 				}
 			}

@@ -36,7 +36,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
-			FailList.VisitChildren (visitor);
+			FailList.Visit (visitor);
 		}
 	}
 }

@@ -29,19 +29,17 @@ using System.Collections.Generic;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class XElementWriter : IVisitor
+	public abstract class XElementWriter : IVisitor
 	{
-		public XElement Root {
+		public XDocument Root {
 			get;
 		}
-
-		public bool IsEmpty => !Root.IsEmpty || Root.HasElements || Root.HasAttributes;
 
 		Stack<CurrentNode> Stack { get; } = new Stack<CurrentNode> ();
 
 		class CurrentNode
 		{
-			public XElement Element {
+			public XNode Node {
 				get;
 			}
 
@@ -49,38 +47,40 @@ namespace Mono.Linker.Optimizer.Configuration
 				get; set;
 			}
 
-			public CurrentNode (XElement element)
+			public CurrentNode (XNode node)
 			{
-				Element = element;
-			}
-
-			public CurrentNode (string name)
-			{
-				Element = new XElement (name);
+				Node = node;
 			}
 		}
 
-		public XElementWriter (string name)
+		protected XElementWriter ()
 		{
-			Root = new XElement (name);
+			Root = new XDocument ();
 			Stack.Push (new CurrentNode (Root));
 		}
 
 		void Visit<T> (T node, string elementName, Func<T, XElement, bool> func)
 			where T : Node
 		{
-			var current = new CurrentNode (elementName);
+			var element = new XElement (elementName);
+			var current = new CurrentNode (element);
 			Stack.Push (current);
 
-			if (func (node, current.Element))
+			if (func (node, element))
 				node.VisitChildren (this);
 
 			Stack.Pop ();
 
-			if (current.IsMarked) {
-				Stack.Peek ().Element.Add (current.Element);
-				Stack.Peek ().IsMarked = true;
-			}
+			var parent = Stack.Peek ();
+			if (parent.Node is XDocument document)
+				document.Add (current.Node);
+			else
+				((XElement)parent.Node).Add (current.Node);
+
+//			if (current.IsMarked) {
+//				Stack.Peek ().Node.Add (current.Node);
+//				Stack.Peek ().IsMarked = true;
+//			}
 		}
 
 		protected void MarkCurrent () => Stack.Peek ().IsMarked = true;
@@ -101,62 +101,28 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (FailList node) => Visit (node, "fail-list", Visit);
 
-		void IVisitor.Visit (FailListEntry node) => Visit (node, "fail-list-entry", Visit);
+		void IVisitor.Visit (FailListEntry node) => Visit (node, node.IsFatal ? "warn" : "fail", Visit);
 
-		void IVisitor.Visit (FailListNode node)
-		{
-			throw new NotImplementedException ();
-		}
+		void IVisitor.Visit (FailListNode node) => Visit (node, node.ElementName, Visit);
 
-		protected bool Visit (RootNode node, XElement element)
-		{
-			return true;
-		}
+		protected abstract bool Visit (RootNode node, XElement element);
 
-		protected bool Visit (SizeReport node, XElement element)
-		{
-			node.VisitChildren (this);
-			return true;
-		}
+		protected abstract bool Visit (SizeReport node, XElement element);
 
-		protected bool Visit (OptimizerReport node, XElement element)
-		{
-			return true;
-		}
+		protected abstract bool Visit (OptimizerReport node, XElement element);
 
-		protected bool Visit (ActionList node, XElement element)
-		{
-			return true;
-		}
+		protected abstract bool Visit (ActionList node, XElement element);
 
-		protected bool Visit (Assembly node, XElement element)
-		{
-			element.SetAttributeValue ("name", node.Name);
-			return true;
-		}
+		protected abstract bool Visit (Assembly node, XElement element);
 
-		protected bool Visit (Type node, XElement element)
-		{
-			element.SetAttributeValue ("name", node.Name);
-			return true;
-		}
+		protected abstract bool Visit (Type node, XElement element);
 
-		protected bool Visit (Method node, XElement element)
-		{
-			MarkCurrent ();
-			element.SetAttributeValue ("name", node.Name);
-			return true;
-		}
+		protected abstract bool Visit (Method node, XElement element);
 
-		protected bool Visit (FailList node, XElement element)
-		{
-			return true;
-		}
+		protected abstract bool Visit (FailList node, XElement element);
 
-		protected bool Visit (FailListEntry node, XElement element)
-		{
-			MarkCurrent ();
-			return false;
-		}
+		protected abstract bool Visit (FailListEntry node, XElement element);
+
+		protected abstract bool Visit (FailListNode node, XElement element);
 	}
 }

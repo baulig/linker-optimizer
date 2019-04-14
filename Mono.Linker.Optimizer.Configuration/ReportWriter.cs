@@ -1,5 +1,5 @@
 ﻿//
-// FailListNode.cs
+// ReportWriter.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -24,31 +24,67 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Xml.Linq;
+using System.Collections.Generic;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class FailListNode : Node
+	public class ReportWriter : XElementWriter
 	{
-		public string ElementName {
-			get;
-		}
-
-		public string Text {
-			get;
-		}
-
-		public FailListNode (string element, string text)
+		protected override bool Visit (RootNode node, XElement element)
 		{
-			ElementName = element;
-			Text = text;
+			return true;
 		}
 
-		public override void Visit (IVisitor visitor)
+		protected override bool Visit (SizeReport node, XElement element)
 		{
-			visitor.Visit (this);
+			node.VisitChildren (this);
+			return true;
 		}
 
-		public override void VisitChildren (IVisitor visitor)
+		protected override bool Visit (OptimizerReport node, XElement element)
 		{
+			return true;
+		}
+
+		protected override bool Visit (ActionList node, XElement element)
+		{
+			return true;
+		}
+
+		protected override bool Visit (Assembly node, XElement element)
+		{
+			element.SetAttributeValue ("name", node.Name);
+			return true;
+		}
+
+		protected override bool Visit (Type node, XElement element)
+		{
+			element.SetAttributeValue ("name", node.Name);
+			return true;
+		}
+
+		protected override bool Visit (Method node, XElement element)
+		{
+			MarkCurrent ();
+			element.SetAttributeValue ("name", node.Name);
+			return true;
+		}
+
+		protected override bool Visit (FailList node, XElement element)
+		{
+			return true;
+		}
+
+		protected override bool Visit (FailListEntry node, XElement element)
+		{
+			return true;
+		}
+
+		protected override bool Visit (FailListNode node, XElement element)
+		{
+			element.Add (new XCData (node.Text));
+			return true;
 		}
 	}
 }
