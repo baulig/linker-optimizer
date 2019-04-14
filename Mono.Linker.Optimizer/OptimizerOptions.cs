@@ -318,21 +318,18 @@ namespace Mono.Linker.Optimizer
 
 		public void CheckFailList (OptimizerContext context, TypeDefinition type, string original = null)
 		{
-			return;
 			if (type.DeclaringType != null) {
 				CheckFailList (context, type.DeclaringType, original ?? type.FullName);
 				return;
 			}
 
 			Type fail = null;
-			IList<Type> stack = null;
-			ActionVisitor.Visit (this, type, (visitor, node) => {
+			ActionVisitor.Visit (this, type, node => {
 				if (fail != null)
 					return;
 				if (node.Action != TypeAction.Fail && node.Action != TypeAction.Warn)
 					return;
 				fail = node;
-				stack = visitor.GetTypeStack ();
 			});
 
 			if (fail == null)
@@ -352,18 +349,15 @@ namespace Mono.Linker.Optimizer
 
 		public void CheckFailList (OptimizerContext context, MethodDefinition method)
 		{
-			return;
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
 			Method fail = null;
-			IList<Type> stack = null;
-			ActionVisitor.Visit (this, method, (visitor, node) => {
+			ActionVisitor.Visit (this, method, node => {
 				if (fail != null)
 					return;
 				if (node.Action != MethodAction.Fail && node.Action != MethodAction.Warn)
 					return;
 				fail = node;
-				stack = visitor.GetTypeStack ();
 			});
 
 			if (fail == null)
@@ -372,7 +366,7 @@ namespace Mono.Linker.Optimizer
 			var message = $"Found fail-listed method `{method.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, fail, stack);
+			DumpFailEntry (context, fail);
 			// var stack = context.DumpTracerStack ();
 			// Report.ReportFailListEntry (method, fail, stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
@@ -383,13 +377,15 @@ namespace Mono.Linker.Optimizer
 		static void DumpFailEntry (OptimizerContext context, Type type)
 		{
 			context.LogMessage (MessageImportance.High, "  " + type);
+			if (type.Parent != null)
+				DumpFailEntry (context, type.Parent);
 		}
 
-		static void DumpFailEntry (OptimizerContext context, Method method, IList<Type> stack)
+		static void DumpFailEntry (OptimizerContext context, Method method)
 		{
 			context.LogMessage (MessageImportance.High, "  " + method);
-			foreach (var type in stack)
-				DumpFailEntry (context, type);
+			if (method.Parent != null)
+				DumpFailEntry (context, method.Parent);
 		}
 
 		public enum PreprocessorMode
