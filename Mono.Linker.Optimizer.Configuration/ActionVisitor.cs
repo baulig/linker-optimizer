@@ -119,7 +119,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit ()
 		{
-			Options.Report.RootNode.Visit (this);
+			Options.ObsoleteReport.RootNode.Visit (this);
 		}
 
 		public void Visit (RootNode node)

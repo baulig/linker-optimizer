@@ -42,7 +42,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		public ConfigurationReader (OptimizerOptions options)
 		{
 			Options = options;
-			Root = options.Report.RootNode;
+			Root = options.ObsoleteReport.RootNode;
 		}
 
 		public void Read (XPathNavigator nav)

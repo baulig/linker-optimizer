@@ -10,8 +10,12 @@
 	<include filename="corlib-asserts.xml" />
 	<include filename="test-remoting-4-size.xml" />
 
+	<type fullname="System.RuntimeType">
+		<method name="ActivationCreateInstance" action="warn" />
+	</type>
+
 	<features>
-		<feature name="remoting" enabled="false" />
+		<feature name="remoting" enabled="true" />
 		<feature name="collator" enabled="false" />
 		<feature name="globalization" enabled="false" />
 	</features>

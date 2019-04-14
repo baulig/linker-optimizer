@@ -99,15 +99,9 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (Method node) => Visit (node, "method", Visit);
 
-		void IVisitor.Visit (FailList node)
-		{
-			throw new NotImplementedException ();
-		}
+		void IVisitor.Visit (FailList node) => Visit (node, "fail-list", Visit);
 
-		void IVisitor.Visit (FailListEntry node)
-		{
-			throw new NotImplementedException ();
-		}
+		void IVisitor.Visit (FailListEntry node) => Visit (node, "fail-list-entry", Visit);
 
 		void IVisitor.Visit (FailListNode node)
 		{
@@ -152,6 +146,17 @@ namespace Mono.Linker.Optimizer.Configuration
 			MarkCurrent ();
 			element.SetAttributeValue ("name", node.Name);
 			return true;
+		}
+
+		protected bool Visit (FailList node, XElement element)
+		{
+			return true;
+		}
+
+		protected bool Visit (FailListEntry node, XElement element)
+		{
+			MarkCurrent ();
+			return false;
 		}
 	}
 }

@@ -31,7 +31,6 @@ using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer
 {
-	using BasicBlocks;
 	using Configuration;
 
 	public class OptimizerOptions
@@ -96,11 +95,14 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
-		public OptimizerReport Report {
+		[Obsolete]
+		public OptimizerReport ObsoleteReport {
 			get;
 		}
 
-		public RootNode Configuration => Report.RootNode;
+		public Configuration.OptimizerReport OptimizerReport {
+			get;
+		}
 
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
@@ -112,7 +114,8 @@ namespace Mono.Linker.Optimizer
 				[MonoLinkerFeature.Martin] = false
 			};
 
-			Report = new OptimizerReport (this);
+			ObsoleteReport = new OptimizerReport (this);
+			OptimizerReport = new Configuration.OptimizerReport ();
 		}
 
 		internal void ParseOptions (string options)
@@ -335,7 +338,7 @@ namespace Mono.Linker.Optimizer
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, nodes[0]);
 			var stack = context.DumpTracerStack ();
-			Configuration.OptimizerReport.FailList.Add (new FailListEntry (type, nodes[0], original, stack));
+			OptimizerReport.FailList.Add (new FailListEntry (type, nodes[0], original, stack));
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (nodes[0].Action == TypeAction.Fail)
 				throw new OptimizerException (message + original_message + ".");
@@ -354,7 +357,7 @@ namespace Mono.Linker.Optimizer
 			context.LogMessage (MessageImportance.High, message + ":");
 			DumpFailEntry (context, nodes[0]);
 			var stack = context.DumpTracerStack ();
-			Configuration.OptimizerReport.FailList.Add (new FailListEntry (method, nodes[0], stack));
+			OptimizerReport.FailList.Add (new FailListEntry (method, nodes[0], stack));
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			if (nodes[0].Action == MethodAction.Fail)
 				throw new OptimizerException (message + ".");

@@ -33,8 +33,6 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public ActionList ActionList { get; } = new ActionList ();
 
-		public OptimizerReport OptimizerReport { get; } = new OptimizerReport ();
-
 		public Assembly GetAssembly (AssemblyDefinition assembly, bool add)
 		{
 			return GetAssembly (assembly.Name.Name, add);

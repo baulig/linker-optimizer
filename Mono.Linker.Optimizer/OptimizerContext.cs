@@ -83,7 +83,7 @@ namespace Mono.Linker.Optimizer
 			if (options.CheckSize)
 				options.ReportMode |= ReportMode.Size;
 
-			if (options.Report.IsEnabled (ReportMode.Detailed) || options.Report.IsEnabled (ReportMode.Size)) {
+			if (options.ObsoleteReport.IsEnabled (ReportMode.Detailed) || options.ObsoleteReport.IsEnabled (ReportMode.Size)) {
 				options.AnalyzeAll = options.ScanAllModules = true;
 				if (options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
 					options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
@@ -152,7 +152,7 @@ namespace Mono.Linker.Optimizer
 
 			_tracer_stack_field = typeof (Tracer).GetField ("dependency_stack", BindingFlags.Instance | BindingFlags.NonPublic);
 
-			Options.Report.Initialize (this);
+			Options.ObsoleteReport.Initialize (this);
 		}
 
 		SupportMethodRegistration ResolveSupportMethod (string name, bool full = false)

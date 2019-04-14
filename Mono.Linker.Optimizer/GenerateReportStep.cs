@@ -40,14 +40,14 @@ namespace Mono.Linker.Optimizer
 		{
 			bool result = true;
 
-			if (Options.Report.IsEnabled (ReportMode.Size)) {
+			if (Options.ObsoleteReport.IsEnabled (ReportMode.Size)) {
 				foreach (var assembly in GetAssemblies ()) {
 					result &= CheckAndReportSize (assembly);
 				}
 			}
 
 			if (Options.ReportFileName != null)
-				Options.Report.WriteReport (Options.ReportFileName);
+				Options.ObsoleteReport.WriteReport (Options.ReportFileName);
 
 			if (!result)
 				throw new OptimizerException ("Size check failed.");
@@ -74,7 +74,7 @@ namespace Mono.Linker.Optimizer
 			}
 
 			var size = (int)new FileInfo (output).Length;
-			return Options.Report.CheckAndReportAssemblySize (Context, assembly, size);
+			return Options.ObsoleteReport.CheckAndReportAssemblySize (Context, assembly, size);
 		}
 	}
 }
