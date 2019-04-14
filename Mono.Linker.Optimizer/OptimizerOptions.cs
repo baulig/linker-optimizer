@@ -101,14 +101,12 @@ namespace Mono.Linker.Optimizer
 		}
 
 		readonly List<TypeEntry> _type_actions;
-		readonly List<MethodEntry> _method_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
 		public OptimizerOptions ()
 		{
 			NoConditionalRedefinition = true;
 			_type_actions = new List<TypeEntry> ();
-			_method_actions = new List<MethodEntry> ();
 			_enabled_features = new Dictionary<MonoLinkerFeature, bool> {
 				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Martin] = false
@@ -318,7 +316,6 @@ namespace Mono.Linker.Optimizer
 			}
 
 			return ActionVisitor.Any (this, method, MethodAction.Debug);
-			return _method_actions.Any (e => e.Matches (method, MethodAction.Debug));
 		}
 
 		public void CheckFailList (OptimizerContext context, TypeDefinition type, string original = null)
@@ -366,7 +363,7 @@ namespace Mono.Linker.Optimizer
 			var message = $"Found fail-listed method `{method.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			// DumpFailEntry (context, fail);
+			DumpFailEntry (context, fail, stack);
 			// var stack = context.DumpTracerStack ();
 			// Report.ReportFailListEntry (method, fail, stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
@@ -381,11 +378,16 @@ namespace Mono.Linker.Optimizer
 				DumpFailEntry (context, entry.Parent);
 		}
 
-		static void DumpFailEntry (OptimizerContext context, MethodEntry entry)
+		static void DumpFailEntry (OptimizerContext context, AbstractType type)
 		{
-			context.LogMessage (MessageImportance.High, "  " + entry);
-			if (entry.Parent != null)
-				DumpFailEntry (context, entry.Parent);
+			context.LogMessage (MessageImportance.High, "  " + type);
+		}
+
+		static void DumpFailEntry (OptimizerContext context, Method method, IList<AbstractType> stack)
+		{
+			context.LogMessage (MessageImportance.High, "  " + method);
+			foreach (var type in stack)
+				DumpFailEntry (context, type);
 		}
 
 		public TypeEntry AddTypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent, Func<MemberReference, bool> conditional)
@@ -395,10 +397,9 @@ namespace Mono.Linker.Optimizer
 			return entry;
 		}
 
+		[Obsolete ("KILL")]
 		public void AddMethodEntry (string name, MatchKind match, MethodAction action, TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
 		{
-			_method_actions.Add (new MethodEntry (name, match, action, parent, conditional));
-
 			switch (action) {
 			case MethodAction.ReturnFalse:
 			case MethodAction.ReturnTrue:
@@ -423,16 +424,6 @@ namespace Mono.Linker.Optimizer
 
 			foreach (var entry in _type_actions) {
 				if (entry.Action != TypeAction.None && entry.Matches (type))
-					action (entry.Action);
-			}
-		}
-
-		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
-		{
-			ActionVisitor.Visit (this, method, action);
-			return;
-			foreach (var entry in _method_actions) {
-				if (entry.Action != MethodAction.None && entry.Matches (method))
 					action (entry.Action);
 			}
 		}

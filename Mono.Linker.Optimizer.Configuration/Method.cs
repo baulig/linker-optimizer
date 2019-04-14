@@ -88,5 +88,10 @@ namespace Mono.Linker.Optimizer.Configuration
 		public override void VisitChildren (IVisitor visitor)
 		{
 		}
+
+		public override string ToString ()
+		{
+			return $"[{GetType ().Name} {Name} {Match} {Action}]";
+		}
 	}
 }

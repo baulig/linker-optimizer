@@ -108,7 +108,7 @@ namespace Mono.Linker.Optimizer
 
 		void ProcessMethod (MethodDefinition method)
 		{
-			Options.ProcessMethodEntries (method, a => ProcessMethodActions (method, a));
+			ActionVisitor.Visit (Options, method, a => ProcessMethodActions (method, a));
 		}
 
 		void ProcessProperty (PropertyDefinition property)

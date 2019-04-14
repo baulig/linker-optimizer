@@ -75,5 +75,10 @@ namespace Mono.Linker.Optimizer.Configuration
 			Types.VisitChildren (visitor);
 			Methods.VisitChildren (visitor);
 		}
+
+		public override string ToString ()
+		{
+			return $"[{GetType ().Name} {Name} {Match} {Action}]";
+		}
 	}
 }
