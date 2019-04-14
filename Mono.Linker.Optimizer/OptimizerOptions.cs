@@ -100,13 +100,11 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		readonly List<TypeEntry> _type_actions;
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
 		public OptimizerOptions ()
 		{
 			NoConditionalRedefinition = true;
-			_type_actions = new List<TypeEntry> ();
 			_enabled_features = new Dictionary<MonoLinkerFeature, bool> {
 				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Martin] = false
@@ -380,13 +378,6 @@ namespace Mono.Linker.Optimizer
 				throw new OptimizerException (message + ".");
 		}
 
-		static void DumpFailEntry (OptimizerContext context, TypeEntry entry)
-		{
-			context.LogMessage (MessageImportance.High, "  " + entry);
-			if (entry.Parent != null)
-				DumpFailEntry (context, entry.Parent);
-		}
-
 		static void DumpFailEntry (OptimizerContext context, AbstractType type)
 		{
 			context.LogMessage (MessageImportance.High, "  " + type);
@@ -399,10 +390,11 @@ namespace Mono.Linker.Optimizer
 				DumpFailEntry (context, type);
 		}
 
+		[Obsolete ("KILL")]
 		public TypeEntry AddTypeEntry (string name, MatchKind match, TypeAction action, TypeEntry parent, Func<MemberReference, bool> conditional)
 		{
 			var entry = new TypeEntry (name, match, action, parent, conditional);
-			_type_actions.Add (entry);
+			// _type_actions.Add (entry);
 			return entry;
 		}
 
@@ -429,12 +421,6 @@ namespace Mono.Linker.Optimizer
 			}
 
 			ActionVisitor.Visit (this, type, action);
-			return;
-
-			foreach (var entry in _type_actions) {
-				if (entry.Action != TypeAction.None && entry.Matches (type))
-					action (entry.Action);
-			}
 		}
 
 		public class TypeEntry
