@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
@@ -42,27 +44,86 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public Action<TypeAction> TypeCallback {
+		public Action<AbstractType> TypeCallback {
 			get;
 		}
 
-		public Action<MethodAction> MethodCallback {
+		public Action<ActionVisitor, Method> MethodCallback {
 			get;
 		}
 
-		public ActionVisitor (OptimizerOptions options, TypeDefinition type, Action<TypeAction> callback)
+		Stack<AbstractType> TypeStack { get; } = new Stack<AbstractType> ();
+
+		public IList<AbstractType> GetTypeStack () => TypeStack.ToList ();
+
+		ActionVisitor (OptimizerOptions options, TypeDefinition type, Action<AbstractType> callback)
 		{
 			Options = options;
 			Type = type;
 			TypeCallback = callback;
 		}
 
-		public ActionVisitor (OptimizerOptions options, MethodDefinition method, Action<MethodAction> callback)
+		ActionVisitor (OptimizerOptions options, MethodDefinition method, Action<ActionVisitor, Method> callback)
 		{
 			Options = options;
 			Type = method.DeclaringType;
 			Method = method;
 			MethodCallback = callback;
+		}
+
+		public static void Visit (OptimizerOptions options, TypeDefinition type, Action<AbstractType> callback)
+		{
+			new ActionVisitor (options, type, node => callback (node)).Visit ();
+		}
+
+		public static void Visit (OptimizerOptions options, MethodDefinition method, Action<ActionVisitor, Method> callback)
+		{
+			new ActionVisitor (options, method, callback).Visit ();
+		}
+
+		public static void Visit (OptimizerOptions options, TypeDefinition type, Action<TypeAction> callback)
+		{
+			new ActionVisitor (options, type, node => callback (node.Action)).Visit ();
+		}
+
+		public static void Visit (OptimizerOptions options, MethodDefinition method, Action<MethodAction> callback)
+		{
+			new ActionVisitor (options, method, (_, node) => callback (node.Action)).Visit ();
+		}
+
+		public static IList<AbstractType> GetNodes (OptimizerOptions options, TypeDefinition type, Func<AbstractType, bool> filter)
+		{
+			var list = new List<AbstractType> ();
+			new ActionVisitor (options, type, node => {
+				if (filter (node))
+					list.Add (node);
+			}).Visit ();
+			return list;
+		}
+
+		public static IList<Method> GetNodes (OptimizerOptions options, MethodDefinition method, Func<ActionVisitor, Method, bool> filter)
+		{
+			var list = new List<Method> ();
+			new ActionVisitor (options, method, (visitor, node) => {
+				if (filter (visitor, node))
+					list.Add (node);
+			}).Visit ();
+			return list;
+		}
+
+		public static bool Any (OptimizerOptions options, TypeDefinition type, TypeAction action)
+		{
+			return GetNodes (options, type, node => node.Action == action).Count > 0;
+		}
+
+		public static bool Any (OptimizerOptions options, MethodDefinition method, MethodAction action)
+		{
+			return GetNodes (options, method, (visitor, node) => node.Action == action).Count > 0;
+		}
+
+		public void Visit ()
+		{
+			Options.Report.RootNode.Visit (this);
 		}
 
 		public void Visit (RootNode node)
@@ -89,18 +150,22 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			if (!node.Matches (Type))
 				return;
+			TypeStack.Push (node);
 			if (TypeCallback != null && node.Action != TypeAction.None)
-				TypeCallback (node.Action);
+				TypeCallback (node);
 			node.VisitChildren (this);
+			TypeStack.Pop ();
 		}
 
 		public void Visit (Type node)
 		{
 			if (!node.Matches (Type))
 				return;
+			TypeStack.Push (node);
 			if (TypeCallback != null && node.Action != TypeAction.None)
-				TypeCallback (node.Action);
+				TypeCallback (node);
 			node.VisitChildren (this);
+			TypeStack.Pop ();
 		}
 
 		public void Visit (Method node)
@@ -108,7 +173,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			if (Method == null || !node.Matches (Method))
 				return;
 			if (MethodCallback != null && node.Action != MethodAction.None)
-				MethodCallback (node.Action);
+				MethodCallback (this, node);
 			node.VisitChildren (this);
 		}
 

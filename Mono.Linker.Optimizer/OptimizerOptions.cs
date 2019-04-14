@@ -317,6 +317,7 @@ namespace Mono.Linker.Optimizer
 					return true;
 			}
 
+			return ActionVisitor.Any (this, method, MethodAction.Debug);
 			return _method_actions.Any (e => e.Matches (method, MethodAction.Debug));
 		}
 
@@ -348,19 +349,28 @@ namespace Mono.Linker.Optimizer
 		{
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
-			var fail = _method_actions.FirstOrDefault (e => e.Matches (method, MethodAction.Fail));
-			var warn = _method_actions.FirstOrDefault (e => e.Matches (method, MethodAction.Warn));
-			if (fail == null && warn == null)
+			Method fail = null;
+			IList<AbstractType> stack = null;
+			ActionVisitor.Visit (this, method, (visitor, node) => {
+				if (fail != null)
+					return;
+				if (node.Action != MethodAction.Fail && node.Action != MethodAction.Warn)
+					return;
+				fail = node;
+				stack = visitor.GetTypeStack ();
+			});
+
+			if (fail == null)
 				return;
 
 			var message = $"Found fail-listed method `{method.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, fail ?? warn);
-			var stack = context.DumpTracerStack ();
-			Report.ReportFailListEntry (method, fail ?? warn, stack);
+			// DumpFailEntry (context, fail);
+			// var stack = context.DumpTracerStack ();
+			// Report.ReportFailListEntry (method, fail, stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			if (fail != null)
+			if (fail.Action == MethodAction.Fail)
 				throw new OptimizerException (message + ".");
 		}
 
@@ -402,12 +412,13 @@ namespace Mono.Linker.Optimizer
 
 		public void ProcessTypeEntries (TypeDefinition type, Action<TypeAction> action)
 		{
-			if (type.DeclaringType != null) {
+			if (false && type.DeclaringType != null) {
+				DebugHelpers.AssertFail ("WHO CALLS THIS?");
 				ProcessTypeEntries (type.DeclaringType, action);
 				return;
 			}
 
-			Report.RootNode.Visit (new ActionVisitor (this, type, action));
+			ActionVisitor.Visit (this, type, action);
 			return;
 
 			foreach (var entry in _type_actions) {
@@ -418,7 +429,7 @@ namespace Mono.Linker.Optimizer
 
 		public void ProcessMethodEntries (MethodDefinition method, Action<MethodAction> action)
 		{
-			Report.RootNode.Visit (new ActionVisitor (this, method, action));
+			ActionVisitor.Visit (this, method, action);
 			return;
 			foreach (var entry in _method_actions) {
 				if (entry.Action != MethodAction.None && entry.Matches (method))

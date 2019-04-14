@@ -90,7 +90,7 @@ namespace Mono.Linker.Optimizer
 		{
 			Options.ProcessTypeEntries (type, a => ProcessTypeActions (type, a));
 
-			if (type.HasNestedTypes) {
+			if (false && type.HasNestedTypes) {
 				foreach (var nested in type.NestedTypes)
 					ProcessType (nested);
 			}
