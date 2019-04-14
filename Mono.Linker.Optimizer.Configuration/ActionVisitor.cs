@@ -44,7 +44,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public Action<AbstractType> TypeCallback {
+		public Action<ActionVisitor, AbstractType> TypeCallback {
 			get;
 		}
 
@@ -56,7 +56,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public IList<AbstractType> GetTypeStack () => TypeStack.ToList ();
 
-		ActionVisitor (OptimizerOptions options, TypeDefinition type, Action<AbstractType> callback)
+		ActionVisitor (OptimizerOptions options, TypeDefinition type, Action<ActionVisitor, AbstractType> callback)
 		{
 			Options = options;
 			Type = type;
@@ -71,9 +71,9 @@ namespace Mono.Linker.Optimizer.Configuration
 			MethodCallback = callback;
 		}
 
-		public static void Visit (OptimizerOptions options, TypeDefinition type, Action<AbstractType> callback)
+		public static void Visit (OptimizerOptions options, TypeDefinition type, Action<ActionVisitor, AbstractType> callback)
 		{
-			new ActionVisitor (options, type, node => callback (node)).Visit ();
+			new ActionVisitor (options, type, callback).Visit ();
 		}
 
 		public static void Visit (OptimizerOptions options, MethodDefinition method, Action<ActionVisitor, Method> callback)
@@ -83,7 +83,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public static void Visit (OptimizerOptions options, TypeDefinition type, Action<TypeAction> callback)
 		{
-			new ActionVisitor (options, type, node => callback (node.Action)).Visit ();
+			new ActionVisitor (options, type, (_, node) => callback (node.Action)).Visit ();
 		}
 
 		public static void Visit (OptimizerOptions options, MethodDefinition method, Action<MethodAction> callback)
@@ -91,11 +91,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			new ActionVisitor (options, method, (_, node) => callback (node.Action)).Visit ();
 		}
 
-		public static IList<AbstractType> GetNodes (OptimizerOptions options, TypeDefinition type, Func<AbstractType, bool> filter)
+		public static IList<AbstractType> GetNodes (OptimizerOptions options, TypeDefinition type, Func<ActionVisitor, AbstractType, bool> filter)
 		{
 			var list = new List<AbstractType> ();
-			new ActionVisitor (options, type, node => {
-				if (filter (node))
+			new ActionVisitor (options, type, (visitor, node) => {
+				if (filter (visitor, node))
 					list.Add (node);
 			}).Visit ();
 			return list;
@@ -113,12 +113,12 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public static bool Any (OptimizerOptions options, TypeDefinition type, TypeAction action)
 		{
-			return GetNodes (options, type, node => node.Action == action).Count > 0;
+			return GetNodes (options, type, (_, node) => node.Action == action).Count > 0;
 		}
 
 		public static bool Any (OptimizerOptions options, MethodDefinition method, MethodAction action)
 		{
-			return GetNodes (options, method, (visitor, node) => node.Action == action).Count > 0;
+			return GetNodes (options, method, (_, node) => node.Action == action).Count > 0;
 		}
 
 		public void Visit ()
@@ -152,7 +152,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				return;
 			TypeStack.Push (node);
 			if (TypeCallback != null && node.Action != TypeAction.None)
-				TypeCallback (node);
+				TypeCallback (this, node);
 			node.VisitChildren (this);
 			TypeStack.Pop ();
 		}
@@ -163,7 +163,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				return;
 			TypeStack.Push (node);
 			if (TypeCallback != null && node.Action != TypeAction.None)
-				TypeCallback (node);
+				TypeCallback (this, node);
 			node.VisitChildren (this);
 			TypeStack.Pop ();
 		}

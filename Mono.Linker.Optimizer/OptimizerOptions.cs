@@ -298,7 +298,7 @@ namespace Mono.Linker.Optimizer
 					return true;
 			}
 
-			return _type_actions.Any (t => t.Matches (type, TypeAction.Debug));
+			return ActionVisitor.Any (this, type, TypeAction.Debug);
 		}
 
 		public bool EnableDebugging (MethodDefinition method)
@@ -325,20 +325,29 @@ namespace Mono.Linker.Optimizer
 				return;
 			}
 
-			var fail = _type_actions.FirstOrDefault (e => e.Matches (type, TypeAction.Fail));
-			var warn = _type_actions.FirstOrDefault (e => e.Matches (type, TypeAction.Warn));
-			if (fail == null && warn == null)
+			AbstractType fail = null;
+			IList<AbstractType> stack = null;
+			ActionVisitor.Visit (this, type, (visitor, node) => {
+				if (fail != null)
+					return;
+				if (node.Action != TypeAction.Fail && node.Action != TypeAction.Warn)
+					return;
+				fail = node;
+				stack = visitor.GetTypeStack ();
+			});
+
+			if (fail == null)
 				return;
 
 			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
 			var message = $"Found fail-listed type `{type.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, fail ?? warn);
-			var stack = context.DumpTracerStack ();
-			Report.ReportFailListEntry (type, fail ?? warn, original, stack);
+			DumpFailEntry (context, fail);
+//			var stack = context.DumpTracerStack ();
+//			Report.ReportFailListEntry (type, fail ?? warn, original, stack);
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			if (fail != null)
+			if (fail.Action == TypeAction.Fail)
 				throw new OptimizerException (message + original_message + ".");
 		}
 
