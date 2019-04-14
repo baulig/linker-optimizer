@@ -75,7 +75,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			var name = nav.GetAttribute ("name") ?? throw ThrowError ("<namespace> entry needs `name` attribute.");
 
 			var action = nav.GetTypeAction ("action");
-			var node = new Type (name, MatchKind.Namespace, action);
+			var node = new Type (null, name, null, MatchKind.Namespace, action);
 			parent.Add (node);
 
 			nav.ProcessChildren ("type", child => OnTypeEntry (child, parent, node));
@@ -88,7 +88,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
 
 			var action = nav.GetTypeAction ("action");
-			var type = new Type (name, match, action);
+			var type = new Type (parent, name, null, match, action);
 			if (parent != null)
 				parent.Types.Add (type);
 			else
@@ -116,7 +116,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				break;
 			}
 
-			var method = new Method (name, match, action);
+			var method = new Method (parent, name, match, action);
 			if (parent != null)
 				parent.Methods.Add (method);
 			else

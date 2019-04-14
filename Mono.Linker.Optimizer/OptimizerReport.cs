@@ -235,7 +235,7 @@ namespace Mono.Linker.Optimizer
 			if (ns == null)
 				return null;
 
-			return ns.Types.GetType (type, add);
+			return ns.Types.GetType (ns, type, add);
 		}
 
 		Method GetMethodEntry (MethodDefinition method, bool add)
@@ -244,7 +244,7 @@ namespace Mono.Linker.Optimizer
 			if (type == null)
 				return null;
 
-			return type.Methods.GetMethod (method, add);
+			return type.Methods.GetMethod (type, method, add);
 		}
 
 		bool CheckAssemblySize (string assembly, int size)

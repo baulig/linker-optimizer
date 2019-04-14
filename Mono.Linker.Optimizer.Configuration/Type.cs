@@ -30,6 +30,10 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public class Type : Node
 	{
+		public Type Parent {
+			get;
+		}
+
 		public string Name {
 			get;
 		}
@@ -66,17 +70,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 		}
 
-		public Type (string name, string fullName)
+		public Type (Type parent, string name, string fullName, MatchKind match, TypeAction action)
 		{
+			Parent = parent;
 			Name = name;
 			FullName = fullName;
-			Match = MatchKind.Name;
-			Action = TypeAction.None;
-		}
-
-		public Type (string name, MatchKind match, TypeAction action)
-		{
-			Name = name;
 			Match = match;
 			Action = action;
 		}

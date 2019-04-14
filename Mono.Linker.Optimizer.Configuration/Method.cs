@@ -33,6 +33,10 @@ namespace Mono.Linker.Optimizer.Configuration
 
 	public class Method : Node
 	{
+		public Type Parent {
+			get;
+		}
+
 		public string Name {
 			get;
 		}
@@ -66,15 +70,9 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 		}
 
-		public Method (string name)
+		public Method (Type parent, string name, MatchKind match, MethodAction action)
 		{
-			Name = name;
-			Match = MatchKind.Name;
-			Action = MethodAction.None;
-		}
-
-		public Method (string name, MatchKind match, MethodAction action)
-		{
+			Parent = parent;
 			Name = name;
 			Match = match;
 			Action = action;

@@ -45,22 +45,22 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		internal static Type GetNamespace (this NodeList<Type> list, string name, bool add)
 		{
-			return list.GetChild (n => n.Name == name, () => add ? new Type (name, MatchKind.Namespace, TypeAction.None) : null);
+			return list.GetChild (n => n.Name == name, () => add ? new Type (null, name, null, MatchKind.Namespace, TypeAction.None) : null);
 		}
 
-		internal static Type GetType (this NodeList<Type> list, TypeDefinition type, bool add)
+		internal static Type GetType (this NodeList<Type> list, Type parent, TypeDefinition type, bool add)
 		{
-			return list.GetChild (t => t.Name == type.Name, () => add ? new Type (type.Name, type.FullName) : null);
+			return list.GetChild (t => t.Name == type.Name, () => add ? new Type (parent, type.Name, type.FullName, MatchKind.Name, TypeAction.None) : null);
 		}
 
-		internal static Method GetMethod (this NodeList<Method> list, MethodDefinition method, bool add)
+		internal static Method GetMethod (this NodeList<Method> list, Type parent, MethodDefinition method, bool add)
 		{
-			return GetMethod (list, method.Name + CecilHelper.GetMethodSignature (method), add);
+			return GetMethod (list, parent, method.Name + CecilHelper.GetMethodSignature (method), add);
 		}
 
-		internal static Method GetMethod (this NodeList<Method> list, string name, bool add)
+		internal static Method GetMethod (this NodeList<Method> list, Type parent, string name, bool add)
 		{
-			return list.GetChild (m => m.Name == name, () => add ? new Method (name) : null);
+			return list.GetChild (m => m.Name == name, () => add ? new Method (parent, name, MatchKind.Name, MethodAction.None) : null);
 		}
 
 		internal static void ProcessChildren (this XPathNavigator nav, string children, Action<XPathNavigator> action)
