@@ -74,21 +74,9 @@ namespace Mono.Linker.Optimizer
 			ProcessChildren (root, "include", OnInclude);
 
 			ProcessChildren (root, "features/feature", OnFeature);
-			ProcessChildren (root, "conditional", OnConditional);
 
-			ProcessChildren (root, "namespace", child => OnNamespaceEntry (child));
-			ProcessChildren (root, "type", child => OnTypeEntry (child, null));
-			ProcessChildren (root, "method", child => OnMethodEntry (child));
-
-			ProcessChildren (root, "size-check", OnSizeCheck);
-
-			var reader = new ConfigurationReader (Options.Report.RootNode);
+			var reader = new ConfigurationReader (Options);
 			reader.Read (root);
-		}
-
-		void OnSizeCheck (XPathNavigator nav)
-		{
-
 		}
 
 		void OnInclude (XPathNavigator nav)
@@ -131,21 +119,6 @@ namespace Mono.Linker.Optimizer
 				enabled = true;
 
 			Options.SetFeatureEnabled (name, enabled);
-		}
-
-		void OnConditional (XPathNavigator nav)
-		{
-			var name = GetAttribute (nav, "feature");
-			if (name == null || !GetBoolAttribute (nav, "enabled", out var enabled))
-				throw ThrowError ("<conditional> needs both `feature` and `enabled` arguments.");
-
-			var feature = OptimizerOptions.FeatureByName (name);
-
-			ProcessChildren (nav, "namespace", child => OnNamespaceEntry (child, Conditional));
-			ProcessChildren (nav, "type", child => OnTypeEntry (child, null, Conditional));
-			ProcessChildren (nav, "method", child => OnMethodEntry (child, null, Conditional));
-
-			bool Conditional (MemberReference reference) => Options.IsFeatureEnabled (feature) == enabled;
 		}
 
 		void CheckAttribute (XPathNavigator nav, string name, Action<bool> action, bool required = false)
@@ -200,57 +173,6 @@ namespace Mono.Linker.Optimizer
 			}
 
 			return true;
-		}
-
-		void OnNamespaceEntry (XPathNavigator nav, Func<MemberReference, bool> conditional = null)
-		{
-			var name = GetAttribute (nav, "name") ?? throw ThrowError ("<namespace> entry needs `name` attribute.");
-
-			OptimizerOptions.TypeEntry entry;
-			var action = GetAttribute (nav, "action");
-			if (action != null)
-				entry = AddTypeEntry (name, MatchKind.Namespace, action, null, conditional);
-			else
-				entry = Options.AddTypeEntry (name, MatchKind.Namespace, TypeAction.None, null, conditional);
-
-			ProcessChildren (nav, "type", child => OnTypeEntry (child, entry, conditional));
-			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
-		}
-
-		void OnTypeEntry (XPathNavigator nav, OptimizerOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
-		{
-			if (!GetName (nav, out var name, out var match))
-				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
-
-			OptimizerOptions.TypeEntry entry;
-			var action = GetAttribute (nav, "action");
-			if (action != null)
-				entry = AddTypeEntry (name, match, action, parent, conditional);
-			else
-				entry = Options.AddTypeEntry (name, match, TypeAction.None, parent, conditional);
-
-			ProcessChildren (nav, "method", child => OnMethodEntry (child, entry, conditional));
-		}
-
-		OptimizerOptions.TypeEntry AddTypeEntry (string name, MatchKind match, string action, OptimizerOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
-		{
-			if (!OptimizerOptions.TryParseTypeAction (action, out var typeAction))
-				throw ThrowError ($"Invalid `action` attribute: `{action}`.");
-
-			return Options.AddTypeEntry (name, match, typeAction, parent, conditional);
-		}
-
-		void OnMethodEntry (XPathNavigator nav, OptimizerOptions.TypeEntry parent = null, Func<MemberReference, bool> conditional = null)
-		{
-			if (!GetName (nav, out var name, out var match))
-				throw ThrowError ($"Ambiguous name in method entry `{nav.OuterXml}`.");
-
-			var action = GetAttribute (nav, "action") ?? throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
-
-			if (!OptimizerOptions.TryParseMethodAction (action, out var methodAction))
-				throw ThrowError ($"Invalid `action` attribute in {nav.OuterXml}.");
-
-			Options.AddMethodEntry (name, match, methodAction, parent, conditional);
 		}
 
 		internal static Exception ThrowError (string message)

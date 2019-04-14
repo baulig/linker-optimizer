@@ -96,6 +96,7 @@ namespace Mono.Linker.Optimizer
 			GetMethodEntry (method, true).HasAction = true;
 		}
 
+#if FIXME
 		public void ReportFailListEntry (TypeDefinition type, OptimizerOptions.TypeEntry entry, string original, List<string> stack)
 		{
 			var fail = new FailListEntry (type.FullName) {
@@ -126,6 +127,7 @@ namespace Mono.Linker.Optimizer
 				}
 			}
 		}
+#endif
 
 		public bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{

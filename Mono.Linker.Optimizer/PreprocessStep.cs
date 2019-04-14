@@ -88,7 +88,7 @@ namespace Mono.Linker.Optimizer
 
 		void ProcessType (TypeDefinition type)
 		{
-			Options.ProcessTypeEntries (type, a => ProcessTypeActions (type, a));
+			ActionVisitor.Visit (Options, type, a => ProcessTypeActions (type, a));
 
 			if (false && type.HasNestedTypes) {
 				foreach (var nested in type.NestedTypes)

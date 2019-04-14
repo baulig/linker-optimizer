@@ -31,13 +31,18 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public class ConfigurationReader
 	{
+		public OptimizerOptions Options {
+			get;
+		}
+
 		public RootNode Root {
 			get;
 		}
 
-		public ConfigurationReader (RootNode root)
+		public ConfigurationReader (OptimizerOptions options)
 		{
-			Root = root;
+			Options = options;
+			Root = options.Report.RootNode;
 		}
 
 		public void Read (XPathNavigator nav)
@@ -100,6 +105,16 @@ namespace Mono.Linker.Optimizer.Configuration
 
 			if (!nav.TryGetMethodAction ("action", out var action))
 				throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
+
+			switch (action) {
+			case MethodAction.ReturnFalse:
+			case MethodAction.ReturnTrue:
+			case MethodAction.ReturnNull:
+			case MethodAction.Throw:
+				if (Options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
+					Options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
+				break;
+			}
 
 			var method = new Method (name, match, action);
 			if (parent != null)
