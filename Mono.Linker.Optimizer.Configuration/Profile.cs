@@ -1,5 +1,5 @@
 ﻿//
-// IVisitor.cs
+// Profile.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -24,35 +24,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public interface IVisitor
+	public class Profile : Node
 	{
-		void Visit (OptimizerConfiguration node);
+		public string Name {
+			get;
+		}
 
-		void Visit (ActionList node);
+		public NodeList<Assembly> Assemblies { get; } = new NodeList<Assembly> ();
 
-		void Visit (SizeReport node);
+		public Profile (string name)
+		{
+			Name = name;
+		}
 
-		void Visit (SizeCheck node);
+		public override void Visit (IVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
 
-		void Visit (OptimizerReport node);
-
-		void Visit (Configuration node);
-
-		void Visit (Profile node);
-
-		void Visit (Assembly node);
-
-		void Visit (Type node);
-
-		void Visit (Method node);
-
-		void Visit (FailList node);
-
-		void Visit (FailListEntry node);
-
-		void Visit (FailListNode node);
+		public override void VisitChildren (IVisitor visitor)
+		{
+			Assemblies.VisitChildren (visitor);
+		}
 	}
 }

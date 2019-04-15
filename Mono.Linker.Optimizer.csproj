@@ -90,6 +90,9 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailListNode.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\ReportWriter.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\DeadCodeMode.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\SizeCheck.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\Configuration.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\Profile.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="external\linker\src\linker\Mono.Linker.csproj">

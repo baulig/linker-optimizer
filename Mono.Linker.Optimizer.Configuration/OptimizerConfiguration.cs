@@ -31,6 +31,8 @@ namespace Mono.Linker.Optimizer.Configuration
 	{
 		public SizeReport SizeReport { get; } = new SizeReport ();
 
+		public SizeCheck SizeCheck { get; } = new SizeCheck ();
+
 		public ActionList ActionList { get; } = new ActionList ();
 
 		public override void Visit (IVisitor visitor)
@@ -40,6 +42,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
+			SizeCheck.Visit (visitor);
 			ActionList.Visit (visitor);
 			SizeReport.Visit (visitor);
 		}

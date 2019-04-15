@@ -119,6 +119,41 @@ namespace Mono.Linker.Optimizer.Configuration
 			return true;
 		}
 
+		bool CheckAssemblySize (string assembly, int size)
+		{
+			if (!Options.CheckSize)
+				return true;
+
+#if FIXME
+			var asmEntry = GetAssemblyEntry (assembly, false);
+			if (asmEntry == null)
+				return true;
+
+			int tolerance;
+			string toleranceValue = asmEntry.Tolerance ?? Options.SizeCheckTolerance ?? "0.05%";
+
+			if (toleranceValue.EndsWith ("%", StringComparison.Ordinal)) {
+				var percent = float.Parse (toleranceValue.Substring (0, toleranceValue.Length - 1));
+				tolerance = (int)(asmEntry.Size * percent / 100.0f);
+			} else {
+				tolerance = int.Parse (toleranceValue);
+			}
+
+			LogDebug ($"Size check: {asmEntry.Name}, actual={size}, expected={asmEntry.Size} (tolerance {toleranceValue})");
+
+			if (size < asmEntry.Size - tolerance) {
+				LogWarning ($"Assembly `{asmEntry.Name}` size below minimum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
+				return false;
+			}
+			if (size > asmEntry.Size + tolerance) {
+				LogWarning ($"Assembly `{asmEntry.Name}` size above maximum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
+				return false;
+			}
+#endif
+
+			return true;
+		}
+
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);

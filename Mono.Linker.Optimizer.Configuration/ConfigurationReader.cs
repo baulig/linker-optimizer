@@ -49,6 +49,8 @@ namespace Mono.Linker.Optimizer.Configuration
 			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, Root));
 			nav.ProcessChildren ("type", child => OnTypeEntry (child, Root, null));
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root, null));
+
+			nav.ProcessChildren ("size-check", child => OnSizeCheckEntry (child));
 		}
 
 		void OnConditional (XPathNavigator nav, ActionList parent)
@@ -120,7 +122,24 @@ namespace Mono.Linker.Optimizer.Configuration
 				list.Add (method);
 		}
 
-		bool GetName (XPathNavigator nav, out string name, out MatchKind match)
+		void OnSizeCheckEntry (XPathNavigator nav)
+		{
+			var configuration = new Configuration (nav.GetAttribute ("configuration"));
+			nav.ProcessChildren ("profile", child => OnProfileEntry (child, configuration));
+		}
+
+		void OnProfileEntry (XPathNavigator nav, Configuration configuration)
+		{
+			var profile = new Profile (nav.GetAttribute ("name"));
+			nav.ProcessChildren ("assembly", child => OnAssembly (child, profile));
+		}
+
+		void OnAssembly (XPathNavigator nav, Profile profile)
+		{
+
+		}
+
+		static bool GetName (XPathNavigator nav, out string name, out MatchKind match)
 		{
 			name = nav.GetAttribute ("name");
 			var fullname = nav.GetAttribute ("fullname");
