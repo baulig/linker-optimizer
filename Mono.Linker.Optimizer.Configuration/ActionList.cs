@@ -82,14 +82,15 @@ namespace Mono.Linker.Optimizer.Configuration
 		public Method GetMethod (MethodDefinition method, bool add)
 		{
 			var parent = GetType (method.DeclaringType, add);
-			if (parent == null)
-				return null;
-
-			var entry = parent.Methods.GetMethod (parent, method, add);
-			if (entry == null)
-				return null;
-
-			return entry;
+			return parent?.Methods.GetChild (m => m.Matches (method), () => {
+				if (!add)
+					return null;
+				if (method.DeclaringType.Methods.Count (m => m.Name == method.Name) > 1) {
+					var name = method.Name + NodeHelper.GetMethodSignature (method);
+					return new Method (parent, name, MatchKind.FullName, MethodAction.None);
+				}
+				return new Method (parent, method.Name, MatchKind.Name, MethodAction.None);
+			});
 		}
 
 		public override void Visit (IVisitor visitor)

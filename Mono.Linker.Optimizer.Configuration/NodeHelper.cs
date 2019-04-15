@@ -124,5 +124,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				return Enum.TryParse (attribute, true, out action);
 			}
 		}
+
+		internal static string GetMethodSignature (MethodDefinition method) => CecilHelper.GetMethodSignature (method);
 	}
 }
