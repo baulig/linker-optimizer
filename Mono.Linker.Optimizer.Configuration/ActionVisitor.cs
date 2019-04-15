@@ -122,7 +122,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			Options.OptimizerConfiguration.Visit (this);
 		}
 
-		public void Visit (RootNode node)
+		public void Visit (OptimizerConfiguration node)
 		{
 			node.VisitChildren (this);
 		}

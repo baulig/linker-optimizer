@@ -73,7 +73,7 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\Method.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Type.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Assembly.cs" />
-    <Compile Include="Mono.Linker.Optimizer.Configuration\RootNode.cs" />
+    <Compile Include="Mono.Linker.Optimizer.Configuration\OptimizerConfiguration.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailList.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\FailListEntry.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\SizeReport.cs" />

@@ -74,7 +74,7 @@ namespace Mono.Linker.Optimizer.Configuration
 				((XElement)parent.Node).Add (current.Node);
 		}
 
-		void IVisitor.Visit (RootNode node) => Visit (node, "root", Visit);
+		void IVisitor.Visit (OptimizerConfiguration node) => Visit (node, "root", Visit);
 
 		void IVisitor.Visit (ActionList node) => Visit (node, "action-list", Visit);
 
@@ -94,7 +94,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (FailListNode node) => Visit (node, node.ElementName, Visit);
 
-		protected abstract bool Visit (RootNode node, XElement element);
+		protected abstract bool Visit (OptimizerConfiguration node, XElement element);
 
 		protected abstract bool Visit (SizeReport node, XElement element);
 

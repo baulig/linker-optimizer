@@ -100,7 +100,7 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		public RootNode OptimizerConfiguration {
+		public OptimizerConfiguration OptimizerConfiguration {
 			get;
 		}
 
@@ -120,7 +120,7 @@ namespace Mono.Linker.Optimizer
 
 			ObsoleteReport = new OldOptimizerReport (this);
 
-			OptimizerConfiguration = new RootNode ();
+			OptimizerConfiguration = new OptimizerConfiguration ();
 			OptimizerReport = new OptimizerReport (this);
 		}
 

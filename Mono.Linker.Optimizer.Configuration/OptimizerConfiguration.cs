@@ -1,5 +1,5 @@
 ﻿//
-// RootNode.cs
+// OptimizerConfiguration.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -27,7 +27,7 @@ using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
-	public class RootNode : Node
+	public class OptimizerConfiguration : Node
 	{
 		public SizeReport SizeReport { get; } = new SizeReport ();
 

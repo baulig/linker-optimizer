@@ -35,7 +35,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public RootNode Root => Options.OptimizerConfiguration;
+		public OptimizerConfiguration Root => Options.OptimizerConfiguration;
 
 		public ConfigurationReader (OptimizerOptions options)
 		{

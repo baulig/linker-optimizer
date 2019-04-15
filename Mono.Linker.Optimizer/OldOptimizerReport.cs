@@ -60,7 +60,7 @@ namespace Mono.Linker.Optimizer
 		RootEntry Root { get; } = new RootEntry ();
 
 		[Obsolete ("KILL", true)]
-		public RootNode RootNode { get; } = new RootNode ();
+		public OptimizerConfiguration RootNode { get; } = new OptimizerConfiguration ();
 
 		public OldOptimizerReport (OptimizerOptions options)
 		{
