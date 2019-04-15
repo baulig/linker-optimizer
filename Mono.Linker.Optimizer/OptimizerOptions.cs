@@ -95,11 +95,6 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
-		[Obsolete]
-		public OldOptimizerReport ObsoleteReport {
-			get;
-		}
-
 		public OptimizerConfiguration OptimizerConfiguration {
 			get;
 		}
@@ -117,8 +112,6 @@ namespace Mono.Linker.Optimizer
 				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Martin] = false
 			};
-
-			ObsoleteReport = new OldOptimizerReport (this);
 
 			OptimizerConfiguration = new OptimizerConfiguration ();
 			OptimizerReport = new OptimizerReport (this);

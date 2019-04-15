@@ -43,7 +43,6 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		protected override bool Visit (SizeReport node, XElement element)
 		{
-			node.VisitChildren (this);
 			return true;
 		}
 
@@ -60,6 +59,8 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected override bool Visit (Assembly node, XElement element)
 		{
 			element.SetAttributeValue ("name", node.Name);
+			if (node.Size != null)
+				element.SetAttributeValue ("size", node.Size.Value.ToString ());
 			return true;
 		}
 

@@ -81,17 +81,6 @@ namespace Mono.Linker.Optimizer
 			OptionsReader.ProcessChildren (nav, "profile", child => OnProfileEntry (child, configuration));
 		}
 
-		public void MarkAsContainingConditionals (MethodDefinition method)
-		{
-			if (!IsEnabled (ReportMode.Actions))
-				return;
-			if (method.DeclaringType.DeclaringType != null)
-				throw new OptimizerAssertionException ($"Conditionals in nested classes are not supported yet.");
-
-			// GetMethodEntry (method, true).HasAction = true;
-		}
-
-
 		public bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
 			ReportAssemblySize (context, assembly, size);

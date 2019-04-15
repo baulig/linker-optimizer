@@ -24,11 +24,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
 	public class SizeReport : Node
 	{
 		public NodeList<Assembly> Assemblies { get; } = new NodeList<Assembly> ();
+
+		public Assembly GetAssembly (AssemblyDefinition assembly, bool add)
+		{
+			return GetAssembly (assembly.Name.Name, add);
+		}
+
+		public Assembly GetAssembly (string name, bool add)
+		{
+			return Assemblies.GetAssembly (name, add);
+		}
 
 		public override void Visit (IVisitor visitor)
 		{

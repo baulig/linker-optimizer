@@ -23,13 +23,17 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+using System;
+using Mono.Cecil;
+
 namespace Mono.Linker.Optimizer.Configuration
 {
 	using BasicBlocks;
-	using Mono.Cecil;
 
 	public class OptimizerReport : Node
 	{
+		public SizeReport SizeReport { get; } = new SizeReport ();
+
 		public ActionList ActionList { get; } = new ActionList ();
 
 		public FailList FailList { get; } = new FailList ();
@@ -105,6 +109,16 @@ namespace Mono.Linker.Optimizer.Configuration
 				ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadVariables;
 		}
 
+		public bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
+		{
+			var entry = SizeReport.GetAssembly (assembly, true);
+			entry.Size = size;
+
+			// return CheckAssemblySize (assembly.Name.Name, size);
+
+			return true;
+		}
+
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);
@@ -112,6 +126,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
+			SizeReport.Visit (visitor);
 			ActionList.Visit (visitor);
 			FailList.Visit (visitor);
 		}

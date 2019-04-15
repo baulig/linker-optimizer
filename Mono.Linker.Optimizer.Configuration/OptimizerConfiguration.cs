@@ -33,16 +33,6 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public ActionList ActionList { get; } = new ActionList ();
 
-		public Assembly GetAssembly (AssemblyDefinition assembly, bool add)
-		{
-			return GetAssembly (assembly.Name.Name, add);
-		}
-
-		public Assembly GetAssembly (string name, bool add)
-		{
-			return SizeReport.Assemblies.GetAssembly (name, add);
-		}
-
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);
