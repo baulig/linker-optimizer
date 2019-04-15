@@ -34,15 +34,17 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public FailList FailList { get; } = new FailList ();
 
-		public ReportMode Mode {
+		public OptimizerOptions Options {
 			get;
 		}
 
+		public ReportMode Mode => Options.ReportMode;
+
 		public bool IsEnabled (ReportMode mode) => (Mode & mode) != 0;
 
-		public OptimizerReport (ReportMode mode)
+		public OptimizerReport (OptimizerOptions options)
 		{
-			Mode = mode;
+			Options = options;
 		}
 
 		public void MarkAsContainingConditionals (MethodDefinition method)

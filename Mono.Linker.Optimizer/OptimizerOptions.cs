@@ -100,6 +100,10 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
+		public RootNode OptimizerConfiguration {
+			get;
+		}
+
 		public OptimizerReport OptimizerReport {
 			get;
 		}
@@ -115,7 +119,9 @@ namespace Mono.Linker.Optimizer
 			};
 
 			ObsoleteReport = new OldOptimizerReport (this);
-			OptimizerReport = new OptimizerReport (ReportMode);
+
+			OptimizerConfiguration = new RootNode ();
+			OptimizerReport = new OptimizerReport (this);
 		}
 
 		internal void ParseOptions (string options)
@@ -207,6 +213,11 @@ namespace Mono.Linker.Optimizer
 		{
 			var parts = argument.Split ('+');
 			for (int i = 0; i < parts.Length; i++) {
+				switch (parts[i].ToLowerInvariant ()) {
+				case "dead-code":
+					ReportMode |= ReportMode.DeadCode;
+					continue;
+				}
 				if (!Enum.TryParse (parts[i], true, out ReportMode mode))
 					throw new OptimizerException ($"Invalid report mode: `{argument}`.");
 				ReportMode |= mode;

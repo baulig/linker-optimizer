@@ -35,14 +35,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public RootNode Root {
-			get;
-		}
+		public RootNode Root => Options.OptimizerConfiguration;
 
 		public ConfigurationReader (OptimizerOptions options)
 		{
 			Options = options;
-			Root = options.ObsoleteReport.RootNode;
 		}
 
 		public void Read (XPathNavigator nav)
