@@ -34,13 +34,27 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public FailList FailList { get; } = new FailList ();
 
+		public ReportMode Mode {
+			get;
+		}
+
+		public bool IsEnabled (ReportMode mode) => (Mode & mode) != 0;
+
+		public OptimizerReport (ReportMode mode)
+		{
+			Mode = mode;
+		}
+
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
-			ActionList.GetMethod (method, true, MethodAction.Scan);
+			if (IsEnabled (ReportMode.Actions))
+				ActionList.GetMethod (method, true, MethodAction.Scan);
 		}
 
 		public void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
 		{
+			if (!IsEnabled (ReportMode.Actions))
+				return;
 			switch (value) {
 			case ConstantValue.False:
 				ActionList.GetMethod (method, true, MethodAction.ReturnFalse);
@@ -61,27 +75,32 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void RemovedDeadBlocks (MethodDefinition method)
 		{
-			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadBlocks;
+			if (IsEnabled (ReportMode.DeadCode))
+				ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadBlocks;
 		}
 
 		public void RemovedDeadExceptionBlocks (MethodDefinition method)
 		{
-			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedExceptionBlocks;
+			if (IsEnabled (ReportMode.DeadCode))
+				ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedExceptionBlocks;
 		}
 
 		public void RemovedDeadJumps (MethodDefinition method)
 		{
-			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadJumps;
+			if (IsEnabled (ReportMode.DeadCode))
+				ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadJumps;
 		}
 
 		public void RemovedDeadConstantJumps (MethodDefinition method)
 		{
-			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedConstantJumps;
+			if (IsEnabled (ReportMode.DeadCode))
+				ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedConstantJumps;
 		}
 
 		public void RemovedDeadVariables (MethodDefinition method)
 		{
-			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadVariables;
+			if (IsEnabled (ReportMode.DeadCode))
+				ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadVariables;
 		}
 
 		public override void Visit (IVisitor visitor)

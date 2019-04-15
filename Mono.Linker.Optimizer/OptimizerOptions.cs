@@ -100,7 +100,7 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		public Configuration.OptimizerReport OptimizerReport {
+		public OptimizerReport OptimizerReport {
 			get;
 		}
 
@@ -115,7 +115,7 @@ namespace Mono.Linker.Optimizer
 			};
 
 			ObsoleteReport = new OldOptimizerReport (this);
-			OptimizerReport = new Configuration.OptimizerReport ();
+			OptimizerReport = new OptimizerReport (ReportMode);
 		}
 
 		internal void ParseOptions (string options)

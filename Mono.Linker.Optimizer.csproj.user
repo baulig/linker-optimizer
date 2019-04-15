@@ -5,5 +5,43 @@
     <StartArguments>--optimizer test-remoting-4 --optimizer-report martin-report.xml --optimizer-options report-mode=actions+size+all -out output -b true -d /Workspace/mono-work/mcs/class/lib/net_4_x -d /Workspace/linker-research/Tests/TestHelpers -c link -l none</StartArguments>
     <StartWorkingDirectory>Tests\Corlib</StartWorkingDirectory>
     <ConsolePause>true</ConsolePause>
+    <MonoDebugMode>false</MonoDebugMode>
+    <MonoDebugCasts>false</MonoDebugCasts>
+    <MonoDebugMdbOptimizations>false</MonoDebugMdbOptimizations>
+    <MonoGdbInfo>false</MonoGdbInfo>
+    <MonoProfile></MonoProfile>
+    <MonoVerboseLevel>0</MonoVerboseLevel>
+    <MonoRuntimeVersion></MonoRuntimeVersion>
+    <MonoSecurityMode>Disabled</MonoSecurityMode>
+    <MonoVerifyAll>false</MonoVerifyAll>
+    <MonoTraceExpressions></MonoTraceExpressions>
+    <MonoLogLevel>Default</MonoLogLevel>
+    <MonoLogMask>None</MonoLogMask>
+    <MonoXmlSerializerGeneration></MonoXmlSerializerGeneration>
+    <MonoConfigDir></MonoConfigDir>
+    <MonoConfigFile></MonoConfigFile>
+    <MonoDisableAIO>false</MonoDisableAIO>
+    <MonoDisableManagedCollation>false</MonoDisableManagedCollation>
+    <MonoExternalEncodings></MonoExternalEncodings>
+    <MonoGacPrefix></MonoGacPrefix>
+    <MonoStripDriveLetters>false</MonoStripDriveLetters>
+    <MonoCaseInsensitivePaths>false</MonoCaseInsensitivePaths>
+    <MonoManagedWatcher>false</MonoManagedWatcher>
+    <MonoNoSmp>false</MonoNoSmp>
+    <MonoPath></MonoPath>
+    <MonoWindowsFormsTheme></MonoWindowsFormsTheme>
+    <MonoThreadsPerCpu></MonoThreadsPerCpu>
+    <MonoAspNetNoDelete>false</MonoAspNetNoDelete>
+    <MonoTraceListener></MonoTraceListener>
+    <MonoXExceptions>false</MonoXExceptions>
+    <MonoXDebug>false</MonoXDebug>
+    <MonoGcType>Default</MonoGcType>
+    <MonoLlvm>false</MonoLlvm>
+    <MonoNoLlvm>false</MonoNoLlvm>
+    <MonoDesktopMode>false</MonoDesktopMode>
+    <MonoServerMode>false</MonoServerMode>
+    <MonoAdditionalOptions></MonoAdditionalOptions>
+    <MonoArchitecture>Default</MonoArchitecture>
+    <Architecture></Architecture>
   </PropertyGroup>
 </Project>
