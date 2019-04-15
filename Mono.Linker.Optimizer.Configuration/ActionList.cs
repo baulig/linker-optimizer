@@ -57,7 +57,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		public bool Evaluate (OptimizerOptions options)
 		{
 			if (evaluated == null)
-				evaluated = Conditional != null && options.IsFeatureEnabled (Conditional) != Enabled;
+				evaluated = Conditional == null || options.IsFeatureEnabled (Conditional) == Enabled;
 			return evaluated.Value;
 		}
 
