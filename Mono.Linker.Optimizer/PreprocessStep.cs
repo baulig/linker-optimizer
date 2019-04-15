@@ -138,11 +138,13 @@ namespace Mono.Linker.Optimizer
 			Context.Debug ();
 		}
 
-		void ProcessTypeActions (TypeDefinition type, TypeAction action)
+		void ProcessTypeActions (TypeDefinition type, Type entry)
 		{
-			switch (action) {
+			Context.AddTypeEntry (type, entry);
+
+			switch (entry.Action) {
 			case TypeAction.Debug:
-				Context.LogMessage (MessageImportance.High, $"Debug type: {type} {action}");
+				Context.LogMessage (MessageImportance.High, $"Debug type: {type} {entry}");
 				Context.Debug ();
 				break;
 
@@ -153,11 +155,11 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		void ProcessMethodActions (MethodDefinition method, MethodAction action)
+		void ProcessMethodActions (MethodDefinition method, Method entry)
 		{
-			switch (action) {
+			switch (entry.Action ?? MethodAction.None) {
 			case MethodAction.Debug:
-				Context.LogMessage (MessageImportance.High, $"Debug method: {method} {action}");
+				Context.LogMessage (MessageImportance.High, $"Debug method: {method}");
 				Context.Debug ();
 				break;
 

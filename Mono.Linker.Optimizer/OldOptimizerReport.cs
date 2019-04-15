@@ -40,7 +40,7 @@ namespace Mono.Linker.Optimizer
 	using Configuration;
 
 	[Obsolete]
-	public class OldOptimizerReport
+	public abstract class OldOptimizerReport
 	{
 		public OptimizerOptions Options {
 			get;

@@ -327,24 +327,28 @@ namespace Mono.Linker.Optimizer
 
 		public void CheckFailList (OptimizerContext context, TypeDefinition type, string original = null)
 		{
-			if (type.DeclaringType != null) {
+			if (false && type.DeclaringType != null) {
 				CheckFailList (context, type.DeclaringType, original ?? type.FullName);
 				return;
 			}
 
-			var nodes = ActionVisitor.GetNodes (this, type, n => n.Action == TypeAction.Fail || n.Action == TypeAction.Warn);
-			if (nodes.Count == 0)
+			var list = context.GetTypeEntries (type);
+			if (list == null || list.IsEmpty)
+				return;
+
+			var entry = list.Children.FirstOrDefault (t => t.Action == TypeAction.Warn || t.Action == TypeAction.Fail);
+			if (entry == null)
 				return;
 
 			var original_message = original != null ? $" while parsing `{original}`" : string.Empty;
 			var message = $"Found fail-listed type `{type.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, nodes[0]);
+			DumpFailEntry (context, entry);
 			var stack = context.DumpTracerStack ();
-			OptimizerReport.FailList.Add (new FailListEntry (type, nodes[0], original, stack));
+			OptimizerReport.FailList.Add (new FailListEntry (type, entry, original, stack));
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			if (nodes[0].Action == TypeAction.Fail)
+			if (entry.Action == TypeAction.Fail)
 				throw new OptimizerException (message + original_message + ".");
 		}
 

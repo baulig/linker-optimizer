@@ -28,13 +28,14 @@ using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Linker.Steps;
 
 namespace Mono.Linker.Optimizer
 {
-	using System.Reflection;
+	using Configuration;
 	using BasicBlocks;
 
 	public class OptimizerContext
@@ -199,6 +200,7 @@ namespace Mono.Linker.Optimizer
 
 		readonly HashSet<TypeDefinition> conditional_types = new HashSet<TypeDefinition> ();
 		readonly Dictionary<MethodDefinition, ConstantValue> constant_methods = new Dictionary<MethodDefinition, ConstantValue> ();
+		readonly Dictionary<TypeDefinition, NodeList<Type>> type_entries = new Dictionary<TypeDefinition, NodeList<Type>> ();
 
 		public bool IsConditionalTypeMarked (TypeDefinition type)
 		{
@@ -208,6 +210,22 @@ namespace Mono.Linker.Optimizer
 		public void MarkConditionalType (TypeDefinition type)
 		{
 			conditional_types.Add (type);
+		}
+
+		internal void AddTypeEntry (TypeDefinition type, Type entry)
+		{
+			if (!type_entries.TryGetValue (type, out var list)) {
+				list = new NodeList<Type> ();
+				type_entries.Add (type, list);
+			}
+			list.Add (entry);
+		}
+
+		internal NodeList<Type> GetTypeEntries (TypeDefinition type)
+		{
+			if (type_entries.TryGetValue (type, out var list))
+				return list;
+			return null;
 		}
 
 		internal void AttemptingToRedefineConditional (TypeDefinition type)
