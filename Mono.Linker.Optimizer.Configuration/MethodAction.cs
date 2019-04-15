@@ -29,6 +29,7 @@ namespace Mono.Linker.Optimizer.Configuration
 	public enum MethodAction
 	{
 		None,
+		Scan,
 		Debug,
 		Fail,
 		Warn,

@@ -83,7 +83,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			var parent = GetType (method.DeclaringType, add);
 			return parent?.Methods.GetChild (
-				m => m.Matches (method, action), add, () => new Method (parent, method, MethodAction.None));
+				m => m.Matches (method, action), add, () => new Method (parent, method, action));
 		}
 
 		public Method AddMethod (MethodDefinition method, MethodAction action)

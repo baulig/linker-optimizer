@@ -134,6 +134,9 @@ namespace Mono.Linker.Optimizer.Configuration
 			switch (action) {
 			case MethodAction.None:
 				break;
+			case MethodAction.Scan:
+				element.SetAttributeValue ("action", "scan");
+				break;
 			case MethodAction.Debug:
 				element.SetAttributeValue ("action", "debug");
 				break;

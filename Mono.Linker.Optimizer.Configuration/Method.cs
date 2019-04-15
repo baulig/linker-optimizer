@@ -79,17 +79,10 @@ namespace Mono.Linker.Optimizer.Configuration
 		}
 
 		public Method (Type parent, MethodDefinition method, MethodAction? action = null)
+			: this (parent, method.Name, MatchKind.Name, action)
 		{
-			Parent = parent;
-			Action = action;
-
-			if (method.DeclaringType.Methods.Count (m => m.Name == method.Name) > 1) {
-				Name = method.Name + NodeHelper.GetMethodSignature (method);
-				Match = MatchKind.FullName;
-			} else {
-				Name = method.Name;
-				Match = MatchKind.Name;
-			}
+			if (method.DeclaringType.Methods.Count (m => m.Name == method.Name) > 1)
+				Name += NodeHelper.GetMethodSignature (method);
 		}
 
 		public override void Visit (IVisitor visitor)

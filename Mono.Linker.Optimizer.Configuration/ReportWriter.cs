@@ -67,9 +67,9 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected override bool Visit (Method node, XElement element)
 		{
 			SetName (element, node.Name, node.Match);
-			SetDeadCodeMode (element, node.DeadCodeMode);
 			if (node.Action != null)
 				SetMethodAction (element, node.Action.Value);
+			SetDeadCodeMode (element, node.DeadCodeMode);
 			return true;
 		}
 
