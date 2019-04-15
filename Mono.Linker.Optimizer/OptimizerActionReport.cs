@@ -54,31 +54,6 @@ namespace Mono.Linker.Optimizer
 			GetMethodEntry (method).ConstantValue = value;
 		}
 
-		public void RemovedDeadBlocks (MethodDefinition method)
-		{
-			GetMethodEntry (method).DeadCodeMode |= DeadCodeMode.RemovedDeadBlocks;
-		}
-
-		public void RemovedDeadExceptionBlocks (MethodDefinition method)
-		{
-			GetMethodEntry (method).DeadCodeMode |= DeadCodeMode.RemovedExceptionBlocks;
-		}
-
-		public void RemovedDeadJumps (MethodDefinition method)
-		{
-			GetMethodEntry (method).DeadCodeMode |= DeadCodeMode.RemovedDeadJumps;
-		}
-
-		public void RemovedDeadConstantJumps (MethodDefinition method)
-		{
-			GetMethodEntry (method).DeadCodeMode |= DeadCodeMode.RemovedConstantJumps;
-		}
-
-		public void RemovedDeadVariables (MethodDefinition method)
-		{
-			GetMethodEntry (method).DeadCodeMode |= DeadCodeMode.RemovedDeadVariables;
-		}
-
 		TypeEntry GetTypeEntry (TypeDefinition type)
 		{
 			if (type.DeclaringType != null)

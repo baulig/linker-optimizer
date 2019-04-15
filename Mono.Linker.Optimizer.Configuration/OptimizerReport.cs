@@ -37,8 +37,32 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
-			var entry = ActionList.GetMethod (method, true);
-			entry.HasAction = true;
+			ActionList.AddMethod (method, MethodAction.None);
+		}
+
+		public void RemovedDeadBlocks (MethodDefinition method)
+		{
+			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadBlocks;
+		}
+
+		public void RemovedDeadExceptionBlocks (MethodDefinition method)
+		{
+			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedExceptionBlocks;
+		}
+
+		public void RemovedDeadJumps (MethodDefinition method)
+		{
+			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadJumps;
+		}
+
+		public void RemovedDeadConstantJumps (MethodDefinition method)
+		{
+			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedConstantJumps;
+		}
+
+		public void RemovedDeadVariables (MethodDefinition method)
+		{
+			ActionList.GetMethod (method).DeadCodeMode |= DeadCodeMode.RemovedDeadVariables;
 		}
 
 		public override void Visit (IVisitor visitor)

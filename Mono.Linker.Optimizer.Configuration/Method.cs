@@ -49,7 +49,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public bool HasAction {
+		public DeadCodeMode DeadCodeMode {
 			get; set;
 		}
 
@@ -76,6 +76,20 @@ namespace Mono.Linker.Optimizer.Configuration
 			Name = name;
 			Match = match;
 			Action = action;
+		}
+
+		public Method (Type parent, MethodDefinition method, MethodAction action)
+		{
+			Parent = parent;
+			Action = action;
+
+			if (method.DeclaringType.Methods.Count (m => m.Name == method.Name) > 1) {
+				Name = method.Name + NodeHelper.GetMethodSignature (method);
+				Match = MatchKind.FullName;
+			} else {
+				Name = method.Name;
+				Match = MatchKind.Name;
+			}
 		}
 
 		public override void Visit (IVisitor visitor)

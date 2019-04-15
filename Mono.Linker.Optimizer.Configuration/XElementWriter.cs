@@ -113,5 +113,40 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected abstract bool Visit (FailListEntry node, XElement element);
 
 		protected abstract bool Visit (FailListNode node, XElement element);
+
+		protected static void SetName (XElement element, string name, MatchKind match)
+		{
+			switch (match) {
+			case MatchKind.Substring:
+				element.SetAttributeValue ("substring", name);
+				break;
+			case MatchKind.FullName:
+				element.SetAttributeValue ("fullname", name);
+				break;
+			default:
+				element.SetAttributeValue ("name", name);
+				break;
+			}
+		}
+
+		protected static void SetDeadCodeMode (XElement element, DeadCodeMode mode)
+		{
+			if (mode == DeadCodeMode.None)
+				return;
+
+			var modes = new List<string> ();
+			if ((mode & DeadCodeMode.RemovedDeadBlocks) != 0)
+				modes.Add ("blocks");
+			if ((mode & DeadCodeMode.RemovedExceptionBlocks) != 0)
+				modes.Add ("exception-blocks");
+			if ((mode & DeadCodeMode.RemovedDeadJumps) != 0)
+				modes.Add ("jumps");
+			if ((mode & DeadCodeMode.RemovedConstantJumps) != 0)
+				modes.Add ("constant-jumps");
+			if ((mode & DeadCodeMode.RemovedDeadVariables) != 0)
+				modes.Add ("variables");
+
+			element.SetAttributeValue ("dead-code", string.Join (",", modes));
+		}
 	}
 }

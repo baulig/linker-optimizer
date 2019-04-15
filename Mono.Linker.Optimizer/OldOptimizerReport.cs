@@ -94,7 +94,7 @@ namespace Mono.Linker.Optimizer
 			if (method.DeclaringType.DeclaringType != null)
 				throw new OptimizerAssertionException ($"Conditionals in nested classes are not supported yet.");
 
-			GetMethodEntry (method, true).HasAction = true;
+			// GetMethodEntry (method, true).HasAction = true;
 		}
 
 #if FIXME
