@@ -63,11 +63,15 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		protected override bool Visit (Configuration node, XElement element)
 		{
+			if (node.Name != null)
+				element.SetAttributeValue ("name", node.Name);
 			return true;
 		}
 
 		protected override bool Visit (Profile node, XElement element)
 		{
+			if (node.Name != null)
+				element.SetAttributeValue ("name", node.Name);
 			return true;
 		}
 
@@ -76,6 +80,8 @@ namespace Mono.Linker.Optimizer.Configuration
 			element.SetAttributeValue ("name", node.Name);
 			if (node.Size != null)
 				element.SetAttributeValue ("size", node.Size.Value.ToString ());
+			if (node.Tolerance != null)
+				element.SetAttributeValue ("tolerance", node.Tolerance);
 			return true;
 		}
 

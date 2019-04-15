@@ -35,7 +35,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public ActionList Root => Options.OptimizerConfiguration.ActionList;
+		public OptimizerConfiguration Root => Options.OptimizerConfiguration;
 
 		public ConfigurationReader (OptimizerOptions options)
 		{
@@ -44,11 +44,11 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Read (XPathNavigator nav)
 		{
-			nav.ProcessChildren ("conditional", child => OnConditional (child, Root));
+			nav.ProcessChildren ("conditional", child => OnConditional (child, Root.ActionList));
 
-			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, Root));
-			nav.ProcessChildren ("type", child => OnTypeEntry (child, Root, null));
-			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root, null));
+			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, Root.ActionList));
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, Root.ActionList, null));
+			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root.ActionList, null));
 
 			nav.ProcessChildren ("size-check", child => OnSizeCheckEntry (child));
 		}
@@ -124,19 +124,29 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void OnSizeCheckEntry (XPathNavigator nav)
 		{
-			var configuration = new Configuration (nav.GetAttribute ("configuration"));
+			var name = nav.GetAttribute ("configuration");
+			var configuration = Root.SizeCheck.Configurations.GetChild (c => c.Name == name, () => new Configuration (name));
+			
 			nav.ProcessChildren ("profile", child => OnProfileEntry (child, configuration));
 		}
 
 		void OnProfileEntry (XPathNavigator nav, Configuration configuration)
 		{
-			var profile = new Profile (nav.GetAttribute ("name"));
+			var name = nav.GetAttribute ("name");
+			var profile = configuration.Profiles.GetChild (p => p.Name == name, () => new Profile (name));
 			nav.ProcessChildren ("assembly", child => OnAssembly (child, profile));
 		}
 
 		void OnAssembly (XPathNavigator nav, Profile profile)
 		{
+			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
+			var sizeAttr = OptionsReader.GetAttribute (nav, "size");
+			if (sizeAttr == null || !int.TryParse (sizeAttr, out var size))
+				throw OptionsReader.ThrowError ("<assembly> requires `size` attribute.");
+			var tolerance = OptionsReader.GetAttribute (nav, "tolerance");
 
+			var assembly = new Assembly (name, size, tolerance);
+			profile.Assemblies.Add (assembly);
 		}
 
 		static bool GetName (XPathNavigator nav, out string name, out MatchKind match)

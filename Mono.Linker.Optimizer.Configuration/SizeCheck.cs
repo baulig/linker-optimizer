@@ -30,6 +30,15 @@ namespace Mono.Linker.Optimizer.Configuration
 	{
 		public NodeList<Configuration> Configurations { get; } = new NodeList<Configuration> ();
 
+		public Profile GetProfile (string configuration, string profile, bool add)
+		{
+			var configEntry = Configurations.GetChild (c => c.Name == configuration, add, () => new Configuration (configuration));
+			if (configEntry == null)
+				return null;
+
+			return configEntry.Profiles.GetChild (p => p.Name == profile, add, () => new Profile (profile));
+		}
+
 		public override void Visit (IVisitor visitor)
 		{
 			visitor.Visit (this);

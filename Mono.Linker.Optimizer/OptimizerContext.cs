@@ -60,6 +60,11 @@ namespace Mono.Linker.Optimizer
 			Context.Logger.LogMessage (importance, message);
 		}
 
+		public void LogWarning (string message)
+		{
+			Context.Logger.LogMessage (MessageImportance.High, message);
+		}
+
 		[Conditional ("DEBUG")]
 		public void LogDebug (string message)
 		{

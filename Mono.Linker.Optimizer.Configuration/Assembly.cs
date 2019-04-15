@@ -37,11 +37,17 @@ namespace Mono.Linker.Optimizer.Configuration
 			get; set;
 		}
 
+		public string Tolerance {
+			get; set;
+		}
+
 		public NodeList<Type> Namespaces { get; } = new NodeList<Type> ();
 
-		public Assembly (string name)
+		public Assembly (string name, int? size = null, string tolerance = null)
 		{
 			Name = name;
+			Size = size;
+			Tolerance = tolerance;
 		}
 
 		public override void Visit (IVisitor visitor)

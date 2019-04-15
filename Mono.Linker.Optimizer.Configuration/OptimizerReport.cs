@@ -46,6 +46,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public bool IsEnabled (ReportMode mode) => (Mode & mode) != 0;
 
+		public SizeCheck SizeCheck => Options.OptimizerConfiguration.SizeCheck;
+
 		public OptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
@@ -111,45 +113,46 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
-			var entry = SizeReport.GetAssembly (assembly, true);
-			entry.Size = size;
+			if (!Options.CheckSize)
+				return true;
 
-			// return CheckAssemblySize (assembly.Name.Name, size);
+			var profile = SizeCheck.GetProfile (Options.ReportConfiguration, Options.ReportProfile, false);
+			if (profile == null) {
+				context.LogMessage (MessageImportance.High, $"Cannot find size check profile for configuration `{((Options.ReportConfiguration ?? "<null>"))}`, profile `{((Options.ReportProfile ?? "<null>"))}`.");
+				return true;
+			}
+
+			SizeReport.Assemblies.GetAssembly (assembly, true).Size = size;
+
+			var entry = profile.Assemblies.GetAssembly (assembly, true);
+			if (entry.Size != null && !CheckAssemblySize (context, entry, size))
+				return false;
 
 			return true;
 		}
 
-		bool CheckAssemblySize (string assembly, int size)
+		bool CheckAssemblySize (OptimizerContext context, Assembly assembly, int size)
 		{
-			if (!Options.CheckSize)
-				return true;
-
-#if FIXME
-			var asmEntry = GetAssemblyEntry (assembly, false);
-			if (asmEntry == null)
-				return true;
-
 			int tolerance;
-			string toleranceValue = asmEntry.Tolerance ?? Options.SizeCheckTolerance ?? "0.05%";
+			string toleranceValue = assembly.Tolerance ?? Options.SizeCheckTolerance ?? "0.05%";
 
 			if (toleranceValue.EndsWith ("%", StringComparison.Ordinal)) {
 				var percent = float.Parse (toleranceValue.Substring (0, toleranceValue.Length - 1));
-				tolerance = (int)(asmEntry.Size * percent / 100.0f);
+				tolerance = (int)(assembly.Size * percent / 100.0f);
 			} else {
 				tolerance = int.Parse (toleranceValue);
 			}
 
-			LogDebug ($"Size check: {asmEntry.Name}, actual={size}, expected={asmEntry.Size} (tolerance {toleranceValue})");
+			context.LogDebug ($"Size check: {assembly.Name}, actual={size}, expected={assembly.Size} (tolerance {toleranceValue})");
 
-			if (size < asmEntry.Size - tolerance) {
-				LogWarning ($"Assembly `{asmEntry.Name}` size below minimum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
+			if (size < assembly.Size - tolerance) {
+				context.LogWarning ($"Assembly `{assembly.Name}` size below minimum: expected {assembly.Size} (tolerance {toleranceValue}), got {size}.");
 				return false;
 			}
-			if (size > asmEntry.Size + tolerance) {
-				LogWarning ($"Assembly `{asmEntry.Name}` size above maximum: expected {asmEntry.Size} (tolerance {toleranceValue}), got {size}.");
+			if (size > assembly.Size + tolerance) {
+				context.LogWarning ($"Assembly `{assembly.Name}` size above maximum: expected {assembly.Size} (tolerance {toleranceValue}), got {size}.");
 				return false;
 			}
-#endif
 
 			return true;
 		}
