@@ -47,20 +47,12 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		[Obsolete]
-		public OptimizerActionReport ReportWriter {
-			get;
-		}
-
 		public AnnotationStore Annotations => Context.Annotations;
 
 		OptimizerContext (LinkContext context, OptimizerOptions options)
 		{
 			Context = context;
 			Options = options;
-
-			if (false && options.ReportFileName != null)
-				ReportWriter = new OptimizerActionReport ();
 		}
 
 		public void LogMessage (MessageImportance importance, string message)
@@ -226,7 +218,7 @@ namespace Mono.Linker.Optimizer
 		internal void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
 		{
 			constant_methods.Add (method, value);
-			ReportWriter?.MarkAsConstantMethod (method, value);
+			Options.OptimizerReport?.MarkAsConstantMethod (method, value);
 		}
 
 		internal bool TryGetConstantMethod (MethodDefinition method, out ConstantValue value)

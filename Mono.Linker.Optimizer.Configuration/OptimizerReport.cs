@@ -29,6 +29,8 @@ using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
+	using BasicBlocks;
+
 	public class OptimizerReport : Node
 	{
 		public ActionList ActionList { get; } = new ActionList ();
@@ -38,6 +40,26 @@ namespace Mono.Linker.Optimizer.Configuration
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
 			ActionList.AddMethod (method, MethodAction.None);
+		}
+
+		public void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
+		{
+			switch (value) {
+			case ConstantValue.False:
+				ActionList.AddMethod (method, MethodAction.ReturnFalse);
+				break;
+			case ConstantValue.True:
+				ActionList.AddMethod (method, MethodAction.ReturnTrue);
+				break;
+			case ConstantValue.Null:
+				ActionList.AddMethod (method, MethodAction.ReturnNull);
+				break;
+			case ConstantValue.Throw:
+				ActionList.AddMethod (method, MethodAction.Throw);
+				break;
+			default:
+				throw DebugHelpers.AssertFail ($"Invalid constant value: `{value}`.");
+			}
 		}
 
 		public void RemovedDeadBlocks (MethodDefinition method)
