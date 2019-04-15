@@ -1,5 +1,5 @@
 ﻿//
-// OptimizerReport.cs
+// OldOptimizerReport.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -39,7 +39,8 @@ namespace Mono.Linker.Optimizer
 	using BasicBlocks;
 	using Configuration;
 
-	public class OptimizerReport
+	[Obsolete]
+	public class OldOptimizerReport
 	{
 		public OptimizerOptions Options {
 			get;
@@ -60,7 +61,7 @@ namespace Mono.Linker.Optimizer
 
 		public RootNode RootNode { get; } = new RootNode ();
 
-		public OptimizerReport (OptimizerOptions options)
+		public OldOptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
 

@@ -67,7 +67,7 @@
     <Compile Include="Mono.Linker.Optimizer\OptimizerActionReport.cs" />
     <Compile Include="Mono.Linker.Optimizer\GenerateReportStep.cs" />
     <Compile Include="Mono.Linker.Optimizer\OptimizerException.cs" />
-    <Compile Include="Mono.Linker.Optimizer\OptimizerReport.cs" />
+    <Compile Include="Mono.Linker.Optimizer\OldOptimizerReport.cs" />
     <Compile Include="Mono.Linker.Optimizer\ReportMode.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\Node.cs" />
     <Compile Include="Mono.Linker.Optimizer.Configuration\IVisitor.cs" />
