@@ -55,18 +55,11 @@ namespace Mono.Linker.Optimizer
 
 		public bool IsEnabled (ReportMode mode) => (Mode & mode) != 0;
 
-		readonly FailList _fail_list;
-
 		RootEntry Root { get; } = new RootEntry ();
-
-		[Obsolete ("KILL", true)]
-		public OptimizerConfiguration RootNode { get; } = new OptimizerConfiguration ();
 
 		public OldOptimizerReport (OptimizerOptions options)
 		{
 			Options = options;
-
-			_fail_list = new FailList ();
 		}
 
 		public void Initialize (OptimizerContext context)
@@ -98,38 +91,6 @@ namespace Mono.Linker.Optimizer
 			// GetMethodEntry (method, true).HasAction = true;
 		}
 
-#if FIXME
-		public void ReportFailListEntry (TypeDefinition type, OptimizerOptions.TypeEntry entry, string original, List<string> stack)
-		{
-			var fail = new FailListEntry (type.FullName) {
-				Original = original
-			};
-			fail.TracerStack.AddRange (stack);
-			_fail_list.FailListEntries.Add (fail);
-
-			while (entry != null) {
-				fail.EntryStack.Add (entry.ToString ());
-				entry = entry.Parent;
-			}
-		}
-
-		public void ReportFailListEntry (MethodDefinition method, OptimizerOptions.MethodEntry entry, List<string> stack)
-		{
-			var fail = new FailListEntry (method.FullName);
-			fail.TracerStack.AddRange (stack);
-			_fail_list.FailListEntries.Add (fail);
-
-			if (entry != null) {
-				fail.EntryStack.Add (entry.ToString ());
-
-				var type = entry.Parent;
-				while (type != null) {
-					fail.EntryStack.Add (type.ToString ());
-					type = type.Parent;
-				}
-			}
-		}
-#endif
 
 		public bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
@@ -227,31 +188,6 @@ namespace Mono.Linker.Optimizer
 		AssemblyEntry GetAssemblyEntry (string name, bool add)
 		{
 			return Root.AssemblyList.GetAssembly (name, add);
-		}
-
-		Type GetTypeEntry (TypeDefinition type, bool add)
-		{
-			if (type.DeclaringType != null)
-				throw DebugHelpers.AssertFail ("Nested types are not supported yet.");
-
-			var assembly = RootNode.GetAssembly (type.Module.Assembly, add);
-			if (assembly == null)
-				return null;
-
-			var ns = assembly.Namespaces.GetNamespace (type.Name, add);
-			if (ns == null)
-				return null;
-
-			return ns.Types.GetType (ns, type, add);
-		}
-
-		Method GetMethodEntry (MethodDefinition method, bool add)
-		{
-			var type = GetTypeEntry (method.DeclaringType, add);
-			if (type == null)
-				return null;
-
-			return type.Methods.GetMethod (type, method, add);
 		}
 
 		bool CheckAssemblySize (string assembly, int size)
@@ -394,10 +330,6 @@ namespace Mono.Linker.Optimizer
 			void Visit (TypeEntry entry);
 
 			void Visit (MethodEntry entry);
-
-			void Visit (FailList entry);
-
-			void Visit (FailListEntry entry);
 		}
 
 		enum WriteMode
@@ -406,257 +338,6 @@ namespace Mono.Linker.Optimizer
 			Size,
 			Detailed,
 			Action
-		}
-
-		class ReportWriter : IVisitor
-		{
-			XmlWriter Writer { get; }
-
-			ReportMode ReportMode { get; }
-
-			WriteMode WriteMode { get; set; }
-
-			ReportWriter (XmlWriter xml, ReportMode mode)
-			{
-				Writer = xml;
-				ReportMode = mode;
-			}
-
-			public static void Write (XmlWriter xml, RootEntry root, ReportMode mode)
-			{
-				var writer = new ReportWriter (xml, mode);
-				root.Visit (writer);
-			}
-
-			void Write (AbstractReportEntry entry)
-			{
-				Writer.WriteStartElement (entry.ElementName);
-				entry.WriteElement (Writer);
-				entry.VisitChildren (this);
-				Writer.WriteEndElement ();
-			}
-
-			void IVisitor.Visit (RootEntry entry)
-			{
-				Writer.WriteStartElement (entry.ElementName);
-				entry.WriteElement (Writer);
-
-				var actionReport = new ActionReportWriter ();
-				entry.Visit (actionReport);
-				actionReport.Root.WriteTo (Writer);
-
-				Write (entry, "action-report", WriteMode.Action);
-
-				WriteMode = WriteMode.Size;
-				entry.VisitChildren (this);
-
-				if ((ReportMode & ReportMode.Detailed) != 0)
-					Write (entry, "type-list", WriteMode.Detailed);
-
-				Writer.WriteEndElement ();
-			}
-
-			void Write (RootEntry root, string element, WriteMode mode)
-			{
-				WriteMode = mode;
-				Writer.WriteStartElement (element);
-				root.VisitChildren (this);
-				Writer.WriteEndElement ();
-			}
-
-			void IVisitor.Visit (SizeReportEntry entry)
-			{
-				if (WriteMode == WriteMode.Action)
-					entry.VisitChildren (this);
-				else
-					Write (entry);
-			}
-
-			void IVisitor.Visit (ConfigurationEntry entry)
-			{
-				Write (entry);
-			}
-
-			void IVisitor.Visit (ProfileEntry entry)
-			{
-				Write (entry);
-			}
-
-			void IVisitor.Visit (AssemblyEntry entry)
-			{
-				Writer.WriteStartElement (entry.ElementName);
-				entry.WriteElement (Writer);
-
-				switch (WriteMode) {
-				case WriteMode.Action:
-				case WriteMode.Detailed:
-					entry.VisitChildren (this);
-					break;
-				}
-
-				Writer.WriteEndElement ();
-			}
-
-			void IVisitor.Visit (NamespaceEntry entry)
-			{
-				Write (entry);
-			}
-
-			void IVisitor.Visit (TypeEntry entry)
-			{
-				Write (entry);
-			}
-
-			void IVisitor.Visit (MethodEntry entry)
-			{
-				Write (entry);
-			}
-
-			void IVisitor.Visit (FailList entry)
-			{
-				Write (entry);
-			}
-
-			void IVisitor.Visit (FailListEntry entry)
-			{
-				Write (entry);
-			}
-		}
-
-		abstract class XElementVisitor : IVisitor
-		{
-			public XElement Root {
-				get;
-			}
-
-			public bool IsEmpty => !Root.IsEmpty || Root.HasElements || Root.HasAttributes;
-
-			Stack<XElement> CurrentNode { get; } = new Stack<XElement> ();
-
-			protected XElementVisitor (string name)
-			{
-				Root = new XElement (name);
-				CurrentNode.Push (Root);
-			}
-
-			void Visit<T> (T entry, Func<T, XElement, bool> func)
-				where T : AbstractReportEntry
-			{
-				var element = new XElement (entry.ElementName);
-
-				if (!func (entry, element))
-					return;
-
-				CurrentNode.Push (element);
-				entry.VisitChildren (this);
-				CurrentNode.Pop ();
-
-				if (!element.IsEmpty || element.HasAttributes || element.HasElements)
-					CurrentNode.Peek ().Add (element);
-			}
-
-			void IVisitor.Visit (RootEntry entry) => Visit (entry, Visit);
-
-			void IVisitor.Visit (SizeReportEntry entry) => Visit (entry, Visit);
-
-			void IVisitor.Visit(ConfigurationEntry entry) => Visit(entry, Visit);
-
-			void IVisitor.Visit(ProfileEntry entry) => Visit(entry, Visit);
-
-			void IVisitor.Visit(AssemblyEntry entry) => Visit(entry, Visit);
-
-			void IVisitor.Visit (NamespaceEntry entry) => Visit (entry, Visit);
-
-			void IVisitor.Visit (TypeEntry entry) => Visit (entry, Visit);
-
-			void IVisitor.Visit (MethodEntry entry) => Visit (entry, Visit);
-
-			void IVisitor.Visit (FailList entry) => Visit (entry, Visit);
-
-			void IVisitor.Visit (FailListEntry entry) => Visit (entry, Visit);
-
-			protected abstract bool Visit (RootEntry entry, XElement element);
-
-			protected abstract bool Visit (SizeReportEntry entry, XElement element);
-
-			protected abstract bool Visit (ConfigurationEntry entry, XElement element);
-
-			protected abstract bool Visit (ProfileEntry entry, XElement element);
-
-			protected abstract bool Visit (AssemblyEntry entry, XElement element);
-
-			protected abstract bool Visit (NamespaceEntry entry, XElement element);
-
-			protected abstract bool Visit (TypeEntry entry, XElement element);
-
-			protected abstract bool Visit (MethodEntry entry, XElement element);
-
-			protected abstract bool Visit (FailList entry, XElement element);
-
-			protected abstract bool Visit (FailListEntry entry, XElement element);
-		}
-
-		class ActionReportWriter : XElementVisitor
-		{
-			public ActionReportWriter ()
-				: base ("the-action-report")
-			{
-			}
-
-			protected override bool Visit (RootEntry entry, XElement element)
-			{
-				entry.AssemblyList.VisitChildren (this);
-				return false;
-			}
-
-			protected override bool Visit (SizeReportEntry entry, XElement element)
-			{
-				throw new InvalidOperationException ();
-			}
-
-			protected override bool Visit (ConfigurationEntry entry, XElement element)
-			{
-				throw new InvalidOperationException ();
-			}
-
-			protected override bool Visit (ProfileEntry entry, XElement element)
-			{
-				throw new InvalidOperationException ();
-			}
-
-			protected override bool Visit (AssemblyEntry entry, XElement element)
-			{
-				element.SetAttributeValue ("name", entry.Name);
-				return true;
-			}
-
-			protected override bool Visit (NamespaceEntry entry, XElement element)
-			{
-				element.SetAttributeValue ("name", entry.Name);
-				return true;
-			}
-
-			protected override bool Visit (TypeEntry entry, XElement element)
-			{
-				element.SetAttributeValue ("name", entry.Name);
-				return true;
-			}
-
-			protected override bool Visit (MethodEntry entry, XElement element)
-			{
-				element.SetAttributeValue ("name", entry.Name);
-				return true;
-			}
-
-			protected override bool Visit (FailList entry, XElement element)
-			{
-				throw new InvalidOperationException ();
-			}
-
-			protected override bool Visit (FailListEntry entry, XElement element)
-			{
-				throw new InvalidOperationException ();
-			}
 		}
 
 		abstract class AbstractReportEntry
@@ -1101,70 +782,6 @@ namespace Mono.Linker.Optimizer
 			public MethodEntry (TypeEntry parent, string name, int size)
 				: base (parent, name, size)
 			{
-			}
-
-			public override void Visit (IVisitor visitor)
-			{
-				visitor.Visit (this);
-			}
-
-			public override void VisitChildren (IVisitor visitor)
-			{
-			}
-		}
-
-		class FailList : AbstractReportEntry
-		{
-			public List<FailListEntry> FailListEntries { get; } = new List<FailListEntry> ();
-
-			public override string ElementName => "fail-list";
-
-			public override void Visit (IVisitor visitor)
-			{
-				visitor.Visit (this);
-			}
-
-			public override void VisitChildren (IVisitor visitor)
-			{
-				FailListEntries.ForEach (entry => entry.Visit (visitor));
-			}
-
-			public override void WriteElement (XmlWriter xml)
-			{
-			}
-		}
-
-		class FailListEntry : AbstractReportEntry
-		{
-			public readonly string Name;
-			public string Original;
-			public readonly List<string> EntryStack;
-			public readonly List<string> TracerStack;
-
-			public override string ElementName => "fail";
-
-			public FailListEntry (string name)
-			{
-				Name = name;
-				EntryStack = new List<string> ();
-				TracerStack = new List<string> ();
-			}
-
-			public override void WriteElement (XmlWriter xml)
-			{
-				xml.WriteAttributeString ("name", Name);
-				if (Original != null)
-					xml.WriteAttributeString ("full-name", Original);
-				foreach (var entry in EntryStack) {
-					xml.WriteStartElement ("entry");
-					xml.WriteAttributeString ("name", entry);
-					xml.WriteEndElement ();
-				}
-				foreach (var entry in TracerStack) {
-					xml.WriteStartElement ("stack");
-					xml.WriteAttributeString ("name", entry);
-					xml.WriteEndElement ();
-				}
 			}
 
 			public override void Visit (IVisitor visitor)

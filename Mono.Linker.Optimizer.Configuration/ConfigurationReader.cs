@@ -35,7 +35,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
-		public OptimizerConfiguration Root => Options.OptimizerConfiguration;
+		public ActionList Root => Options.OptimizerConfiguration.ActionList;
 
 		public ConfigurationReader (OptimizerOptions options)
 		{
@@ -44,11 +44,11 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Read (XPathNavigator nav)
 		{
-			nav.ProcessChildren ("conditional", child => OnConditional (child, Root.ActionList));
+			nav.ProcessChildren ("conditional", child => OnConditional (child, Root));
 
-			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, Root.ActionList));
-			nav.ProcessChildren ("type", child => OnTypeEntry (child, Root.ActionList, null));
-			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root.ActionList, null));
+			nav.ProcessChildren ("namespace", child => OnNamespaceEntry (child, Root));
+			nav.ProcessChildren ("type", child => OnTypeEntry (child, Root, null));
+			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root, null));
 		}
 
 		void OnConditional (XPathNavigator nav, ActionList parent)
