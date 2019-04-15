@@ -187,12 +187,12 @@ namespace Mono.Linker.Optimizer
 
 		public bool IsEnabled (MethodDefinition method)
 		{
-			return Options.ScanAllModules || method.Module.Assembly == MainAssembly || Options.EnableDebugging (method.DeclaringType);
+			return Options.ScanAllModules || method.Module.Assembly == MainAssembly || Options.EnableDebugging (this, method.DeclaringType);
 		}
 
 		internal int GetDebugLevel (MethodDefinition method)
 		{
-			return Options.EnableDebugging (method) ? 5 : 0;
+			return Options.EnableDebugging (this, method) ? 5 : 0;
 		}
 
 		internal void Debug ()
@@ -200,7 +200,8 @@ namespace Mono.Linker.Optimizer
 
 		readonly HashSet<TypeDefinition> conditional_types = new HashSet<TypeDefinition> ();
 		readonly Dictionary<MethodDefinition, ConstantValue> constant_methods = new Dictionary<MethodDefinition, ConstantValue> ();
-		readonly Dictionary<TypeDefinition, NodeList<Type>> type_entries = new Dictionary<TypeDefinition, NodeList<Type>> ();
+		readonly Dictionary<TypeDefinition, List<Type>> type_entries = new Dictionary<TypeDefinition, List<Type>> ();
+		readonly Dictionary<MethodDefinition, List<Method>> method_entries = new Dictionary<MethodDefinition, List<Method>> ();
 
 		public bool IsConditionalTypeMarked (TypeDefinition type)
 		{
@@ -215,15 +216,31 @@ namespace Mono.Linker.Optimizer
 		internal void AddTypeEntry (TypeDefinition type, Type entry)
 		{
 			if (!type_entries.TryGetValue (type, out var list)) {
-				list = new NodeList<Type> ();
+				list = new List<Type> ();
 				type_entries.Add (type, list);
 			}
 			list.Add (entry);
 		}
 
-		internal NodeList<Type> GetTypeEntries (TypeDefinition type)
+		internal List<Type> GetTypeEntries (TypeDefinition type)
 		{
 			if (type_entries.TryGetValue (type, out var list))
+				return list;
+			return null;
+		}
+
+		internal void AddMethodEntry (MethodDefinition method, Method entry)
+		{
+			if (!method_entries.TryGetValue (method, out var list)) {
+				list = new List<Method> ();
+				method_entries.Add (method, list);
+			}
+			list.Add (entry);
+		}
+
+		internal List<Method> GetMethodEntries (MethodDefinition method)
+		{
+			if (method_entries.TryGetValue (method, out var list))
 				return list;
 			return null;
 		}

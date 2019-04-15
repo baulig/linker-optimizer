@@ -157,6 +157,8 @@ namespace Mono.Linker.Optimizer
 
 		void ProcessMethodActions (MethodDefinition method, Method entry)
 		{
+			Context.AddMethodEntry (method, entry);
+
 			switch (entry.Action ?? MethodAction.None) {
 			case MethodAction.Debug:
 				Context.LogMessage (MessageImportance.High, $"Debug method: {method}");

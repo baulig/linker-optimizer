@@ -290,10 +290,10 @@ namespace Mono.Linker.Optimizer
 			}
 		}
 
-		public bool EnableDebugging (TypeDefinition type)
+		public bool EnableDebugging (OptimizerContext context, TypeDefinition type)
 		{
 			if (type.DeclaringType != null)
-				return EnableDebugging (type.DeclaringType);
+				return EnableDebugging (context, type.DeclaringType);
 
 			if (DontDebugThis (type))
 				return false;
@@ -305,14 +305,14 @@ namespace Mono.Linker.Optimizer
 					return true;
 			}
 
-			return ActionVisitor.Any (this, type, TypeAction.Debug);
+			return context.GetTypeEntries (type)?.Any (t => t.Action == TypeAction.Debug) ?? false;
 		}
 
-		public bool EnableDebugging (MethodDefinition method)
+		public bool EnableDebugging (OptimizerContext context, MethodDefinition method)
 		{
 			if (DontDebugThis (method.DeclaringType))
 				return false;
-			if (EnableDebugging (method.DeclaringType))
+			if (EnableDebugging (context, method.DeclaringType))
 				return true;
 
 			if (AutoDebugMain) {
@@ -322,7 +322,7 @@ namespace Mono.Linker.Optimizer
 					return true;
 			}
 
-			return ActionVisitor.Any (this, method, MethodAction.Debug);
+			return context.GetMethodEntries (method)?.Any (m => m.Action == MethodAction.Debug) ?? false;
 		}
 
 		public void CheckFailList (OptimizerContext context, TypeDefinition type, string original = null)
@@ -333,10 +333,10 @@ namespace Mono.Linker.Optimizer
 			}
 
 			var list = context.GetTypeEntries (type);
-			if (list == null || list.IsEmpty)
+			if (list == null || list.Count == 0)
 				return;
 
-			var entry = list.Children.FirstOrDefault (t => t.Action == TypeAction.Warn || t.Action == TypeAction.Fail);
+			var entry = list.FirstOrDefault (t => t.Action == TypeAction.Warn || t.Action == TypeAction.Fail);
 			if (entry == null)
 				return;
 
@@ -356,18 +356,22 @@ namespace Mono.Linker.Optimizer
 		{
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
-			var nodes = ActionVisitor.GetNodes (this, method, n => n.Action == MethodAction.Fail || n.Action == MethodAction.Warn);
-			if (nodes.Count == 0)
+			var list = context.GetMethodEntries (method);
+			if (list == null || list.Count == 0)
+				return;
+
+			var entry = list.FirstOrDefault (t => t.Action == MethodAction.Warn || t.Action == MethodAction.Fail);
+			if (entry == null)
 				return;
 
 			var message = $"Found fail-listed method `{method.FullName}`";
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
 			context.LogMessage (MessageImportance.High, message + ":");
-			DumpFailEntry (context, nodes[0]);
+			DumpFailEntry (context, entry);
 			var stack = context.DumpTracerStack ();
-			OptimizerReport.FailList.Add (new FailListEntry (method, nodes[0], stack));
+			OptimizerReport.FailList.Add (new FailListEntry (method, entry, stack));
 			context.LogMessage (MessageImportance.High, Environment.NewLine);
-			if (nodes[0].Action == MethodAction.Fail)
+			if (entry.Action == MethodAction.Fail)
 				throw new OptimizerException (message + ".");
 		}
 

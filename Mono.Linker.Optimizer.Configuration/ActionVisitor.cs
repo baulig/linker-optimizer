@@ -77,46 +77,6 @@ namespace Mono.Linker.Optimizer.Configuration
 			new ActionVisitor (options, method, callback).Visit ();
 		}
 
-		public static void Visit (OptimizerOptions options, TypeDefinition type, Action<TypeAction> callback)
-		{
-			new ActionVisitor (options, type, node => callback (node.Action)).Visit ();
-		}
-
-		public static void Visit (OptimizerOptions options, MethodDefinition method, Action<MethodAction> callback)
-		{
-			new ActionVisitor (options, method, node => callback (node.Action ?? MethodAction.None)).Visit ();
-		}
-
-		public static IList<Type> GetNodes (OptimizerOptions options, TypeDefinition type, Func<Type, bool> filter)
-		{
-			var list = new List<Type> ();
-			new ActionVisitor (options, type, node => {
-				if (filter (node))
-					list.Add (node);
-			}).Visit ();
-			return list;
-		}
-
-		public static IList<Method> GetNodes (OptimizerOptions options, MethodDefinition method, Func<Method, bool> filter)
-		{
-			var list = new List<Method> ();
-			new ActionVisitor (options, method, node => {
-				if (filter (node))
-					list.Add (node);
-			}).Visit ();
-			return list;
-		}
-
-		public static bool Any (OptimizerOptions options, TypeDefinition type, TypeAction action)
-		{
-			return GetNodes (options, type, node => node.Action == action).Count > 0;
-		}
-
-		public static bool Any (OptimizerOptions options, MethodDefinition method, MethodAction action)
-		{
-			return GetNodes (options, method, node => node.Action == action).Count > 0;
-		}
-
 		public void Visit ()
 		{
 			Options.OptimizerConfiguration.Visit (this);
