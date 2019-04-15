@@ -157,29 +157,7 @@ namespace Mono.Linker.Optimizer
 				break;
 			}
 
-			if (entry.DeadCodeMode != DeadCodeMode.None)
-				xml.WriteAttributeString ("dead-code", FormatDeadCodeMode (entry.DeadCodeMode));
-
 			xml.WriteEndElement ();
-		}
-
-		string FormatDeadCodeMode (DeadCodeMode mode)
-		{
-			if (mode == DeadCodeMode.None)
-				return "none";
-
-			var modes = new List<string> ();
-			if ((mode & DeadCodeMode.RemovedDeadBlocks) != 0)
-				modes.Add ("blocks");
-			if ((mode & DeadCodeMode.RemovedExceptionBlocks) != 0)
-				modes.Add ("exception-blocks");
-			if ((mode & DeadCodeMode.RemovedDeadJumps) != 0)
-				modes.Add ("jumps");
-			if ((mode & DeadCodeMode.RemovedConstantJumps) != 0)
-				modes.Add ("constant-jumps");
-			if ((mode & DeadCodeMode.RemovedDeadVariables) != 0)
-				modes.Add ("variables");
-			return string.Join (",", modes);
 		}
 
 		class TypeEntry
@@ -202,23 +180,11 @@ namespace Mono.Linker.Optimizer
 		{
 			public readonly string Name;
 			public ConstantValue? ConstantValue;
-			public DeadCodeMode DeadCodeMode;
 
 			public MethodEntry (string name)
 			{
 				Name = name;
 			}
-		}
-
-		[Flags]
-		enum DeadCodeMode
-		{
-			None				= 0,
-			RemovedDeadBlocks		= 1,
-			RemovedExceptionBlocks		= 2,
-			RemovedDeadJumps		= 4,
-			RemovedConstantJumps		= 8,
-			RemovedDeadVariables		= 16
 		}
 	}
 }
