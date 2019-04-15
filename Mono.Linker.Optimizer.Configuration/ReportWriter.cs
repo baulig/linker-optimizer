@@ -72,7 +72,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		protected override bool Visit (FailList node, XElement element)
 		{
-			return true;
+			return !node.IsEmpty;
 		}
 
 		protected override bool Visit (FailListEntry node, XElement element)

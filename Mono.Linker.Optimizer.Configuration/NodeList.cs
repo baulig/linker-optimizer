@@ -33,7 +33,7 @@ namespace Mono.Linker.Optimizer.Configuration
 	public class NodeList<T>
 		where T : Node
 	{
-		public bool HasChildren => children != null;
+		public bool IsEmpty => children == null || children.Count == 0;
 
 		public List<T> Children => children;
 

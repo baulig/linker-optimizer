@@ -29,13 +29,16 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public class FailList : Node
 	{
+		public bool IsEmpty => Entries.IsEmpty;
+
 		public NodeList<FailListEntry> Entries { get; } = new NodeList<FailListEntry> ();
 
 		public void Add (FailListEntry entry) => Entries.Add (entry);
 
 		public override void Visit (IVisitor visitor)
 		{
-			visitor.Visit (this);
+			if (!IsEmpty)
+				visitor.Visit (this);
 		}
 
 		public override void VisitChildren (IVisitor visitor)

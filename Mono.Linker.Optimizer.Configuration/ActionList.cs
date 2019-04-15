@@ -24,7 +24,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Linq;
 using System.Collections.Generic;
+using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
@@ -55,6 +57,40 @@ namespace Mono.Linker.Optimizer.Configuration
 		public void Add (Type node) => children.Add (node);
 
 		public void Add (Method node) => children.Add (node);
+
+		public Type GetNamespace (string name, bool add)
+		{
+			var ns = children.OfType<Type> ().FirstOrDefault (t => t.Match == MatchKind.Namespace && t.Name == name);
+			if (add && ns == null) {
+				ns = new Type (null, name, null, MatchKind.Namespace, TypeAction.None);
+				children.Add (ns);
+			}
+			return ns;
+		}
+
+		public Type GetType (TypeDefinition type, bool add)
+		{
+			Type parent;
+			if (type.DeclaringType != null)
+				parent = GetType (type.DeclaringType, add);
+			else
+				parent = GetNamespace (type.Namespace, add);
+
+			return parent?.Types.GetType (parent, type, add);
+		}
+
+		public Method GetMethod (MethodDefinition method, bool add)
+		{
+			var parent = GetType (method.DeclaringType, add);
+			if (parent == null)
+				return null;
+
+			var entry = parent.Methods.GetMethod (parent, method, add);
+			if (entry == null)
+				return null;
+
+			return entry;
+		}
 
 		public override void Visit (IVisitor visitor)
 		{
