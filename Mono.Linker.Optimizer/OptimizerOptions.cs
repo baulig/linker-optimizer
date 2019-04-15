@@ -327,16 +327,7 @@ namespace Mono.Linker.Optimizer
 
 		public void CheckFailList (OptimizerContext context, TypeDefinition type, string original = null)
 		{
-			if (false && type.DeclaringType != null) {
-				CheckFailList (context, type.DeclaringType, original ?? type.FullName);
-				return;
-			}
-
-			var list = context.GetTypeEntries (type);
-			if (list == null || list.Count == 0)
-				return;
-
-			var entry = list.FirstOrDefault (t => t.Action == TypeAction.Warn || t.Action == TypeAction.Fail);
+			var entry = context.GetTypeEntries (type)?.FirstOrDefault (t => t.Action == TypeAction.Warn || t.Action == TypeAction.Fail);
 			if (entry == null)
 				return;
 
@@ -356,11 +347,7 @@ namespace Mono.Linker.Optimizer
 		{
 			CheckFailList (context, method.DeclaringType, method.FullName);
 
-			var list = context.GetMethodEntries (method);
-			if (list == null || list.Count == 0)
-				return;
-
-			var entry = list.FirstOrDefault (t => t.Action == MethodAction.Warn || t.Action == MethodAction.Fail);
+			var entry = context.GetMethodEntries (method)?.FirstOrDefault (m => m.Action == MethodAction.Warn || m.Action == MethodAction.Fail);
 			if (entry == null)
 				return;
 

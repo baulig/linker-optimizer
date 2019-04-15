@@ -89,7 +89,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Visit (ActionList node)
 		{
-			if (node.Conditional != null && Options.IsFeatureEnabled (node.Conditional) != node.Enabled)
+			if (!node.Evaluate (Options))
 				return;
 			node.VisitChildren (this);
 		}

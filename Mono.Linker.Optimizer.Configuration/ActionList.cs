@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Linq;
+using System.Threading;
 using System.Collections.Generic;
 using Mono.Cecil;
 
@@ -41,6 +42,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		}
 
 		readonly List<Node> children = new List<Node> ();
+		bool? evaluated;
 
 		public ActionList ()
 		{
@@ -50,6 +52,13 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			Conditional = conditional;
 			Enabled = enabled;
+		}
+
+		public bool Evaluate (OptimizerOptions options)
+		{
+			if (evaluated == null)
+				evaluated = Conditional != null && options.IsFeatureEnabled (Conditional) != Enabled;
+			return evaluated.Value;
 		}
 
 		public void Add (ActionList node) => children.Add (node);
