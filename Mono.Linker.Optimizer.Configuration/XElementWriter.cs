@@ -84,7 +84,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (Assembly node) => Visit (node, "assembly", Visit);
 
-		void IVisitor.Visit (Type node) => Visit (node, "type", Visit);
+		void IVisitor.Visit (Type node) => Visit (node, node.Match == MatchKind.Namespace ? "namespace" : "type", Visit);
 
 		void IVisitor.Visit (Method node) => Visit (node, "method", Visit);
 

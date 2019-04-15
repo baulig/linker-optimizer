@@ -58,21 +58,36 @@ namespace Mono.Linker.Optimizer.Configuration
 			return true;
 		}
 
+		static void WriteName (XElement element, string name, MatchKind match)
+		{
+			switch (match) {
+			case MatchKind.Substring:
+				element.SetAttributeValue ("substring", name);
+				break;
+			case MatchKind.FullName:
+				element.SetAttributeValue ("fullname", name);
+				break;
+			default:
+				element.SetAttributeValue ("name", name);
+				break;
+			}
+		}
+
 		protected override bool Visit (Type node, XElement element)
 		{
-			element.SetAttributeValue ("name", node.Name);
+			WriteName (element, node.Name, node.Match);
 			return true;
 		}
 
 		protected override bool Visit (Method node, XElement element)
 		{
-			element.SetAttributeValue ("name", node.Name);
+			WriteName (element, node.Name, node.Match);
 			return true;
 		}
 
 		protected override bool Visit (FailList node, XElement element)
 		{
-			return !node.IsEmpty;
+			return true;
 		}
 
 		protected override bool Visit (FailListEntry node, XElement element)
