@@ -99,36 +99,6 @@ namespace Mono.Linker.Optimizer
 			return CheckAssemblySize (assembly.Name.Name, size);
 		}
 
-		public void WriteReport (string filename)
-		{
-			var settings = new XmlWriterSettings {
-				Indent = true,
-				OmitXmlDeclaration = false,
-				NewLineHandling = NewLineHandling.None,
-				ConformanceLevel = ConformanceLevel.Document,
-				IndentChars = "\t",
-				Encoding = Encoding.Default
-			};
-
-			using (var xml = XmlWriter.Create (filename, settings)) {
-//				xml.WriteStartDocument ();
-
-//				xml.WriteStartElement ("test");
-				// var writer = new XElementWriter ("the-test");
-				// RootNode.Visit (writer);
-				// writer.Root.WriteTo (xml);
-
-				var writer2 = new Configuration.ReportWriter ();
-				Options.OptimizerReport.Visit (writer2);
-				writer2.Root.WriteTo (xml);
-
-//				xml.WriteEndElement ();
-
-				// ReportWriter.Write (xml, Root, Mode);
-//				xml.WriteEndDocument ();
-			}
-		}
-
 		void LogMessage (string message)
 		{
 			Logger.LogMessage (MessageImportance.Normal, message);

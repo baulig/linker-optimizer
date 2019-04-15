@@ -31,7 +31,7 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public abstract class XElementWriter : IVisitor
 	{
-		public XDocument Root {
+		public XNode Root {
 			get;
 		}
 
@@ -49,10 +49,10 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 		}
 
-		protected XElementWriter ()
+		protected XElementWriter (XNode root)
 		{
-			Root = new XDocument ();
-			Stack.Push (new CurrentNode (Root));
+			Root = root;
+			Stack.Push (new CurrentNode (root));
 		}
 
 		void Visit<T> (T node, string elementName, Func<T, XElement, bool> func)

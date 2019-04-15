@@ -25,10 +25,15 @@
 // THE SOFTWARE.
 using System;
 using System.IO;
+using System.Text;
+using System.Xml;
+using System.Xml.Linq;
 using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer
 {
+	using Configuration;
+
 	public class GenerateReportStep : OptimizerBaseStep
 	{
 		public GenerateReportStep (OptimizerContext context)
@@ -40,17 +45,36 @@ namespace Mono.Linker.Optimizer
 		{
 			bool result = true;
 
-			if (Options.ObsoleteReport.IsEnabled (ReportMode.Size)) {
+			if (Options.OptimizerReport.IsEnabled (ReportMode.Size)) {
 				foreach (var assembly in GetAssemblies ()) {
 					result &= CheckAndReportSize (assembly);
 				}
 			}
 
 			if (Options.ReportFileName != null)
-				Options.ObsoleteReport.WriteReport (Options.ReportFileName);
+				WriteReport (Options.ReportFileName);
 
 			if (!result)
 				throw new OptimizerException ("Size check failed.");
+		}
+
+		void WriteReport (string filename)
+		{
+			var settings = new XmlWriterSettings {
+				Indent = true,
+				OmitXmlDeclaration = false,
+				NewLineHandling = NewLineHandling.None,
+				ConformanceLevel = ConformanceLevel.Document,
+				IndentChars = "\t",
+				Encoding = Encoding.Default
+			};
+
+			using (var xml = XmlWriter.Create (filename, settings)) {
+				var document = new XDocument ();
+				var writer = new ReportWriter (document);
+				Options.OptimizerReport.Visit (writer);
+				document.WriteTo (xml);
+			}
 		}
 
 		bool CheckAndReportSize (AssemblyDefinition assembly)

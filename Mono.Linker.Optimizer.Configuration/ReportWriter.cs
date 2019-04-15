@@ -31,6 +31,11 @@ namespace Mono.Linker.Optimizer.Configuration
 {
 	public class ReportWriter : XElementWriter
 	{
+		public ReportWriter (XNode root)
+			: base (root)
+		{
+		}
+
 		protected override bool Visit (OptimizerConfiguration node, XElement element)
 		{
 			return true;
