@@ -68,6 +68,8 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			SetName (element, node.Name, node.Match);
 			SetDeadCodeMode (element, node.DeadCodeMode);
+			if (node.Action != null)
+				SetMethodAction (element, node.Action.Value);
 			return true;
 		}
 

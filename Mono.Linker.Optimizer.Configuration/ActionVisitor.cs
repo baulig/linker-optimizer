@@ -84,7 +84,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public static void Visit (OptimizerOptions options, MethodDefinition method, Action<MethodAction> callback)
 		{
-			new ActionVisitor (options, method, node => callback (node.Action)).Visit ();
+			new ActionVisitor (options, method, node => callback (node.Action ?? MethodAction.None)).Visit ();
 		}
 
 		public static IList<Type> GetNodes (OptimizerOptions options, TypeDefinition type, Func<Type, bool> filter)

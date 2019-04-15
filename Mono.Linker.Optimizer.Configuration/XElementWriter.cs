@@ -129,6 +129,37 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 		}
 
+		protected static void SetMethodAction (XElement element, MethodAction action)
+		{
+			switch (action) {
+			case MethodAction.None:
+				break;
+			case MethodAction.Debug:
+				element.SetAttributeValue ("action", "debug");
+				break;
+			case MethodAction.Warn:
+				element.SetAttributeValue ("action", "warn");
+				break;
+			case MethodAction.Fail:
+				element.SetAttributeValue ("action", "fail");
+				break;
+			case MethodAction.ReturnFalse:
+				element.SetAttributeValue ("action", "return-false");
+				break;
+			case MethodAction.ReturnTrue:
+				element.SetAttributeValue ("action", "return-true");
+				break;
+			case MethodAction.ReturnNull:
+				element.SetAttributeValue ("action", "return-null");
+				break;
+			case MethodAction.Throw:
+				element.SetAttributeValue ("action", "throw");
+				break;
+			default:
+				throw DebugHelpers.AssertFail ($"Invalid method action: `{action}`.");
+			}
+		}
+
 		protected static void SetDeadCodeMode (XElement element, DeadCodeMode mode)
 		{
 			if (mode == DeadCodeMode.None)

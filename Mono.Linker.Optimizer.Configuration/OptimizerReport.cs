@@ -39,23 +39,23 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void MarkAsContainingConditionals (MethodDefinition method)
 		{
-			ActionList.AddMethod (method, MethodAction.None);
+			ActionList.GetMethod (method);
 		}
 
 		public void MarkAsConstantMethod (MethodDefinition method, ConstantValue value)
 		{
 			switch (value) {
 			case ConstantValue.False:
-				ActionList.AddMethod (method, MethodAction.ReturnFalse);
+				ActionList.GetMethod (method, true, MethodAction.ReturnFalse);
 				break;
 			case ConstantValue.True:
-				ActionList.AddMethod (method, MethodAction.ReturnTrue);
+				ActionList.GetMethod (method, true, MethodAction.ReturnTrue);
 				break;
 			case ConstantValue.Null:
-				ActionList.AddMethod (method, MethodAction.ReturnNull);
+				ActionList.GetMethod (method, true, MethodAction.ReturnNull);
 				break;
 			case ConstantValue.Throw:
-				ActionList.AddMethod (method, MethodAction.Throw);
+				ActionList.GetMethod (method, true, MethodAction.Throw);
 				break;
 			default:
 				throw DebugHelpers.AssertFail ($"Invalid constant value: `{value}`.");
