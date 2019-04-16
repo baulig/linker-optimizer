@@ -1,5 +1,5 @@
 ﻿//
-// GenerateReportStep.cs
+// FinalCheckStep.cs
 //
 // Author:
 //       Martin Baulig <mabaul@microsoft.com>
@@ -23,47 +23,19 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using System.IO;
-using System.Text;
-using System.Xml;
-using System.Xml.Linq;
-using Mono.Cecil;
-
 namespace Mono.Linker.Optimizer
 {
-	using Configuration;
-
-	public class GenerateReportStep : OptimizerBaseStep
+	public class FinalCheckStep : OptimizerBaseStep
 	{
-		public GenerateReportStep (OptimizerContext context)
+		public FinalCheckStep (OptimizerContext context)
 			: base (context)
 		{
 		}
 
 		protected override void Process ()
 		{
-			if (Options.ReportFileName != null)
-				WriteReport (Options.ReportFileName);
-		}
-
-		void WriteReport (string filename)
-		{
-			var settings = new XmlWriterSettings {
-				Indent = true,
-				OmitXmlDeclaration = false,
-				NewLineHandling = NewLineHandling.None,
-				ConformanceLevel = ConformanceLevel.Document,
-				IndentChars = "\t",
-				Encoding = Encoding.Default
-			};
-
-			using (var xml = XmlWriter.Create (filename, settings)) {
-				var document = new XDocument ();
-				var writer = new ReportWriter (document);
-				Options.OptimizerReport.Visit (writer);
-				document.WriteTo (xml);
-			}
+			if (Context.SizeCheckFailed)
+				throw new OptimizerException ("Size check failed.");
 		}
 	}
 }
