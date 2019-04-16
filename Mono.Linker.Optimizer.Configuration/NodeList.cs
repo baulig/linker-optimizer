@@ -35,7 +35,11 @@ namespace Mono.Linker.Optimizer.Configuration
 	{
 		public bool IsEmpty => children == null || children.Count == 0;
 
+		public int Count => children?.Count ?? 0;
+
 		public List<T> Children => children;
+
+		public T this [int index] => children [index];
 
 		List<T> children;
 

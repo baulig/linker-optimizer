@@ -122,13 +122,18 @@ namespace Mono.Linker.Optimizer.Configuration
 				return true;
 			}
 
-			SizeReport.Assemblies.GetAssembly (assembly, true).Size = size;
+			var configEntry = profile.Assemblies.GetAssembly (assembly, true);
+			var sucess = configEntry.Size == null || CheckAssemblySize (context, configEntry, size);
 
-			var entry = profile.Assemblies.GetAssembly (assembly, true);
-			if (entry.Size != null && !CheckAssemblySize (context, entry, size))
-				return false;
+			var reportEntry = SizeReport.Assemblies.GetAssembly (assembly, true);
+			reportEntry.Size = size;
 
-			return true;
+			if (IsEnabled (ReportMode.Detailed)) {
+				GenerateDetailedReport (assembly, reportEntry);
+				CleanupAndPurgeSizeReport (reportEntry);
+			}
+
+			return sucess;
 		}
 
 		bool CheckAssemblySize (OptimizerContext context, Assembly assembly, int size)
@@ -155,6 +160,75 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 
 			return true;
+		}
+
+		void GenerateDetailedReport (AssemblyDefinition assembly, Assembly entry)
+		{
+			foreach (var type in assembly.MainModule.Types) {
+				if (type.Name == "<Module>" || string.IsNullOrEmpty (type.Namespace))
+					continue;
+				var ns = entry.Namespaces.GetNamespace (type.Namespace, true);
+				var typeEntry = ns.Types.GetType (ns, type, true);
+				GenerateDetailedReport (type, typeEntry);
+				ns.Size = (ns.Size ?? 0) + typeEntry.Size;
+			}
+		}
+
+		void GenerateDetailedReport (TypeDefinition type, Type entry)
+		{
+			int size = 0;
+			foreach (var method in type.Methods) {
+				if (!method.HasBody)
+					continue;
+				var methodEntry = entry.Methods.GetChild (m => m.Matches (method), () => new Method (entry, method));
+				methodEntry.Size = method.Body.CodeSize;
+				size += methodEntry.Size.Value;
+			}
+			entry.Size = size;
+		}
+
+		void CleanupAndPurgeSizeReport (Assembly assembly)
+		{
+			foreach (var type in assembly.Namespaces.Children)
+				CleanupAndPurgeSizeReport (type);
+		}
+
+		bool CleanupAndPurgeSizeReport (Type type)
+		{
+			var marked = false;
+			if (!type.Types.IsEmpty) {
+				foreach (var nested in type.Types.Children)
+					CleanupAndPurgeSizeReport (nested);
+			}
+
+			if (!type.Types.IsEmpty)
+				;
+
+			if (type.Methods.IsEmpty)
+				return marked;
+
+			CleanupSizeList (type.Methods);
+
+			return marked;
+		}
+
+		void CleanupSizeList (NodeList<Method> list)
+		{
+			if (list == null || list.IsEmpty)
+				return;
+
+			for (int i = 0; i < list.Count; i++) {
+				if (list[i].Size != null || list[i].Action != null)
+					continue;
+				list.Children.RemoveAt (i--);
+			}
+
+			list.Children.Sort (Compare);
+		}
+
+		static int Compare (Method x, Method y)
+		{
+			return y.Size.Value.CompareTo (x.Size.Value);
 		}
 
 		public override void Visit (IVisitor visitor)
