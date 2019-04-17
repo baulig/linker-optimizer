@@ -34,9 +34,14 @@ namespace Mono.Linker.Optimizer
 
 	public class CompareWithReportStep : OptimizerBaseStep
 	{
+		public OptimizerConfiguration Configuration {
+			get;
+		}
+
 		public CompareWithReportStep (OptimizerContext context)
 			: base (context)
 		{
+			Configuration = new OptimizerConfiguration ();
 		}
 
 		protected override void Process ()
@@ -51,7 +56,17 @@ namespace Mono.Linker.Optimizer
 					Context.LogWarning ($"Cannot find root node in `{Options.CompareWith}`.");
 					return;
 				}
+
+				var reader = new ConfigurationReader (Configuration);
+				reader.Read (root);
 			}
+
+			ProcessSizeReport ();
+		}
+
+		void ProcessSizeReport ()
+		{
+			Context.LogDebug ($"TEST");
 		}
 	}
 }

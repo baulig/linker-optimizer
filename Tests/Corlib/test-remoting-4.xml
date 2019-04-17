@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
 
-	<options report-configuration="remoting" report-profile="net_4_x" detailed-size-report="true" check-size="true" />
+	<options report-configuration="remoting" report-profile="net_4_x" detailed-size-report="true" check-size="true" compare-with="test-remoting-4-size.xml" />
 
 	<options all-modules="true" analyze-all="true" />
 
