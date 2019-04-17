@@ -70,6 +70,17 @@ namespace Mono.Linker.Optimizer.Configuration
 				action (iterator.Current);
 		}
 
+		internal static void ProcessChildren<T> (this XPathNavigator nav, string children, NodeList<T> list, Func<XPathNavigator, T> func)
+			where T : Node
+		{
+			var iterator = nav.Select (children);
+			while (iterator.MoveNext ()) {
+				var child = func (iterator.Current);
+				if (child != null)
+					list.Add (child);
+			}
+		}
+
 		internal static bool GetBoolAttribute (this XPathNavigator nav, string name, out bool value)
 		{
 			var attr = GetAttribute (nav, name);

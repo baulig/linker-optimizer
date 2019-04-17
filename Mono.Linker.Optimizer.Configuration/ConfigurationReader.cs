@@ -53,6 +53,8 @@ namespace Mono.Linker.Optimizer.Configuration
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, Root.ActionList, null));
 
 			nav.ProcessChildren ("size-check", child => OnSizeCheckEntry (child));
+
+			nav.ProcessChildren ("size-report", child => OnSizeReportEntry (child, Root.SizeReport));
 		}
 
 		void OnConditional (XPathNavigator nav, ActionList parent)
@@ -83,6 +85,19 @@ namespace Mono.Linker.Optimizer.Configuration
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, parent, node));
 		}
 
+		Type OnNamespaceEntry (XPathNavigator nav)
+		{
+			var name = nav.GetAttribute ("name") ?? throw ThrowError ("<namespace> entry needs `name` attribute.");
+
+			var action = nav.GetTypeAction ("action");
+			var node = new Type (null, name, null, MatchKind.Namespace, action);
+
+			nav.ProcessChildren ("type", child => node.Types.Add (OnTypeEntry (child, node)));
+			/// nav.ProcessChildren ("method", child => OnMethodEntry (child, parent, node));
+
+			return node;
+		}
+
 		void OnTypeEntry (XPathNavigator nav, ActionList list, Type parent)
 		{
 			if (!GetName (nav, out var name, out var match))
@@ -97,6 +112,20 @@ namespace Mono.Linker.Optimizer.Configuration
 
 			nav.ProcessChildren ("type", child => OnTypeEntry (nav, list, type));
 			nav.ProcessChildren ("method", child => OnMethodEntry (child, list, type));
+		}
+
+		Type OnTypeEntry (XPathNavigator nav, Type parent)
+		{
+			if (!GetName (nav, out var name, out var match))
+				throw ThrowError ($"Ambiguous name in type entry `{nav.OuterXml}`.");
+
+			var action = nav.GetTypeAction ("action");
+			var type = new Type (parent, name, null, match, action);
+
+			nav.ProcessChildren ("type", child => type.Types.Add (OnTypeEntry (nav, type)));
+			// nav.ProcessChildren ("method", child => OnMethodEntry (child, list, type));
+
+			return type;
 		}
 
 		void OnMethodEntry (XPathNavigator nav, ActionList list, Type parent)
@@ -135,10 +164,15 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			var name = nav.GetAttribute ("name");
 			var profile = configuration.Profiles.GetChild (p => p.Name == name, () => new Profile (name));
-			nav.ProcessChildren ("assembly", child => OnAssembly (child, profile));
+			nav.ProcessChildren ("assembly", child => profile.Assemblies.Add (OnAssembly (child)));
 		}
 
-		void OnAssembly (XPathNavigator nav, Profile profile)
+		void OnSizeReportEntry (XPathNavigator nav, SizeReport parent)
+		{
+			nav.ProcessChildren ("assembly", parent.Assemblies, OnAssembly);
+		}
+
+		Assembly OnAssembly (XPathNavigator nav)
 		{
 			var name = OptionsReader.GetAttribute (nav, "name") ?? throw OptionsReader.ThrowError ("<assembly> requires `name` attribute.");
 			var sizeAttr = OptionsReader.GetAttribute (nav, "size");
@@ -147,7 +181,10 @@ namespace Mono.Linker.Optimizer.Configuration
 			var tolerance = OptionsReader.GetAttribute (nav, "tolerance");
 
 			var assembly = new Assembly (name, size, tolerance);
-			profile.Assemblies.Add (assembly);
+
+			nav.ProcessChildren ("namespace", assembly.Namespaces, OnNamespaceEntry);
+
+			return assembly;
 		}
 
 		static bool GetName (XPathNavigator nav, out string name, out MatchKind match)
