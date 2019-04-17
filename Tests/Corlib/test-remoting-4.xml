@@ -7,7 +7,6 @@
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
-	<include filename="test-remoting-4-size.xml" />
 
 	<size-check configuration="remoting">
 		<profile name="net_4_x">
