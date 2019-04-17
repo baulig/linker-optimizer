@@ -74,8 +74,11 @@ namespace Mono.Linker.Optimizer
 
 			ProcessChildren (root, "features/feature", OnFeature);
 
-			var reader = new ConfigurationReader (Options);
+			var reader = new ConfigurationReader (Options.OptimizerConfiguration);
 			reader.Read (root);
+
+			if (reader.NeedPreprocessor && Options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
+				Options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
 		}
 
 		void OnInclude (XPathNavigator nav)

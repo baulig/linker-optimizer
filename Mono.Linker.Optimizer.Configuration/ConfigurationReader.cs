@@ -25,21 +25,23 @@
 // THE SOFTWARE.
 using System;
 using System.Xml.XPath;
-using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
 {
 	public class ConfigurationReader
 	{
-		public OptimizerOptions Options {
+		public OptimizerConfiguration Root {
 			get;
 		}
 
-		public OptimizerConfiguration Root => Options.OptimizerConfiguration;
+		public bool NeedPreprocessor {
+			get;
+			private set;
+		}
 
-		public ConfigurationReader (OptimizerOptions options)
+		public ConfigurationReader (OptimizerConfiguration root)
 		{
-			Options = options;
+			Root = root;
 		}
 
 		public void Read (XPathNavigator nav)
@@ -110,8 +112,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			case MethodAction.ReturnTrue:
 			case MethodAction.ReturnNull:
 			case MethodAction.Throw:
-				if (Options.Preprocessor == OptimizerOptions.PreprocessorMode.None)
-					Options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
+				NeedPreprocessor = true;
 				break;
 			}
 
