@@ -46,18 +46,18 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public void Read (XPathNavigator nav)
 		{
-			nav.ProcessChildren ("conditional", child => OnConditional (child, Root.ActionList));
+			nav.ProcessChildren ("conditional", Root.ActionList.Children, OnConditional);
 
-			nav.ProcessChildren ("namespace", child => Root.ActionList.Add (OnNamespaceEntry (child)));
-			nav.ProcessChildren ("type", child => Root.ActionList.Add (OnTypeEntry (child, null)));
-			nav.ProcessChildren ("method", child => Root.ActionList.Add (OnMethodEntry (child, null)));
+			nav.ProcessChildren ("namespace", Root.ActionList.Children, OnNamespaceEntry);
+			nav.ProcessChildren ("type", (Type)null, Root.ActionList.Children, OnTypeEntry);
+			nav.ProcessChildren ("method", (Type)null, Root.ActionList.Children, OnMethodEntry);
 
 			nav.ProcessChildren ("size-check", child => OnSizeCheckEntry (child));
 
 			nav.ProcessChildren ("size-report", child => OnSizeReportEntry (child, Root.SizeReport));
 		}
 
-		void OnConditional (XPathNavigator nav, ActionList parent)
+		ActionList OnConditional (XPathNavigator nav)
 		{
 			var name = nav.GetAttribute ("feature");
 			if (name == null || !nav.GetBoolAttribute ("enabled", out var enabled))
@@ -66,11 +66,12 @@ namespace Mono.Linker.Optimizer.Configuration
 			OptimizerOptions.FeatureByName (name);
 
 			var conditional = new ActionList (name, enabled);
-			parent.Add (conditional);
 
-			nav.ProcessChildren ("namespace", parent.Children, OnNamespaceEntry);
-			nav.ProcessChildren ("type", (Type)null, parent.Children, OnTypeEntry);
-			nav.ProcessChildren ("method", (Type)null, parent.Children, OnMethodEntry);
+			nav.ProcessChildren ("namespace", conditional.Children, OnNamespaceEntry);
+			nav.ProcessChildren ("type", (Type)null, conditional.Children, OnTypeEntry);
+			nav.ProcessChildren ("method", (Type)null, conditional.Children, OnMethodEntry);
+
+			return conditional;
 		}
 
 		Type OnNamespaceEntry (XPathNavigator nav)
