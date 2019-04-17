@@ -41,6 +41,8 @@ namespace Mono.Linker.Optimizer.Configuration
 			get;
 		}
 
+		public NodeList<Node> Children { get; } = new NodeList<Node> ();
+
 		readonly List<Node> children = new List<Node> ();
 		bool? evaluated;
 
