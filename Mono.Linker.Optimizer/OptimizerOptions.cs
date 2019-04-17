@@ -203,6 +203,9 @@ namespace Mono.Linker.Optimizer
 				case "dead-code":
 					ReportMode |= ReportMode.DeadCode;
 					continue;
+				case "detailed-methods":
+					ReportMode |= ReportMode.Detailed | ReportMode.DetailedMethods;
+					continue;
 				}
 				if (!Enum.TryParse (parts[i], true, out ReportMode mode))
 					throw new OptimizerException ($"Invalid report mode: `{argument}`.");

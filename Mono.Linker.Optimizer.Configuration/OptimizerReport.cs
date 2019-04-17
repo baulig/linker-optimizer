@@ -178,11 +178,22 @@ namespace Mono.Linker.Optimizer.Configuration
 			foreach (var method in type.Methods) {
 				if (!method.HasBody)
 					continue;
-				var methodEntry = entry.Methods.GetChild (m => m.Matches (method), () => new Method (entry, method));
-				methodEntry.Size = method.Body.CodeSize;
-				size += methodEntry.Size.Value;
+				var codeSize = GetCodeSize (method);
+				if (IsEnabled (ReportMode.DetailedMethods)) {
+					var methodEntry = entry.Methods.GetChild (m => m.Matches (method), () => new Method (entry, method));
+					methodEntry.Size = codeSize;
+				}
+				size += codeSize;
 			}
 			entry.Size = size;
+		}
+
+		static int GetCodeSize (MethodDefinition method)
+		{
+			var size = method.Body.CodeSize + method.Name.Length;
+			if (method.Body.HasVariables)
+				size += method.Body.Variables.Count;
+			return size;
 		}
 
 		bool CleanupSizeList (NodeList<Type> list)
@@ -193,7 +204,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			for (int i = 0; i < list.Count; i++) {
 				var marked = CleanupSizeList (list[i].Types);
 				marked |= CleanupSizeList (list[i].Methods);
-				marked |= list[i].Size != null || list[i].Action != TypeAction.Preserve;
+				marked |= (list[i].Size ?? 0) > 0;
 				if (marked)
 					continue;
 				list.Children.RemoveAt (i--);
