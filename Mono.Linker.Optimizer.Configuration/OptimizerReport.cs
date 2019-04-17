@@ -113,6 +113,14 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public bool CheckAndReportAssemblySize (OptimizerContext context, AssemblyDefinition assembly, int size)
 		{
+			if (IsEnabled (ReportMode.Detailed)) {
+				var reportEntry = SizeReport.Assemblies.GetAssembly (assembly, true);
+				reportEntry.Size = size;
+
+				GenerateDetailedReport (assembly, reportEntry);
+				CleanupSizeList (reportEntry.Namespaces);
+			}
+
 			if (!Options.CheckSize)
 				return true;
 
@@ -123,17 +131,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 
 			var configEntry = profile.Assemblies.GetAssembly (assembly, true);
-			var sucess = configEntry.Size == null || CheckAssemblySize (context, configEntry, size);
-
-			var reportEntry = SizeReport.Assemblies.GetAssembly (assembly, true);
-			reportEntry.Size = size;
-
-			if (IsEnabled (ReportMode.Detailed)) {
-				GenerateDetailedReport (assembly, reportEntry);
-				CleanupSizeList (reportEntry.Namespaces);
-			}
-
-			return sucess;
+			return configEntry.Size == null || CheckAssemblySize (context, configEntry, size);
 		}
 
 		bool CheckAssemblySize (OptimizerContext context, Assembly assembly, int size)
