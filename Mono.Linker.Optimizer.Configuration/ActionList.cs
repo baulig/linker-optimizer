@@ -25,8 +25,6 @@
 // THE SOFTWARE.
 using System;
 using System.Linq;
-using System.Threading;
-using System.Collections.Generic;
 using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer.Configuration
@@ -70,7 +68,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public Type GetNamespace (string name, bool add)
 		{
-			var ns = Children.Children.OfType<Type> ().FirstOrDefault (t => t.Match == MatchKind.Namespace && t.Name == name);
+			var ns = Children.Children?.OfType<Type> ().FirstOrDefault (t => t.Match == MatchKind.Namespace && t.Name == name);
 			if (add && ns == null) {
 				ns = new Type (null, name, null, MatchKind.Namespace, TypeAction.None);
 				Children.Add (ns);
@@ -111,7 +109,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		public override void VisitChildren (IVisitor visitor)
 		{
-			Children.Children.ForEach (node => node.Visit (visitor));
+			Children.Children?.ForEach (node => node.Visit (visitor));
 		}
 	}
 }

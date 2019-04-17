@@ -106,8 +106,10 @@ namespace Mono.Linker.Optimizer.Configuration
 			if (!GetName (nav, out var name, out var match))
 				throw ThrowError ($"Ambiguous name in method entry `{nav.OuterXml}`.");
 
-			if (!nav.TryGetMethodAction ("action", out var action))
-				throw ThrowError ($"Missing `action` attribute in {nav.OuterXml}.");
+			var action = MethodAction.None;
+			var attribute = nav.GetAttribute ("action");
+			if (attribute != null && !nav.TryGetMethodAction ("action", out action))
+				throw ThrowError ($"Cannot parse `action` attribute in {nav.OuterXml}.");
 
 			switch (action) {
 			case MethodAction.ReturnFalse:
