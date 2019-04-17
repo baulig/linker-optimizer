@@ -83,6 +83,10 @@ namespace Mono.Linker.Optimizer
 			get; set;
 		}
 
+		public string CompareWith {
+			get; set;
+		}
+
 		public bool DisableAll {
 			get; set;
 		}
@@ -141,6 +145,9 @@ namespace Mono.Linker.Optimizer
 						continue;
 					case "report-mode":
 						SetReportMode (value);
+						continue;
+					case "compare-with":
+						CompareWith = value;
 						continue;
 					default:
 						throw new OptimizerException ($"Unknown option `{part}`.");
