@@ -162,6 +162,7 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void GenerateDetailedReport (AssemblyDefinition assembly, Assembly entry)
 		{
+			int totalSize = 0;
 			foreach (var type in assembly.MainModule.Types) {
 				if (type.Name == "<Module>" || string.IsNullOrEmpty (type.Namespace))
 					continue;
@@ -169,12 +170,20 @@ namespace Mono.Linker.Optimizer.Configuration
 				var typeEntry = ns.Types.GetType (ns, type, true);
 				GenerateDetailedReport (type, typeEntry);
 				ns.Size = (ns.Size ?? 0) + typeEntry.Size;
+				totalSize += typeEntry.Size.Value;
 			}
+			entry.CodeSize = totalSize;
 		}
 
 		void GenerateDetailedReport (TypeDefinition type, Type entry)
 		{
 			int size = 0;
+
+			foreach (var field in type.Fields)
+				size += field.Name.Length + 4;
+			foreach (var property in type.Properties)
+				size += property.Name.Length + 4;
+
 			foreach (var method in type.Methods) {
 				if (!method.HasBody)
 					continue;
@@ -190,9 +199,11 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		static int GetCodeSize (MethodDefinition method)
 		{
-			var size = method.Body.CodeSize + method.Name.Length;
+			var size = method.Body.CodeSize + method.Name.Length + 12;
+			foreach (var arg in method.Parameters)
+				size += arg.Name.Length + 5;
 			if (method.Body.HasVariables)
-				size += method.Body.Variables.Count;
+				size += 4 * method.Body.Variables.Count;
 			return size;
 		}
 

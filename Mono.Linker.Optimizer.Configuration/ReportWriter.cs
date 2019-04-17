@@ -80,6 +80,8 @@ namespace Mono.Linker.Optimizer.Configuration
 			element.SetAttributeValue ("name", node.Name);
 			if (node.Size != null)
 				element.SetAttributeValue ("size", node.Size.Value.ToString ());
+			if (node.CodeSize != null)
+				element.SetAttributeValue ("code-size", node.CodeSize.Value.ToString ());
 			if (node.Tolerance != null)
 				element.SetAttributeValue ("tolerance", node.Tolerance);
 			return true;
