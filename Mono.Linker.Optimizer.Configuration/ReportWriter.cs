@@ -125,7 +125,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			SetName (element, node.Name, node.Match);
 			if (node.Action != null)
-				SetTypeAction (element, node.Action);
+				SetTypeAction (element, node.Action.Value);
 			if (node.Size != null)
 				element.SetAttributeValue ("size", node.Size.Value);
 			return true;

@@ -70,7 +70,7 @@ namespace Mono.Linker.Optimizer.Configuration
 		{
 			var ns = Children.Children?.OfType<Type> ().FirstOrDefault (t => t.Match == MatchKind.Namespace && t.Name == name);
 			if (add && ns == null) {
-				ns = new Type (null, name, null, MatchKind.Namespace, TypeAction.None);
+				ns = new Type (null, name, null, MatchKind.Namespace);
 				Children.Add (ns);
 			}
 			return ns;
