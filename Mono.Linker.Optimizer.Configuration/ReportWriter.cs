@@ -24,6 +24,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.IO;
+using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 using System.Collections.Generic;
 
@@ -34,6 +37,37 @@ namespace Mono.Linker.Optimizer.Configuration
 		public ReportWriter (XNode root)
 			: base (root)
 		{
+		}
+
+		static XmlWriterSettings DefaultSettings => new XmlWriterSettings {
+			Indent = true,
+			OmitXmlDeclaration = false,
+			NewLineHandling = NewLineHandling.None,
+			ConformanceLevel = ConformanceLevel.Document,
+			IndentChars = "\t",
+			Encoding = Encoding.Default
+		};
+
+		public static void Write (TextWriter output, Node root)
+		{
+			using (var xml = XmlWriter.Create (output, DefaultSettings)) {
+				var document = new XDocument ();
+				var writer = new ReportWriter (document);
+				root.Visit (writer);
+				document.WriteTo (xml);
+			}
+
+			output.WriteLine ();
+		}
+
+		public static void Write (string filename, Node root)
+		{
+			using (var xml = XmlWriter.Create (filename, DefaultSettings)) {
+				var document = new XDocument ();
+				var writer = new ReportWriter (document);
+				root.Visit (writer);
+				document.WriteTo (xml);
+			}
 		}
 
 		protected override bool Visit (OptimizerConfiguration node, XElement element)

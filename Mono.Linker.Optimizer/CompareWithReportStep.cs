@@ -25,8 +25,11 @@
 // THE SOFTWARE.
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.XPath;
+using Mono.Cecil;
 
 namespace Mono.Linker.Optimizer
 {
@@ -38,10 +41,15 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
+		public ActionList Result {
+			get;
+		}
+
 		public CompareWithReportStep (OptimizerContext context)
 			: base (context)
 		{
 			Configuration = new OptimizerConfiguration ();
+			Result = new ActionList ();
 		}
 
 		protected override void Process ()
@@ -62,11 +70,67 @@ namespace Mono.Linker.Optimizer
 			}
 
 			ProcessSizeReport ();
+
+			WriteReport ();
+		}
+
+		void WriteReport ()
+		{
+			ReportWriter.Write (Console.Out, Result);
 		}
 
 		void ProcessSizeReport ()
 		{
 			Context.LogDebug ($"TEST");
+
+			foreach (var asm in Context.Context.GetAssemblies ()) {
+				ProcessAssembly (asm);
+			}
+
+			Context.LogDebug ($"TEST #1");
+		}
+
+		void ProcessAssembly (AssemblyDefinition assembly)
+		{
+			var entry = Configuration.SizeReport.GetAssembly (assembly, false);
+			if (entry == null)
+				return;
+
+			foreach (var ns in entry.Namespaces.Children) {
+				ProcessNamespace (assembly, ns);
+			}
+		}
+
+		void ProcessNamespace (AssemblyDefinition assembly, Type ns)
+		{
+			if (ns.Types.IsEmpty)
+				return;
+
+			var removed = new List<Type> ();
+			bool found = false;
+
+			foreach (var type in ns.Types.Children) {
+				Context.LogDebug ($"  TYPE: {ns.Name}.{type.Name}");
+
+				var tdef = assembly.MainModule.GetType (ns.Name, type.Name);
+				if (tdef != null) {
+					ProcessType (tdef, type);
+					found = true;
+					continue;
+				}
+
+				Context.LogDebug ($"  TYPE #1: {ns.Name}.{type.Name}");
+				removed.Add (type);
+			}
+
+			if (!found) {
+				Context.LogDebug ($"REMOVED NS: {ns}");
+			}
+		}
+
+		void ProcessType (TypeDefinition type, Type entry)
+		{
+
 		}
 	}
 }
