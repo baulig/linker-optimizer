@@ -110,28 +110,26 @@ namespace Mono.Linker.Optimizer
 			bool found = false;
 
 			foreach (var type in ns.Types.Children) {
-				Context.LogDebug ($"  TYPE: {ns.Name}.{type.Name}");
-
 				var tdef = assembly.MainModule.GetType (ns.Name, type.Name);
 				if (tdef != null) {
-					ProcessType (tdef, type);
 					found = true;
 					continue;
 				}
 
-				Context.LogDebug ($"  TYPE #1: {ns.Name}.{type.Name}");
 				removed.Add (type);
 			}
 
 			if (!found) {
-				Context.LogDebug ($"REMOVED NS: {ns}");
 				Result.Add (new Type (null, ns.Name, null, MatchKind.Namespace, TypeAction.Fail));
+				return;
 			}
-		}
 
-		void ProcessType (TypeDefinition type, Type entry)
-		{
+			var entry = new Type (null, ns.Name, null, MatchKind.Namespace);
+			Result.Add (entry);
 
+			foreach (var remove in removed) {
+				entry.Types.Add (new Type (entry, remove.Name, null, MatchKind.Name, TypeAction.Fail));
+			}
 		}
 	}
 }
