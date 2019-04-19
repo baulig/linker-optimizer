@@ -124,6 +124,8 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected override bool Visit (Type node, XElement element)
 		{
 			SetName (element, node.Name, node.Match);
+			if (node.Action != null)
+				SetTypeAction (element, node.Action);
 			if (node.Size != null)
 				element.SetAttributeValue ("size", node.Size.Value);
 			return true;

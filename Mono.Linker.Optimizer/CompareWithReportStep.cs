@@ -125,6 +125,7 @@ namespace Mono.Linker.Optimizer
 
 			if (!found) {
 				Context.LogDebug ($"REMOVED NS: {ns}");
+				Result.Add (new Type (null, ns.Name, null, MatchKind.Namespace, TypeAction.Fail));
 			}
 		}
 

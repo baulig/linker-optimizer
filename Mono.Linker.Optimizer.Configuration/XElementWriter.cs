@@ -141,6 +141,31 @@ namespace Mono.Linker.Optimizer.Configuration
 			}
 		}
 
+		protected static void SetTypeAction (XElement element, TypeAction action)
+		{
+			switch (action) {
+			case TypeAction.None:
+				break;
+			case TypeAction.Debug:
+				element.SetAttributeValue ("action", "debug");
+				break;
+			case TypeAction.Warn:
+				element.SetAttributeValue ("action", "warn");
+				break;
+			case TypeAction.Fail:
+				element.SetAttributeValue ("action", "fail");
+				break;
+			case TypeAction.Preserve:
+				element.SetAttributeValue ("action", "preserve");
+				break;
+			case TypeAction.Size:
+				element.SetAttributeValue ("action", "size");
+				break;
+			default:
+				throw DebugHelpers.AssertFail ($"Invalid type action: `{action}`.");
+			}
+		}
+
 		protected static void SetMethodAction (XElement element, MethodAction action)
 		{
 			switch (action) {
