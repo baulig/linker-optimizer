@@ -70,24 +70,13 @@ namespace Mono.Linker.Optimizer
 			}
 
 			ProcessSizeReport ();
-
-			WriteReport ();
-		}
-
-		void WriteReport ()
-		{
-			ReportWriter.Write (Console.Out, Result);
 		}
 
 		void ProcessSizeReport ()
 		{
-			Context.LogDebug ($"TEST");
-
 			foreach (var asm in Context.Context.GetAssemblies ()) {
 				ProcessAssembly (asm);
 			}
-
-			Context.LogDebug ($"TEST #1");
 		}
 
 		void ProcessAssembly (AssemblyDefinition assembly)
@@ -123,6 +112,9 @@ namespace Mono.Linker.Optimizer
 				Result.Root.Add (new Type (null, ns.Name, null, MatchKind.Namespace, TypeAction.Fail));
 				return;
 			}
+
+			if (removed.Count == 0)
+				return;
 
 			var entry = new Type (null, ns.Name, null, MatchKind.Namespace);
 			Result.Root.Add (entry);
