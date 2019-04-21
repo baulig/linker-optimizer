@@ -8,13 +8,15 @@
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
 
-	<size-check x-configuration="remoting">
-		<profile name="net_4_x">
-			<assembly name="mscorlib" size="944640" />
-		</profile>
-		<profile name="wasm">
-			<assembly name="mscorlib" size="573952" />
-		</profile>
+	<size-check>
+		<configuration name="remoting">
+			<profile name="net_4_x">
+				<assembly name="mscorlib" size="944640" />
+			</profile>
+			<profile name="wasm">
+				<assembly name="mscorlib" size="573952" />
+			</profile>
+		</configuration>
 	</size-check>
 
 	<features>
