@@ -3,12 +3,12 @@
 
 	<options report-configuration="remoting" report-profile="net_4_x" detailed-size-report="true" check-size="true" compare-with="test-remoting-4-size.xml" />
 
-	<options all-modules="true" analyze-all="true" />
+	<options-x all-modules="true" analyze-all="true" />
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
 
-	<size-check configuration="remoting">
+	<size-check x-configuration="remoting">
 		<profile name="net_4_x">
 			<assembly name="mscorlib" size="944640" />
 		</profile>

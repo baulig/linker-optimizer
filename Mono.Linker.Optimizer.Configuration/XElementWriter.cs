@@ -82,6 +82,8 @@ namespace Mono.Linker.Optimizer.Configuration
 
 		void IVisitor.Visit (SizeCheck node) => Visit (node, "size-check", Visit);
 
+		void IVisitor.Visit (SizeComparision node) => Visit (node, "size-comparision", Visit);
+
 		void IVisitor.Visit (OptimizerReport node) => Visit (node, "optimizer-report", Visit);
 
 		void IVisitor.Visit (Configuration node) => Visit (node, "configuration", Visit);
@@ -105,6 +107,8 @@ namespace Mono.Linker.Optimizer.Configuration
 		protected abstract bool Visit (SizeReport node, XElement element);
 
 		protected abstract bool Visit (SizeCheck node, XElement element);
+
+		protected abstract bool Visit (SizeComparision node, XElement element);
 
 		protected abstract bool Visit (OptimizerReport node, XElement element);
 

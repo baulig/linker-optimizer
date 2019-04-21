@@ -85,6 +85,11 @@ namespace Mono.Linker.Optimizer.Configuration
 			return true;
 		}
 
+		protected override bool Visit (SizeComparision node, XElement element)
+		{
+			return true;
+		}
+
 		protected override bool Visit (OptimizerReport node, XElement element)
 		{
 			return true;

@@ -34,6 +34,10 @@ namespace Mono.Linker.Optimizer.Configuration
 	{
 		public SizeReport SizeReport { get; } = new SizeReport ();
 
+		public SizeComparision SizeComparision {
+			get; set;
+		}
+
 		public ActionList ActionList { get; } = new ActionList ();
 
 		public FailList FailList { get; } = new FailList ();
@@ -260,6 +264,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			SizeReport.Visit (visitor);
 			ActionList.Visit (visitor);
 			FailList.Visit (visitor);
+			SizeComparision?.Visit (visitor);
 		}
 	}
 }

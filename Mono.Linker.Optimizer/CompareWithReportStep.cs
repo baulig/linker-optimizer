@@ -41,7 +41,7 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
-		public ActionList Result {
+		public SizeComparision Result {
 			get;
 		}
 
@@ -49,7 +49,7 @@ namespace Mono.Linker.Optimizer
 			: base (context)
 		{
 			Configuration = new OptimizerConfiguration ();
-			Result = new ActionList ();
+			context.Options.OptimizerReport.SizeComparision = Result = new SizeComparision ();
 		}
 
 		protected override void Process ()
@@ -120,12 +120,12 @@ namespace Mono.Linker.Optimizer
 			}
 
 			if (!found) {
-				Result.Add (new Type (null, ns.Name, null, MatchKind.Namespace, TypeAction.Fail));
+				Result.Root.Add (new Type (null, ns.Name, null, MatchKind.Namespace, TypeAction.Fail));
 				return;
 			}
 
 			var entry = new Type (null, ns.Name, null, MatchKind.Namespace);
-			Result.Add (entry);
+			Result.Root.Add (entry);
 
 			foreach (var remove in removed) {
 				entry.Types.Add (new Type (entry, remove.Name, null, MatchKind.Name, TypeAction.Fail));
