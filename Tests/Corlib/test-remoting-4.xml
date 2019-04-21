@@ -10,7 +10,10 @@
 
 	<size-check configuration="remoting">
 		<profile name="net_4_x">
-			<assembly name="mscorlib" size="945664" />
+			<assembly name="mscorlib" size="944640" />
+		</profile>
+		<profile name="wasm">
+			<assembly name="mscorlib" size="573952" />
 		</profile>
 	</size-check>
 
