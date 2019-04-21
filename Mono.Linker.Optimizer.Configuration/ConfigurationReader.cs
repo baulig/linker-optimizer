@@ -52,7 +52,7 @@ namespace Mono.Linker.Optimizer.Configuration
 			nav.ProcessChildren ("type", (Type)null, Root.ActionList.Children, OnTypeEntry);
 			nav.ProcessChildren ("method", (Type)null, Root.ActionList.Children, OnMethodEntry);
 
-			nav.ProcessChildren ("size-check", child => OnSizeCheckEntry (child));
+			nav.ProcessChildren ("size-check", child => OnSizeCheckEntry (child, Root.SizeCheck));
 
 			nav.ProcessChildren ("size-report", child => OnSizeReportEntry (child, Root.SizeReport));
 		}
@@ -123,12 +123,17 @@ namespace Mono.Linker.Optimizer.Configuration
 			return new Method (parent, name, match, action);
 		}
 
-		void OnSizeCheckEntry (XPathNavigator nav)
+		void OnSizeCheckEntry (XPathNavigator nav, SizeCheck parent)
 		{
-			var name = nav.GetAttribute ("configuration");
-			var configuration = Root.SizeCheck.Configurations.GetChild (c => c.Name == name, () => new Configuration (name));
+			nav.ProcessChildren ("configuration", parent, parent.Configurations, OnConfigurationEntry);
+		}
 
+		Configuration OnConfigurationEntry (XPathNavigator nav, SizeCheck parent)
+		{
+			var name = nav.GetAttribute ("name");
+			var configuration = Root.SizeCheck.Configurations.GetChild (c => c.Name == name, () => new Configuration (name));
 			nav.ProcessChildren ("profile", configuration, configuration.Profiles, OnProfileEntry);
+			return configuration;
 		}
 
 		Profile OnProfileEntry (XPathNavigator nav, Configuration configuration)
