@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
 
-	<options disable-module="true" disable-all="true" report-configuration="remoting" report-profile="net_4_x" detailed-size-report="true" check-size="true" compare-with="test-remoting-4-size.xml" size-check-tolerance="5%" />
+	<options disable-all="true" report-configuration="remoting" report-profile="net_4_x" detailed-size-report="true" check-size="true" compare-with="test-remoting-4-size.xml" size-check-tolerance="5%" />
 
 	<include filename="corlib-api.xml" />
-	<include filename="corlib-asserts.xml" />
+<!--	<include filename="corlib-asserts.xml" /> -->
 
 	<size-check>
 		<configuration name="remoting">
@@ -16,6 +16,8 @@
 			</profile>
 		</configuration>
 	</size-check>
+
+	<namespace name="System.Reflection.Emit" action="fail" />
 
 	<type fullname="System.Runtime.Serialization.IObjectReference">
 		<method name="GetRealObject" action="fail" />

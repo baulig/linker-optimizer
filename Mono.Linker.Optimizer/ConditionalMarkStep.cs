@@ -101,7 +101,7 @@ namespace Mono.Linker.Optimizer
 				return;
 			}
 
-			if (scanner == null || !scanner.FoundConditionals) {
+			if (true || scanner == null || !scanner.FoundConditionals) {
 				base.MarkMethodBody (body);
 				return;
 			}
