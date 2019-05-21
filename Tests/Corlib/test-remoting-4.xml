@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
 
-	<options disable-all="true" report-configuration="remoting" report-profile="wasm" detailed-size-report="true" report-mode="actions+size+detailed" check-size="true" size-check-tolerance="5%" />
+	<options disable-all="true" disable-module="true" report-configuration="remoting" report-profile="wasm" detailed-size-report="true" report-mode="actions+size+all" check-size="true" size-check-tolerance="5%" />
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
@@ -16,6 +16,8 @@
 			</profile>
 		</configuration>
 	</size-check>
+
+	<type fullname="System.Diagnostics.StackTrace" action="fail" />
 
 	<namespace name="System.Reflection.Emit" action="fail" />
 
