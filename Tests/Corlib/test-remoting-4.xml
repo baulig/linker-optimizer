@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <linker-optimizer>
 
-	<options disable-all="true" disable-module="true" report-configuration="remoting" report-profile="wasm" detailed-size-report="true" report-mode="actions+size+all" check-size="true" size-check-tolerance="5%" />
+	<options report-configuration="remoting" report-profile="wasm" detailed-size-report="true" report-mode="actions+size+detailed" check-size="true" size-check-tolerance="5%" />
 
 	<include filename="corlib-api.xml" />
 	<include filename="corlib-asserts.xml" />
@@ -17,17 +17,15 @@
 		</configuration>
 	</size-check>
 
-	<type fullname="System.Diagnostics.StackTrace" action="fail" />
-
-	<namespace name="System.Reflection.Emit" action="fail" />
-
 	<type fullname="System.Runtime.Serialization.IObjectReference">
 		<method name="GetRealObject" action="fail" />
 	</type>
 
+	<!--
 	<features>
 		<feature name="remoting" enabled="false" />
 		<feature name="collator" enabled="false" />
 		<feature name="globalization" enabled="false" />
 	</features>
+	-->
 </linker-optimizer>
