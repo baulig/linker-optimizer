@@ -9,7 +9,7 @@ DOTNET_RID = osx.10.14-x64
 include $(ROOTDIR)/build/rules.make
 
 DOTNET_LINKER_ARGS := -out $(LINKER_OUTPUT) -b true -c link -l none --dump-dependencies
-TEST_LINKER_ARGS := --optimizer-report $(LINKER_OUTPUT)/martin-report.xml --optimizer-options report-profile=$(PROFILE)
+TEST_LINKER_ARGS := --optimizer-report $(LINKER_OUTPUT)/martin-report.xml --optimizer-options report-profile=dotnet,report-mode=actions+size+detailed
 PUBLISH_OUT = bin/Debug/netcoreapp3.0/$(DOTNET_RID)/publish
 
 TEST_CASES := \
