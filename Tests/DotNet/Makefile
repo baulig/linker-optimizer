@@ -29,4 +29,5 @@ dotnet-$(1): $(1)/Program.cs $(1)/$(1).csproj standalone-build
 endef
 
 $(eval $(call DotNetTest,EmptyTest))
+$(eval $(call DotNetTest,EmptyBlazor))
 
