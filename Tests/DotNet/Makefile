@@ -11,6 +11,7 @@ include $(ROOTDIR)/build/rules.make
 DOTNET_LINKER_ARGS := -out $(LINKER_OUTPUT) -b true -c link -l none --dump-dependencies
 TEST_LINKER_ARGS := --optimizer-report $(LINKER_OUTPUT)/martin-report.xml --optimizer-options report-profile=dotnet,report-mode=actions+size+detailed
 PUBLISH_OUT = bin/Debug/netcoreapp3.0/$(DOTNET_RID)/publish
+BLAZOR_OUT = bin/Debug/netstandard2.0/publish
 
 TEST_CASES := \
 	test-dotnet-1.cs
@@ -28,6 +29,17 @@ dotnet-$(1): $(1)/Program.cs $(1)/$(1).csproj standalone-build
 	$(if $(V),,@) $(LINKER) --optimizer $(1)/$(PUBLISH_OUT)/$(1).dll $(TEST_LINKER_ARGS) $(DOTNET_LINKER_ARGS)
 endef
 
+define BlazorTest
+blazor-$(1): $(1)/Program.cs $(1)/$(1).csproj standalone-build
+	@echo Running test $(1)
+	@rm -rf $(1)/bin $(1)/obj
+	(cd $(1) && dotnet build)
+	(cd $(1) && dotnet publish)
+	@rm -rf $(LINKER_OUTPUT)
+	@mkdir $(LINKER_OUTPUT)
+	$(if $(V),,@) $(LINKER) --optimizer $(1)/$(BLAZOR_OUT)/$(1)/dist/_framework/_bin/$(1).dll $(TEST_LINKER_ARGS) $(DOTNET_LINKER_ARGS)
+endef
+
 $(eval $(call DotNetTest,EmptyTest))
-$(eval $(call DotNetTest,EmptyBlazor))
+$(eval $(call BlazorTest,EmptyBlazor))
 
