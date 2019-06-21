@@ -6,6 +6,7 @@ RUNTIME_BINARY = $(MONO_ROOT)/mono/mini/mono
 LINKER_OUTPUT := output
 PROFILE_PATH := $(abspath $(MONO_ROOT)/mcs/class/lib/$(PROFILE_DIRECTORY))
 AOTPROFILE_PATH := $(abspath $(MONO_ROOT)/mcs/class/lib/testing_aot_full)
+WASM_PROFILE_PATH := $(abspath $(MONO_ROOT)/mcs/class/lib/wasm)
 XUNIT_PATH := $(MONO_ROOT)/external/xunit-binaries
 
 PROFILER_FLAGS := --profile=log:calls,calldepth=100
