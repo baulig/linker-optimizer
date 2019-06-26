@@ -145,3 +145,68 @@ The `./build.sh --pack` might fail with
 
 Go to `src/Components` and run `./build.sh` there (that should take about three minutes).  Then go to the root directory and run the `./build.sh --pack` again (should take about six minutes).
 
+#### Setting up and building the sample
+
+Edit `EmptyBlazor.csproj` to and adjust the package sources and version:
+
+```
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RestoreAdditionalProjectSources>
+      /Workspace/AspNetCore/artifacts/packages/Debug/Shipping;
+      https://dotnet.myget.org/F/aspnetcore-dev/api/v3/index.json;
+      https://dotnet.myget.org/F/blazor-dev/api/v3/index.json;
+    </RestoreAdditionalProjectSources>
+    <LangVersion>7.3</LangVersion>
+    <RazorLangVersion>3.0</RazorLangVersion>
+    <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.0.0-dev" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.0.0-dev" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.0.0-dev" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
+```
+
+#### Error
+
+Now the `dotnet restore` works, but the `dotnet build` fails:
+
+```
+$ dotnet build
+Microsoft (R) Build Engine version 16.2.0-preview-19278-01+d635043bd for .NET Core
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+  Restore completed in 25.39 ms for /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/EmptyBlazor.csproj.
+/usr/local/share/dotnet/sdk/3.0.100-preview6-012266/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.RuntimeIdentifierInference.targets(158,5): message NETSDK1057: You are using a preview version of .NET Core. See: https://aka.ms/dotnet-core-preview [/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/EmptyBlazor.csproj]
+  EmptyBlazor -> /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/bin/Debug/netstandard2.0/EmptyBlazor.dll
+  It was not possible to find any compatible framework version
+  The specified framework 'Microsoft.NETCore.App', version '3.0.0-preview7-27812-08' was not found.
+    - The following frameworks were found:
+        2.0.3 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+        2.0.9 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+        2.2.4 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+        2.2.5 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+        3.0.0-preview4-27511-06 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+        3.0.0-preview6-27813-07 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  
+  You can resolve the problem by installing the specified framework and/or SDK.
+  
+  The .NET Core frameworks can be found at:
+    - https://aka.ms/dotnet-download
+/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.build/3.0.0-dev/targets/Blazor.MonoRuntime.targets(531,5): error MSB3073: The command "dotnet "/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.build/3.0.0-dev/targets/../tools/Microsoft.AspNetCore.Blazor.Build.dll" resolve-dependencies "/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/obj/Debug/netstandard2.0/EmptyBlazor.dll" --references "/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/obj/Debug/netstandard2.0/blazor/resolve-dependencies.txt" --base-class-library "/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.mono/0.10.0-dev/build/netstandard1.0/../../tools/mono/bcl/" --base-class-library "/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.mono/0.10.0-dev/build/netstandard1.0/../../tools/mono/bcl/Facades/" --output "/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/obj/Debug/netstandard2.0/blazor/resolved.assemblies.txt"" exited with code 150. [/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/EmptyBlazor.csproj]
+
+Build FAILED.
+
+/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.build/3.0.0-dev/targets/Blazor.MonoRuntime.targets(531,5): error MSB3073: The command "dotnet "/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.build/3.0.0-dev/targets/../tools/Microsoft.AspNetCore.Blazor.Build.dll" resolve-dependencies "/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/obj/Debug/netstandard2.0/EmptyBlazor.dll" --references "/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/obj/Debug/netstandard2.0/blazor/resolve-dependencies.txt" --base-class-library "/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.mono/0.10.0-dev/build/netstandard1.0/../../tools/mono/bcl/" --base-class-library "/Users/mabaul/.nuget/packages/microsoft.aspnetcore.blazor.mono/0.10.0-dev/build/netstandard1.0/../../tools/mono/bcl/Facades/" --output "/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/obj/Debug/netstandard2.0/blazor/resolved.assemblies.txt"" exited with code 150. [/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/EmptyBlazor.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:38.31
+```
+
