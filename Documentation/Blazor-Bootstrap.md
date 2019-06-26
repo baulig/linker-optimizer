@@ -258,3 +258,91 @@ Host (useful for support):
   Microsoft.NETCore.App 3.0.0-preview7-27826-04 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
 
 ```
+
+Rebuilt everything and now I'm getting this error:
+
+```
+$ dotnet restore
+
+Welcome to .NET Core 3.0!
+---------------------
+SDK Version: 3.0.100-preview7-012629
+
+Telemetry
+---------
+The .NET Core tools collect usage data in order to help us improve your experience. The data is anonymous. It is collected by Microsoft and shared with the community. You can opt-out of telemetry by setting the DOTNET_CLI_TELEMETRY_OPTOUT environment variable to '1' or 'true' using your favorite shell.
+
+Read more about .NET Core CLI Tools telemetry: https://aka.ms/dotnet-cli-telemetry
+
+----------------
+Explore documentation: https://aka.ms/dotnet-docs
+Report issues and find source on GitHub: https://github.com/dotnet/core
+Find out what's new: https://aka.ms/dotnet-whats-new
+Learn about the installed HTTPS developer cert: https://aka.ms/aspnet-core-https
+Use 'dotnet --help' to see available commands or visit: https://aka.ms/dotnet-cli-docs
+Write your first app: https://aka.ms/first-net-core-app
+--------------------------------------------------------------------------------------
+  Restore completed in 2.03 sec for /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/EmptyBlazor.csproj.
+draenor:EmptyBlazor mabaul$ 
+draenor:EmptyBlazor mabaul$ dotnet build
+Microsoft (R) Build Engine version 16.3.0-preview-19321-02+a5a222491 for .NET Core
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+  Restore completed in 20.49 ms for /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/EmptyBlazor.csproj.
+  You are using a preview version of .NET Core. See: https://aka.ms/dotnet-core-preview
+  EmptyBlazor -> /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/bin/Debug/netstandard2.0/EmptyBlazor.dll
+  Writing boot data to: /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/obj/Debug/netstandard2.0/blazor/blazor.boot.json
+  Blazor Build result -> 45 files in /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/bin/Debug/netstandard2.0/dist
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.56
+draenor:EmptyBlazor mabaul$ 
+draenor:EmptyBlazor mabaul$ 
+draenor:EmptyBlazor mabaul$ dotnet run
+Application startup exception: System.InvalidOperationException: Application assembly not found at /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/.
+   at Microsoft.AspNetCore.Blazor.DevServer.Server.Startup.ResolveApplicationAssemblyFullPath(IWebHostEnvironment environment)
+   at Microsoft.AspNetCore.Blazor.DevServer.Server.Startup.Configure(IApplicationBuilder app, IWebHostEnvironment environment, IConfiguration configuration)
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Object[] arguments, Signature sig, Boolean constructor, Boolean wrapExceptions)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at Microsoft.AspNetCore.Hosting.Internal.MethodInfoExtensions.InvokeWithoutWrappingExceptions(MethodInfo methodInfo, Object obj, Object[] parameters)
+   at Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder.Invoke(Object instance, IApplicationBuilder builder)
+   at Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder.<>c__DisplayClass4_0.<Build>b__0(IApplicationBuilder builder)
+   at Microsoft.AspNetCore.Hosting.Internal.ConventionBasedStartup.Configure(IApplicationBuilder app)
+   at Microsoft.AspNetCore.HostFilteringStartupFilter.<>c__DisplayClass0_0.<Configure>b__0(IApplicationBuilder app)
+   at Microsoft.AspNetCore.Hosting.Internal.WebHost.BuildApplication()
+crit: Microsoft.AspNetCore.Hosting.Internal.WebHost[6]
+      Application startup exception
+System.InvalidOperationException: Application assembly not found at /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/.
+   at Microsoft.AspNetCore.Blazor.DevServer.Server.Startup.ResolveApplicationAssemblyFullPath(IWebHostEnvironment environment)
+   at Microsoft.AspNetCore.Blazor.DevServer.Server.Startup.Configure(IApplicationBuilder app, IWebHostEnvironment environment, IConfiguration configuration)
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Object[] arguments, Signature sig, Boolean constructor, Boolean wrapExceptions)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at Microsoft.AspNetCore.Hosting.Internal.MethodInfoExtensions.InvokeWithoutWrappingExceptions(MethodInfo methodInfo, Object obj, Object[] parameters)
+   at Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder.Invoke(Object instance, IApplicationBuilder builder)
+   at Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder.<>c__DisplayClass4_0.<Build>b__0(IApplicationBuilder builder)
+   at Microsoft.AspNetCore.Hosting.Internal.ConventionBasedStartup.Configure(IApplicationBuilder app)
+   at Microsoft.AspNetCore.HostFilteringStartupFilter.<>c__DisplayClass0_0.<Configure>b__0(IApplicationBuilder app)
+   at Microsoft.AspNetCore.Hosting.Internal.WebHost.BuildApplication()
+Unhandled exception. System.InvalidOperationException: Application assembly not found at /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/.
+   at Microsoft.AspNetCore.Blazor.DevServer.Server.Startup.ResolveApplicationAssemblyFullPath(IWebHostEnvironment environment)
+   at Microsoft.AspNetCore.Blazor.DevServer.Server.Startup.Configure(IApplicationBuilder app, IWebHostEnvironment environment, IConfiguration configuration)
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Object[] arguments, Signature sig, Boolean constructor, Boolean wrapExceptions)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at Microsoft.AspNetCore.Hosting.Internal.MethodInfoExtensions.InvokeWithoutWrappingExceptions(MethodInfo methodInfo, Object obj, Object[] parameters)
+   at Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder.Invoke(Object instance, IApplicationBuilder builder)
+   at Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder.<>c__DisplayClass4_0.<Build>b__0(IApplicationBuilder builder)
+   at Microsoft.AspNetCore.Hosting.Internal.ConventionBasedStartup.Configure(IApplicationBuilder app)
+   at Microsoft.AspNetCore.HostFilteringStartupFilter.<>c__DisplayClass0_0.<Configure>b__0(IApplicationBuilder app)
+   at Microsoft.AspNetCore.Hosting.Internal.WebHost.BuildApplication()
+   at Microsoft.AspNetCore.Hosting.Internal.WebHost.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Hosting.WebHostExtensions.RunAsync(IWebHost host, CancellationToken token, String startupMessage)
+   at Microsoft.AspNetCore.Hosting.WebHostExtensions.RunAsync(IWebHost host, CancellationToken token, String startupMessage)
+   at Microsoft.AspNetCore.Hosting.WebHostExtensions.RunAsync(IWebHost host, CancellationToken token)
+   at Microsoft.AspNetCore.Hosting.WebHostExtensions.Run(IWebHost host)
+   at Microsoft.AspNetCore.Blazor.DevServer.Commands.ServeCommand.Execute()
+   at Microsoft.Extensions.CommandLineUtils.CommandLineApplication.Execute(String[] args)
+   at Microsoft.AspNetCore.Blazor.DevServer.Program.Main(String[] args)
+```
