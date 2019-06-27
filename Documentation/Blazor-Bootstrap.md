@@ -346,3 +346,73 @@ Unhandled exception. System.InvalidOperationException: Application assembly not 
    at Microsoft.Extensions.CommandLineUtils.CommandLineApplication.Execute(String[] args)
    at Microsoft.AspNetCore.Blazor.DevServer.Program.Main(String[] args)
 ```
+
+#### Cleaning up this mess
+
+After building the Blazor module, we need to build the Extensions module.
+
+```
+$ git remote -v
+baulig	git@github.com:baulig/Extensions.git (fetch)
+baulig	git@github.com:baulig/Extensions.git (push)
+origin	https://github.com/aspnet/Extensions.git (fetch)
+origin	https://github.com/aspnet/Extensions.git (push)
+```
+
+In the `Versions.props`, we also need to edit all the version numbers from the `aspnet/Extensions` module like for instance
+
+    <MonoWebAssemblyInteropPackageVersion>3.0.0-preview7.19312.4</MonoWebAssemblyInteropPackageVersion>
+
+I'm not using the `darc` command, but do it manually.
+
+Starting all over again, now using
+
+```
+l$ dotnet --info
+.NET Core SDK (reflecting any global.json):
+ Version:   3.0.100-preview7-012635
+ Commit:    cd5572d30b
+
+Runtime Environment:
+ OS Name:     Mac OS X
+ OS Version:  10.14
+ OS Platform: Darwin
+ RID:         osx.10.14-x64
+ Base Path:   /usr/local/share/dotnet/sdk/3.0.100-preview7-012635/
+
+Host (useful for support):
+  Version: 3.0.0-preview7-27826-04
+  Commit:  5c4d829254
+
+.NET Core SDKs installed:
+  2.0.3 [/usr/local/share/dotnet/sdk]
+  2.1.202 [/usr/local/share/dotnet/sdk]
+  2.2.203 [/usr/local/share/dotnet/sdk]
+  2.2.300 [/usr/local/share/dotnet/sdk]
+  2.2.301-preview-010200 [/usr/local/share/dotnet/sdk]
+  3.0.100-preview4-010713 [/usr/local/share/dotnet/sdk]
+  3.0.100-preview6-012266 [/usr/local/share/dotnet/sdk]
+  3.0.100-preview7-012629 [/usr/local/share/dotnet/sdk]
+  3.0.100-preview7-012635 [/usr/local/share/dotnet/sdk]
+
+.NET Core runtimes installed:
+  Microsoft.AspNetCore.All 2.2.1 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.All]
+  Microsoft.AspNetCore.All 2.2.4 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.All]
+  Microsoft.AspNetCore.All 2.2.5 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.All]
+  Microsoft.AspNetCore.App 2.2.4 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 2.2.5 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 3.0.0-preview6.19307.2 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 3.0.0-preview7.19325.7 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 3.0.0-preview7.19325.8 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 2.0.3 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 2.0.9 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 2.2.4 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 2.2.5 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 3.0.0-preview4-27511-06 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 3.0.0-preview6-27813-07 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 3.0.0-preview7-27826-04 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+  ```
+
+  And I've completely wiped my NuGet cache.
+
+  
