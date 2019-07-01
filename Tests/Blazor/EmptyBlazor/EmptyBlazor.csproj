@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RestoreAdditionalProjectSources>
-      /Workspace/AspNetCore/artifacts/packages/Debug/Shipping/;
-      /Workspace/AspNetCore/artifacts/packages/Debug/NonShipping/;
-      /Workspace/Extensions/artifacts/packages/Debug/Shipping/;
-      /Workspace/Extensions/artifacts/packages/Debug/NonShipping/;
-      /Workspace/Blazor/artifacts/packages/Debug/Shipping/;
+      /Workspace/Blazor/AspNetCore/artifacts/packages/Debug/Shipping/;
+      /Workspace/Blazor/AspNetCore/artifacts/packages/Debug/NonShipping/;
+      /Workspace/Blazor/Extensions/artifacts/packages/Debug/Shipping/;
+      /Workspace/Blazor/Extensions/artifacts/packages/Debug/NonShipping/;
+      /Workspace/Blazor/Blazor/artifacts/packages/Debug/Shipping/;
       https://dotnet.myget.org/F/aspnetcore-dev/api/v3/index.json;
       </RestoreAdditionalProjectSources>
     <LangVersion>7.3</LangVersion>

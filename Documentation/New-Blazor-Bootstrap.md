@@ -47,7 +47,7 @@ origin	https://github.com/aspnet/AspNetCore.git (push)
 ```
 
 Make sure you have the latest version, which contains Larry's initialization changes:
-https://github.com/baulig/AspNetCore/commit/107304d3964849c2e0797284cf7f836e12d7f6dd.
+https://github.com/baulig/AspNetCore/commit/d0d19d078822de94888f602bdfc4c67f304cd210.
 
 Install the latest .NET Dogfood SDK.
 
