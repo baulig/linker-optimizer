@@ -193,3 +193,93 @@ Do not use any of the `build-*` targets for now as they'd wipe out and rebuild t
 
 Instead, use `dotnet build` and `dotnet prepare`.
 
+Then you can use the `link-EmptyBlazor` target:
+
+```
+$ make V=1 link-EmptyBlazor
+MONO_PATH=/Workspace/mono-linker/mcs/class/lib/build /Workspace/mono-linker/runtime/mono-wrapper  --debug /Workspace/linker-optimizer/output/bin/Debug/Mono.Linker.Optimizer.exe --optimizer EmptyBlazor/bin/Debug/netstandard2.0/EmptyBlazor.dll --optimizer-xml EmptyBlazor/optimizer.xml --optimizer-report output/martin-report.xml --optimizer-options report-profile=wasm,report-mode=actions+size+detailed   -out output/_framework/_bin -d EmptyBlazor/bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/_framework/_bin/ -b true -c copy -u copy -p copy mscorlib -p copy System -l none --keep-facades true --verbose
+Reading XML description from EmptyBlazor/optimizer.xml.
+Reading XML description from /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor/../../Corlib/corlib-api.xml.
+Initializing Mono Linker Optimizer.
+Preprocessor mode: Automatic.
+BB SCAN FAILED: System.Boolean System.Threading.Tasks.ThreadPoolTaskScheduler/<FilterTasksFromWorkItems>d__6::MoveNext()
+BB SCAN FAILED: System.Void System.Text.Json.JsonSerializer::ReadCore(System.Text.Json.JsonSerializerOptions,System.Text.Json.Utf8JsonReader&,System.Text.Json.ReadStack&)
+BB SCAN FAILED: System.Boolean System.Net.Http.Headers.HttpHeaders/<GetHeaderStrings>d__23::MoveNext()
+BB SCAN FAILED: System.Boolean System.Net.Http.Headers.HttpHeaders/<GetEnumeratorCore>d__28::MoveNext()
+BB SCAN FAILED: System.Threading.Tasks.Task System.Net.Http.HttpContent::LoadIntoBufferAsync(System.Int64,System.Threading.CancellationToken)
+BB SCAN FAILED: System.Object Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver::VisitConstructor(Microsoft.Extensions.DependencyInjection.ServiceLookup.ConstructorCallSite,Microsoft.Extensions.DependencyInjection.ServiceLookup.RuntimeResolverContext)
+BB SCAN FAILED: System.Boolean System.Net.Http.Headers.HttpHeaderValueCollection`1/<GetEnumerator>d__21::MoveNext()
+BB SCAN FAILED: System.Boolean System.Text.Json.JsonSerializer::Write(System.Text.Json.Utf8JsonWriter,System.Int32,System.Text.Json.JsonSerializerOptions,System.Text.Json.WriteStack&)
+BB SCAN FAILED: System.Boolean Microsoft.Extensions.Internal.ParameterDefaultValue::TryGetDefaultValue(System.Reflection.ParameterInfo,System.Object&)
+BB SCAN FAILED: System.Boolean System.Text.Json.JsonPropertyInfoCommon`4/<CreateGenericTDeclaredPropertyIEnumerable>d__27::MoveNext()
+BB SCAN FAILED: System.Boolean System.Text.Json.JsonPropertyInfoCommon`4/<CreateGenericTRuntimePropertyIEnumerable>d__26::MoveNext()
+BB SCAN FAILED: System.Boolean System.Text.Json.JsonPropertyInfoCommon`4/<CreateGenericIEnumerableFromDictionary>d__28::MoveNext()
+BB SCAN FAILED: System.Boolean Microsoft.AspNetCore.Components.Reflection.MemberAssignment/<GetPropertiesIncludingInherited>d__0::MoveNext()
+BB SCAN FAILED: System.Boolean System.Linq.Expressions.Compiler.CompilerScope/<GetVariablesIncludingMerged>d__37::MoveNext()
+BB SCAN FAILED: System.Boolean System.Security.Claims.ClaimsIdentity/<get_Claims>d__51::MoveNext()
+Output action:     Link assembly: EmptyBlazor, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+Output action:     Copy assembly: netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51
+Output action:     Copy assembly: Microsoft.AspNetCore.Blazor, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Microsoft.Extensions.DependencyInjection.Abstractions, Version=3.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Microsoft.AspNetCore.Components, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: mscorlib, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e
+Output action:     Copy assembly: System.Core, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e
+Output action:     Copy assembly: System, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e
+Output action:     Copy assembly: System.Data, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Output action:     Copy assembly: System.Drawing.Common, Version=4.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51
+Output action:     Copy assembly: System.IO.Compression, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Output action:     Copy assembly: System.IO.Compression.FileSystem, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Output action:     Copy assembly: System.ComponentModel.Composition, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Output action:     Copy assembly: System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
+Output action:     Copy assembly: System.Numerics, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Output action:     Copy assembly: System.Runtime.Serialization, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e
+Output action:     Copy assembly: System.Transactions, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Output action:     Copy assembly: System.Web.Services, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
+Output action:     Copy assembly: System.Xml, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e
+Output action:     Copy assembly: System.Xml.Linq, Version=2.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35
+Output action:     Copy assembly: Mono.Security, Version=2.0.5.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756
+Output action:     Copy assembly: System.ServiceModel.Internals, Version=0.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35
+Output action:     Copy assembly: Microsoft.Extensions.Logging.Abstractions, Version=3.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Mono.WebAssembly.Interop, Version=3.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Microsoft.AspNetCore.Components.Browser, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Microsoft.JSInterop, Version=3.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Microsoft.Extensions.DependencyInjection, Version=3.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: System.Text.Json, Version=4.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51
+Output action:     Copy assembly: Microsoft.Extensions.Options, Version=3.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Microsoft.AspNetCore.Metadata, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: Microsoft.AspNetCore.Authorization, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: System.ComponentModel.Annotations, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
+Output action:     Copy assembly: Microsoft.Extensions.Primitives, Version=3.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60
+Output action:     Copy assembly: System.Memory, Version=4.0.99.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51
+Output action:     Copy assembly: System.Runtime.CompilerServices.Unsafe, Version=4.0.4.0, Culture=neutral, PublicKeyToken=null
+Output action:     Copy assembly: System.Numerics.Vectors, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
+Output action:     Copy assembly: System.Threading.Tasks.Extensions, Version=4.2.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51
+Output action:     Copy assembly: Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51
+Output action:     Copy assembly: System.Buffers, Version=4.0.99.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51
+Output action:     Copy assembly: System.ComponentModel.DataAnnotations, Version=2.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35
+Mono Linker Optimizer finished in 00:00:07.4928121.
+```
+
+This will put the outputs into the `output` directory and you should see 4 versions of `mscorlib.dll`:
+
+```
+$ find . -name mscorlib.dll
+./output/_framework/_bin/mscorlib.dll
+./EmptyBlazor/obj/Debug/netstandard2.0/blazor/resolvedassemblies/mscorlib.dll
+./EmptyBlazor/bin/Debug/netstandard2.0/dist/_framework/_bin/mscorlib.dll
+./EmptyBlazor/bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/_framework/_bin/mscorlib.dll
+```
+
+Copy the generated one from `./output/_framework/_bin/mscorlib.dll` into the publish directory:
+
+```
+cp -f ./output/_framework/_bin/mscorlib.dll ./EmptyBlazor/bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/_framework/_bin/
+```
+
+Then start the `http-server` and open it in your browser:
+
+```
+http-server ./EmptyBlazor/bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/
+```
+
+This will work because - if you look at the output above, you'll see that none of the assemblies are actually linked.
