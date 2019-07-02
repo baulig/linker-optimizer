@@ -10,7 +10,7 @@ include $(ROOTDIR)/build/rules.make
 
 WASM_PROFILE_PATH := $(abspath $(MONO_ROOT)/mcs/class/lib/wasm)
 
-LINKER_ASSEMBLY_ARGS := -b true -c copy -u copy -p copy mscorlib -p copy System -l none --keep-facades true --verbose
+LINKER_ASSEMBLY_ARGS := -b true -c copy -u copy -p link mscorlib -p copy System -l none --keep-facades true --verbose
 
 DOTNET_LINKER_ARGS := -out $(LINKER_OUTPUT) -b true -c link -l none --dump-dependencies
 WASM_LINKER_ARGS := $(DOTNET_LINKER_ARGS) -d $(WASM_PROFILE_PATH)
