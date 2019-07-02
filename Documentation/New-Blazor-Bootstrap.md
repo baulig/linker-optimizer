@@ -102,3 +102,58 @@ Host (useful for support):
 
 To build this, first build the `Blazor` module, then `Extensions`, then `AspNetCore`.
 
+```
+(cd Blazor && ./build.sh)
+(cd Extensions && ./build.sh)
+(cd AspNetCore && ./build.sh)
+(cd AspNetCore/src/Components && ./build.sh)
+(cd AspNetCore/src/Components && ./build.sh --pack)
+(cd AspNetCore && ./build.sh --pack)
+```
+
+Then build the sample:
+
+```
+$ pwd
+/Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor
+$ git reset --hard HEAD
+$ git clean -xffd
+$ dotnet build
+$ dotnet publish
+```
+
+Edit `bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/_framework/blazor.webassembly.js`, search for `createEmscriptenModuleInstance()` in it and comment out
+
+```
+//        MONO.mono_wasm_set_runtime_options(["--trace"]);
+```
+
+Or otherwise your web browser will really love you.
+
+**WARNING**: If leave the `--trace` in and you're doing this on a Mac with Firefox and an external monitor, this _may_ cause the white flicker of death where you have to log out and in again!  If've seen this happening this afternoon.
+
+You can either do `dotnet run` or manually start a server:
+
+```
+http-server ./EmptyBlazor/bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/
+```
+
+### Using the Linker Optimizer
+
+First, checkout and build Mono normally.  Do not use any of the SDK stuff, that's not going to work, and also don't worry about runtime presets.  Just build normally.
+
+```
+cd /Workspace/mono-linker
+git clean -xffd && git submodule foreach git clean -xffd
+./autogen.sh --prefix=/Workspace/LINKER && make -j18 && make install
+```
+
+(or if you feel lucky want to stress-test your computer, try `make -j` ...)
+
+Then build the `wasm` profile:
+
+```
+cd mcs/class
+make PROFILE=wasm -j
+```
+
