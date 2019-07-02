@@ -138,7 +138,7 @@ You can either do `dotnet run` or manually start a server:
 http-server ./EmptyBlazor/bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/
 ```
 
-### Using the Linker Optimizer
+### Preparing the Linker Optimizer
 
 First, checkout and build Mono normally.  Do not use any of the SDK stuff, that's not going to work, and also don't worry about runtime presets.  Just build normally.
 
@@ -156,4 +156,40 @@ Then build the `wasm` profile:
 cd mcs/class
 make PROFILE=wasm -j
 ```
+
+No need to do `make install` - and you could actually get away with just compiling _some_ of the assemblies, but I find it a lot more tedious to go back and add what I was missing than to just building them all.
+
+Now set the `MONO_ROOT` environment variable to the Mono _checkout_ that you just built (not it's install location).
+
+```
+$ export MONO_ROOT=/Workspace/mono-linker
+```
+
+Then type `make` in the top-level directory:
+
+```
+$ pwd
+/Workspace/linker-optimizer
+$ make
+msbuild /nologo /verbosity:quiet /Workspace/linker-optimizer/Mono.Linker.Optimizer.sln
+```
+
+Okay, so much about preparations.
+
+### Using the Linker Optimizer
+
+After you've done all the above mentioned preparations, it's time to actually use the Linker Optimizer.
+
+Go to `Tests/Blazor`:
+
+```
+$ pwd
+/Workspace/linker-optimizer/Tests/Blazor
+```
+
+The latest version of that `Makefile` has a few targets and it's still kinda experimental.
+
+Do not use any of the `build-*` targets for now as they'd wipe out and rebuild the Blazor sample.
+
+Instead, use `dotnet build` and `dotnet prepare`.
 
