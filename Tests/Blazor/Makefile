@@ -10,11 +10,18 @@ include $(ROOTDIR)/build/rules.make
 
 WASM_PROFILE_PATH := $(abspath $(MONO_ROOT)/mcs/class/lib/wasm)
 
-LINKER_ASSEMBLY_ARGS := -b true -c copy -u copy -p link mscorlib -p copy System -l none --keep-facades true --verbose
+LINKER_ASSEMBLY_ARGS := \
+	-b true -c copy -u copy -p link mscorlib -p link System -p link System.Core \
+	-p link Microsoft.Extensions.DependencyInjection -p link EmptyBlazor \
+	-p link Microsoft.AspNetCore.Components.Browser -p link Microsoft.AspNetCore.Blazor \
+	-p link Microsoft.AspNetCore.Components -p link Mono.WebAssembly.Interop \
+	-p link Microsoft.JSInterop -p link Microsoft.Extensions.DependencyInjection.Abstractions \
+	-l none --keep-facades true --verbose --disable-opt unreachablebodies \
+	--strip-security true --exclude-feature com --exclude-feature sre
 
 DOTNET_LINKER_ARGS := -out $(LINKER_OUTPUT) -b true -c link -l none --dump-dependencies
 WASM_LINKER_ARGS := $(DOTNET_LINKER_ARGS) -d $(WASM_PROFILE_PATH)
-TEST_LINKER_ARGS := --optimizer-report $(LINKER_OUTPUT)/martin-report.xml --optimizer-options report-profile=wasm,report-mode=actions+size+detailed $(EXTRA_OPTIMIZER_ARGS)
+TEST_LINKER_ARGS :=  --optimizer-xml $(ROOTDIR)/Tests/corlib-nunit.xml --optimizer-report $(LINKER_OUTPUT)/martin-report.xml --optimizer-options report-profile=wasm,report-mode=actions+size+detailed $(EXTRA_OPTIMIZER_ARGS)
 BLAZOR_OUT = bin/Debug/netstandard2.0/publish
 
 TEST_CASES := \
