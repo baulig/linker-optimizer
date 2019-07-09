@@ -22,6 +22,7 @@
 	<type fullname="Microsoft.AspNetCore.Blazor.Hosting.WebAssemblyHost" action="preserve" />
 	<type fullname="Microsoft.AspNetCore.Components.Builder.ComponentsApplicationBuilderExtensions" action="preserve" />
 	<type fullname="Microsoft.AspNetCore.Components.ComponentBase" action="preserve" />
+	<type fullname="Microsoft.AspNetCore.Components.Routing.Router" action="preserve" />
 
 	<conditional feature="sre" enabled="true">
 		<type fullname="System.Reflection.Emit.TypeBuilder" action="preserve" />

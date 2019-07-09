@@ -10,14 +10,23 @@ include $(ROOTDIR)/build/rules.make
 
 WASM_PROFILE_PATH := $(abspath $(MONO_ROOT)/mcs/class/lib/wasm)
 
+ASSEMBLY_LIST := \
+	mscorlib \
+	System \
+	System.Core \
+	Microsoft.AspNetCore.Blazor \
+	Microsoft.AspNetCore.Components \
+	Microsoft.AspNetCore.Components.Browser \
+	Microsoft.Extensions.DependencyInjection \
+	Microsoft.Extensions.DependencyInjection.Abstractions \
+	Microsoft.JSInterop \
+	Mono.WebAssembly.Interop
+
 LINKER_ASSEMBLY_ARGS := \
-	-b true -c copy -u copy -p link mscorlib -p link System -p link System.Core \
-	-p link Microsoft.Extensions.DependencyInjection -p link EmptyBlazor \
-	-p link Microsoft.AspNetCore.Components.Browser -p link Microsoft.AspNetCore.Blazor \
-	-p link Microsoft.AspNetCore.Components -p link Mono.WebAssembly.Interop \
-	-p link Microsoft.JSInterop -p link Microsoft.Extensions.DependencyInjection.Abstractions \
-	-l none --keep-facades true --verbose --disable-opt unreachablebodies \
-	--strip-security true --exclude-feature com --exclude-feature sre
+	-b true -c copy -u copy -l none --keep-facades true --verbose \
+	--disable-opt unreachablebodies --strip-security true \
+	--exclude-feature com --exclude-feature sre \
+	$(patsubst %,-p link %, $(ASSEMBLY_LIST))
 
 DOTNET_LINKER_ARGS := -out $(LINKER_OUTPUT) -b true -c link -l none --dump-dependencies
 WASM_LINKER_ARGS := $(DOTNET_LINKER_ARGS) -d $(WASM_PROFILE_PATH)
