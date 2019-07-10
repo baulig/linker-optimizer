@@ -24,5 +24,10 @@
   </assembly>
 
   <assembly fullname="Microsoft.AspNetCore.Components" preserve="all">
+    <namespace fullname="Microsoft.AspNetCore.Components.Reflection" preserve="all" />
+    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutComponentBase" preserve="all" />
+    <type fullname="Microsoft.AspNetCore.Components.RouteAttribute" preserve="all" />
+    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutAttribute" preserve="all" />
   </assembly>
+
 </linker>
