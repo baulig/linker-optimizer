@@ -19,6 +19,7 @@ ASSEMBLY_LIST := \
 	Microsoft.AspNetCore.Components.Browser \
 	Microsoft.Extensions.DependencyInjection \
 	Microsoft.Extensions.DependencyInjection.Abstractions \
+	Microsoft.Extensions.Options \
 	Microsoft.JSInterop \
 	Mono.WebAssembly.Interop
 
@@ -26,6 +27,7 @@ LINKER_ASSEMBLY_ARGS := \
 	-b true -c copy -u copy -l none --keep-facades true --verbose \
 	--disable-opt unreachablebodies --strip-security true \
 	--exclude-feature com --exclude-feature sre \
+	-x $(ROOTDIR)/Tests/Blazor/BuiltInBclLinkerDescriptor.xml \
 	$(patsubst %,-p link %, $(ASSEMBLY_LIST))
 
 DOTNET_LINKER_ARGS := -out $(LINKER_OUTPUT) -b true -c link -l none --dump-dependencies

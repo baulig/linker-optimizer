@@ -24,6 +24,9 @@
 	<type fullname="Microsoft.AspNetCore.Components.ComponentBase" action="preserve" />
 	<type fullname="Microsoft.AspNetCore.Components.Routing.Router" action="preserve" />
 
+	<type fullname="Microsoft.AspNetCore.Components.RenderTree.RenderTreeBuilder" action="preserve" />
+	<type fullname="Microsoft.AspNetCore.Components.RuntimeHelpers" action="preserve" />
+
 	<conditional feature="sre" enabled="true">
 		<type fullname="System.Reflection.Emit.TypeBuilder" action="preserve" />
 	</conditional>
