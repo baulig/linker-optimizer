@@ -18,15 +18,6 @@
 	<type fullname="System.Collections.Generic.IEnumerable`1" action="preserve" />
 	<type fullname="System.Linq.Enumerable" action="preserve" />
 
-	<type fullname="Mono.WebAssembly.Interop.MonoWebAssemblyJSRuntime" action="preserve" />
-	<type fullname="Microsoft.AspNetCore.Blazor.Hosting.WebAssemblyHost" action="preserve" />
-	<type fullname="Microsoft.AspNetCore.Components.Builder.ComponentsApplicationBuilderExtensions" action="preserve" />
-	<type fullname="Microsoft.AspNetCore.Components.ComponentBase" action="preserve" />
-	<type fullname="Microsoft.AspNetCore.Components.Routing.Router" action="preserve" />
-
-	<type fullname="Microsoft.AspNetCore.Components.RenderTree.RenderTreeBuilder" action="preserve" />
-	<type fullname="Microsoft.AspNetCore.Components.RuntimeHelpers" action="preserve" />
-
 	<conditional feature="sre" enabled="true">
 		<type fullname="System.Reflection.Emit.TypeBuilder" action="preserve" />
 	</conditional>

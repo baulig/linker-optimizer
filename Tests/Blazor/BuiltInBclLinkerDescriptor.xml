@@ -19,8 +19,14 @@
     <type fullname="System.ComponentModel.TimeSpanConverter" />
   </assembly>
 
+  <assembly fullname="Mono.WebAssembly.Interop">
+    <type fullname="Mono.WebAssembly.Interop.MonoWebAssemblyJSRuntime" preserve="all" />
+  </assembly>
+
   <assembly fullname="Microsoft.AspNetCore.Blazor">
-  	<type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyComponentContext" preserve="all" />
+    <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyComponentContext" preserve="all" />
+    <type fullname="Microsoft.AspNetCore.Components.Builder.ComponentsApplicationBuilderExtensions" preserve="all" />
+    <type fullname="Microsoft.AspNetCore.Blazor.Hosting.WebAssemblyHost" preserve="all" />
   </assembly>
 
   <assembly fullname="Microsoft.AspNetCore.Components" preserve="all">
