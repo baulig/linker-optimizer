@@ -27,17 +27,17 @@
   <Target
       Name="_ComputeLinkerOptimizerDependencies"
       DependsOnTargets="_PrepareLinkerOptimizerConfiguration"
-      Inputs="@(LinkOptimizerXmlDescriptors)"
+      Inputs="@(LinkerOptimizerXmlDescriptors)"
       Outputs="$(_LinkerOptimizerDependencyCache)"
       Condition="'$(LinkerOptimizerEnabled)' != 'false'"
   >
 
-    <Message Text="Using Linker Optimizer XML: %(LinkOptimizerXmlDescriptors.Identity)!" />
+    <Message Text="Using Linker Optimizer XML: %(LinkerOptimizerXmlDescriptors.Identity)!" />
     <Message Text="Using Linker Optimizer Arguments: $(LinkerOptimizerOptions)"  Condition="'$(LinkerOptimizerOptions)' != ''" />
     <Message Text="Using Linker Optimizer Report: $(LinkerOptimizerReport)"  Condition="'$(LinkerOptimizerReport)' != ''" />
 
     <ItemGroup>
-      <_LinkerOptimizerXmlArguments Include="@(LinkOptimizerXmlDescriptors->'--optimizer-xml &quot;%(FullPath)&quot;')" Condition="'@(LinkOptimizerXmlDescriptors)' != ''" />
+      <_LinkerOptimizerXmlArguments Include="@(LinkerOptimizerXmlDescriptors->'--optimizer-xml &quot;%(FullPath)&quot;')" Condition="'@(LinkerOptimizerXmlDescriptors)' != ''" />
     </ItemGroup>
 
     <PropertyGroup>
@@ -49,7 +49,7 @@
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
     </PropertyGroup>
 
-    <Hash ItemsToHash="@(LinkOptimizerXmlDescriptors);$(_LinkerOptimizerCommandLine)">
+    <Hash ItemsToHash="@(LinkerOptimizerXmlDescriptors);$(_LinkerOptimizerCommandLine)">
       <Output TaskParameter="HashResult" PropertyName="_LinkerOptimizerDependencyHash" />
     </Hash>
 
@@ -61,7 +61,7 @@
 
     <ItemGroup>
       <BlazorBuildLinkerExtraInputs Include="$(_LinkerOptimizerDependencyCache)" />
-      <BlazorBuildLinkerExtraInputs Include="@(LinkOptimizerXmlDescriptors)" />
+      <BlazorBuildLinkerExtraInputs Include="@(LinkerOptimizerXmlDescriptors)" />
     </ItemGroup>
 
   </Target>

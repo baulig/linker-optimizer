@@ -16,8 +16,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <LinkOptimizerXmlDescriptors Include="optimizer.xml" />
-    <LinkOptimizerXmlDescriptors Include="$(MSBuildThisFileDirectory)\..\..\corlib-nunit.xml" />
+    <LinkerOptimizerXmlDescriptors Include="optimizer.xml" />
+    <LinkerOptimizerXmlDescriptors Include="$(MSBuildThisFileDirectory)\..\..\corlib-nunit.xml" />
   </ItemGroup>
 
   <PropertyGroup>
