@@ -167,7 +167,7 @@ total 18272
 
 Then run with
 
-````
+```
 $ dotnet run
 Hosting environment: Production
 Content root path: /Workspace/linker-optimizer/Tests/Blazor/EmptyBlazor
@@ -176,3 +176,22 @@ Now listening on: https://localhost:5001
 Application started. Press Ctrl+C to shut down.
 ```
 
+### Configuring the Project
+
+If you look at the `EmptyBlazor.csproj`, you'll see the following:
+
+```
+  <ItemGroup>
+    <LinkOptimizerXmlDescriptors Include="optimizer.xml" />
+    <LinkOptimizerXmlDescriptors Include="$(MSBuildThisFileDirectory)\..\..\corlib-nunit.xml" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <LinkerOptimizerOptions>report-profile=wasm,report-mode=actions+size+detailed</LinkerOptimizerOptions>
+    <LinkerOptimizerReport>martin-report.xml</LinkerOptimizerReport>
+    <LinkerOptimizerExtraLinkerArguments>--verbose</LinkerOptimizerExtraLinkerArguments>
+    <LinkerOptimizerEnabled>true</LinkerOptimizerEnabled>
+  </PropertyGroup>
+```
+
+You can disable the optimizer by changing the `LinkerOptimizerEnabled` property in there.
