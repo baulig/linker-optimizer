@@ -24,7 +24,7 @@
     <LinkerOptimizerOptions>report-profile=wasm,report-mode=actions+size+detailed</LinkerOptimizerOptions>
     <LinkerOptimizerReport>martin-report.xml</LinkerOptimizerReport>
     <LinkerOptimizerExtraLinkerArguments>--verbose</LinkerOptimizerExtraLinkerArguments>
-    <LinkerOptimizerEnabled>false</LinkerOptimizerEnabled>
+    <LinkerOptimizerEnabled>true</LinkerOptimizerEnabled>
   </PropertyGroup>
 
   <ItemGroup>
