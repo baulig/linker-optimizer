@@ -5,9 +5,6 @@ TEST_HELPERS_LIBRARY = $(ROOTDIR)/Tests/TestHelpers/TestHelpers.dll
 $(TEST_HELPERS_LIBRARY):
 	$(MAKE) -C $(ROOTDIR)/Tests/TestHelpers
 
-$(LINKER_EXE):
-	$(MAKE) -C $(ROOTDIR) standalone-build
-
 CLEAN_DIRECTORIES += $(LINKER_OUTPUT)
 
 LINKER_ARGS = -out $(LINKER_OUTPUT) -b true -d $(PROFILE_PATH) -d $(ROOTDIR)/Tests/TestHelpers
@@ -20,7 +17,7 @@ NUNIT_ARGS := -exclude=NotOnMac,MacNotWorking,NotWorking,CAS,LinkerNotWorking,Mo
 
 .NOTPARALLEL:
 
-compile-tests:: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(AOTTEST_CASES:.cs=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY) $(LINKER_EXE)
+compile-tests:: $(TEST_CASES:.cs=.exe) $(ILTEST_CASES:.il=.exe) $(AOTTEST_CASES:.cs=.exe) $(BROKEN_TESTS:.cs=.exe) $(TEST_HELPERS_LIBRARY)
 
 run: $(TEST_CASES:.cs=) $(AOTTEST_CASES:.cs=) $(ILTEST_CASES:.il=) standalone-build
 

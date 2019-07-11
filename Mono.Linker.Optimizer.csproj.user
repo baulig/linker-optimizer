@@ -2,8 +2,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
     <StartAction>Project</StartAction>
-    <StartArguments>--optimizer test-globalization-1 --optimizer-report martin-report.xml --optimizer-options report-profile=wasm,report-mode=all -out output -b true -d /Workspace/mono-patch/mcs/class/lib/wasm -d /Workspace/linker-research/Tests/TestHelpers -c link -l none</StartArguments>
-    <StartWorkingDirectory>Tests\Corlib</StartWorkingDirectory>
+    <StartArguments>--optimizer EmptyBlazor/bin/Debug/netstandard2.0/EmptyBlazor.dll --optimizer-xml EmptyBlazor/optimizer.xml --optimizer-xml /Workspace/linker-optimizer/Tests/corlib-nunit.xml --optimizer-report output/martin-report.xml --optimizer-options report-profile=wasm,report-mode=actions+size+detailed   -out output/_framework/_bin -d EmptyBlazor/bin/Debug/netstandard2.0/publish/EmptyBlazor/dist/_framework/_bin/ -b true -c copy -u copy -l none --keep-facades true --verbose --disable-opt unreachablebodies --strip-security true --exclude-feature com --exclude-feature sre -x /Workspace/linker-optimizer/Tests/Blazor/BuiltInBclLinkerDescriptor.xml -p link mscorlib -p link System -p link System.Core -p link Microsoft.AspNetCore.Blazor -p link Microsoft.AspNetCore.Components -p link Microsoft.AspNetCore.Components.Browser -p link Microsoft.Extensions.DependencyInjection -p link Microsoft.Extensions.DependencyInjection.Abstractions -p link Microsoft.Extensions.Options -p link Microsoft.JSInterop -p link Mono.WebAssembly.Interop</StartArguments>
+    <StartWorkingDirectory>Tests\Blazor</StartWorkingDirectory>
+    <ExternalConsole>false</ExternalConsole>
     <ConsolePause>true</ConsolePause>
   </PropertyGroup>
 </Project>

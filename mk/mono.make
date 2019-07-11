@@ -1,5 +1,5 @@
 MONO_ROOT = $(abspath $(ROOTDIR)/../../../..)
-include $(MONO_ROOT)/mcs/build/rules.make
+include $(MONO_ROOT)/mcs/mk/rules.make
 
 RUNTIME_BINARY = $(MONO_ROOT)/mono/mini/mono
 

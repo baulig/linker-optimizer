@@ -1,4 +1,4 @@
 [submodule "external/linker"]
 	path = external/linker
-	branch = work-linker-research
+	branch = work-sdk
 	url = git@github.com:baulig/private-linker.git

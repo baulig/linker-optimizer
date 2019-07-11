@@ -3,7 +3,7 @@ thisdir = tools/linker/Martin/Tests/TestHelpers
 makefile_dir := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOTDIR := $(abspath $(makefile_dir)/../..)
 
-include $(ROOTDIR)/build/rules.make
+include $(ROOTDIR)/mk/rules.make
 
 CORLIB_SOURCES := \
 	../../System.Runtime.CompilerServices/MonoLinkerFeature.cs \

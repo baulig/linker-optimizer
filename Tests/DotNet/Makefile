@@ -6,7 +6,7 @@ ROOTDIR := $(abspath $(makefile_dir)/../..)
 DOTNET = dotnet
 DOTNET_RID = osx.10.14-x64
 
-include $(ROOTDIR)/build/rules.make
+include $(ROOTDIR)/mk/rules.make
 
 DOTNET_LINKER_ARGS := -out $(LINKER_OUTPUT) -b true -c link -l none --dump-dependencies
 TEST_LINKER_ARGS := --optimizer-report $(LINKER_OUTPUT)/martin-report.xml --optimizer-options report-profile=dotnet,report-mode=actions+size+detailed
@@ -16,7 +16,7 @@ BLAZOR_OUT = bin/Debug/netstandard2.0/publish
 TEST_CASES := \
 	test-dotnet-1.cs
 
-include $(ROOTDIR)/build/tests.make
+include $(ROOTDIR)/mk/tests.make
 
 define DotNetTest
 dotnet-$(1): $(1)/Program.cs $(1)/$(1).csproj standalone-build

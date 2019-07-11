@@ -6,23 +6,7 @@ standalone-all:: standalone-build
 
 standalone-build::
 
-ifneq "$(wildcard $(ROOTDIR)/../net_4_x-linked-size.csv)" ""
-INTEGRATED_MAKE = 1
-else
-ifneq "$(MONO_ROOT)" ""
-STANDALONE_MAKE = 1
-else
-$(error "`MONO_ROOT` environment variable must be set in standalone-mode.")
-endif
-endif
-
-ifdef INTEGRATED_MAKE
-include $(ROOTDIR)/build/mono.make
-endif
-
-ifdef STANDALONE_MAKE
-include $(ROOTDIR)/build/standalone.make
-endif
+include $(ROOTDIR)/mk/dotnet.make
 
 TESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(PROFILE_PATH)/mscorlib.dll
 AOTTESTS_COMPILER = $(MCS) -nologo -noconfig -unsafe -nostdlib -debug:portable -r:$(AOTPROFILE_PATH)/mscorlib.dll

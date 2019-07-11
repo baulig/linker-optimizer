@@ -6,7 +6,7 @@ ROOTDIR := $(abspath $(makefile_dir)/../..)
 DOTNET = dotnet
 DOTNET_RID = osx.10.14-x64
 
-include $(ROOTDIR)/build/rules.make
+include $(ROOTDIR)/mk/rules.make
 
 WASM_PROFILE_PATH := $(abspath $(MONO_ROOT)/mcs/class/lib/wasm)
 
@@ -38,7 +38,7 @@ BLAZOR_OUT = bin/Debug/netstandard2.0/publish
 TEST_CASES := \
 	test-EmptyBlazor
 
-include $(ROOTDIR)/build/tests.make
+include $(ROOTDIR)/mk/tests.make
 
 define BlazorTest
 build-$(1): $(1)/Program.cs $(1)/$(1).csproj standalone-build

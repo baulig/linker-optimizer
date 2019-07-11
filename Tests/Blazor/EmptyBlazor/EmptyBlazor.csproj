@@ -12,7 +12,19 @@
       </RestoreAdditionalProjectSources>
     <LangVersion>7.3</LangVersion>
     <RazorLangVersion>3.0</RazorLangVersion>
-    <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
+    <BlazorLinkOnBuild>true</BlazorLinkOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <LinkOptimizerXmlDescriptors Include="optimizer.xml" />
+    <LinkOptimizerXmlDescriptors Include="$(MSBuildThisFileDirectory)\..\..\corlib-nunit.xml" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <LinkerOptimizerOptions>report-profile=wasm,report-mode=actions+size+detailed</LinkerOptimizerOptions>
+    <LinkerOptimizerReport>martin-report.xml</LinkerOptimizerReport>
+    <LinkerOptimizerExtraLinkerArguments>--verbose</LinkerOptimizerExtraLinkerArguments>
+    <LinkerOptimizerEnabled>true</LinkerOptimizerEnabled>
   </PropertyGroup>
 
   <ItemGroup>

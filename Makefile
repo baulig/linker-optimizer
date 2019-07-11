@@ -3,7 +3,7 @@ thisdir = tools/linker/Martin
 makefile_dir := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOTDIR := $(abspath $(makefile_dir))
 
-include $(ROOTDIR)/build/rules.make
+include $(ROOTDIR)/mk/rules.make
 
 standalone-all:: build
 
@@ -26,7 +26,7 @@ PROGRAM = monolinker-optimizer.exe
 LOCAL_MCS_FLAGS = /main:Mono.Linker.Optimizer.Program /r:$(the_libdir)monolinker.exe
 LIB_REFS = System System.Core System.Xml Mono.Cecil
 
-include $(ROOTDIR)/../../../build/executable.make
+include $(ROOTDIR)/../../../mk/executable.make
 
 standalone-build:: $(the_lib)
 
