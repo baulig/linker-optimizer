@@ -27,9 +27,8 @@
 
 	<namespace name="System.Linq.Expressions" action="none" />
 
-	<type fullname="EmptyBlazor.App" action="preserve" />
-	<type fullname="EmptyBlazor.Startup" action="preserve" />
-	
+	<namespace name="EmptyBlazor" action="preserve" />
+
 	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="none" />
 	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="none" />
 
