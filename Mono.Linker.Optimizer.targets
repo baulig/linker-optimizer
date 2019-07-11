@@ -49,6 +49,10 @@
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' == 'false'">
+        <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\illink.dll</MonoLinkerPath>
+    </PropertyGroup>
+
     <!-- Clear the contents of /obj/<<configuration>>/<<targetframework>>/blazor/blazor/linker -->
     <Delete Files="$(BlazorIntermediateLinkerOutputPath)*.dll" />
 
