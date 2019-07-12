@@ -29,8 +29,11 @@
 
 	<namespace name="EmptyBlazor" action="preserve" />
 
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="none" />
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="none" />
+	<namespace name="Microsoft.Extensions.DependencyInjection" action="none" />
+
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceProvider" action="none" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="fail" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="fail" />
 
 	<features>
 		<feature name="sre" enabled="false" />
