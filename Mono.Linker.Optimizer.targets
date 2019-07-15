@@ -44,8 +44,9 @@
       <_LinkerOptimizerArguments>--optimizer %(IntermediateAssembly.FullPath)</_LinkerOptimizerArguments>
       <_LinkerOptimizerOptions Condition="'$(LinkerOptimizerOptions)' != ''">--optimizer-options $(LinkerOptimizerOptions)</_LinkerOptimizerOptions>
       <_LinkerOptimizerReport Condition="'$(LinkerOptimizerReport)' != ''">--optimizer-report $(LinkerOptimizerReport)</_LinkerOptimizerReport>
+      <_LinkerOptimizerExtraLinkerDesc>$(MSBuildThisFileDirectory)\Tests\Blazor\extra-linker-descriptor.xml</_LinkerOptimizerExtraLinkerDesc>
       <_LinkerOptimizerCommandLine>$(_LinkerOptimizerArguments) @(_LinkerOptimizerXmlArguments, ' ') $(_LinkerOptimizerOptions) $(_LinkerOptimizerReport) $(LinkerOptimizerExtraArguments) $(LinkerOptimizerExtraLinkerArguments) </_LinkerOptimizerCommandLine>
-      <AdditionalMonoLinkerOptions>$(_LinkerOptimizerCommandLine) $(AdditionalMonoLinkerOptions)</AdditionalMonoLinkerOptions>
+      <AdditionalMonoLinkerOptions>$(_LinkerOptimizerCommandLine) -x $(_LinkerOptimizerExtraLinkerDesc) $(AdditionalMonoLinkerOptions)</AdditionalMonoLinkerOptions>
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
     </PropertyGroup>
 
