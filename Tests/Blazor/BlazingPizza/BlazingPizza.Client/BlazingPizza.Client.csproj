@@ -16,6 +16,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <LinkerOptimizerXmlDescriptors Include="optimizer.xml" />
+    <LinkerOptimizerXmlDescriptors Include="$(MSBuildThisFileDirectory)\..\..\..\corlib-nunit.xml" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <LinkerOptimizerOptions>report-profile=wasm,report-mode=actions+size+detailed</LinkerOptimizerOptions>
+    <LinkerOptimizerReport>martin-report.xml</LinkerOptimizerReport>
+    <LinkerOptimizerExtraLinkerArguments>--verbose --dump-dependencies</LinkerOptimizerExtraLinkerArguments>
+    <LinkerOptimizerEnabled>true</LinkerOptimizerEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.0.0-dev" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.0.0-dev" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.0.0-dev" PrivateAssets="all" />
