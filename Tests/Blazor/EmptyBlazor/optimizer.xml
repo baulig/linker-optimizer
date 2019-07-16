@@ -4,26 +4,6 @@
 	<options report-configuration="blazor" disable-all="true" report-mode="actions+size+detailed" check-size="false" size-check-tolerance="10%" />
 
 	<include filename="../../Corlib/corlib-api.xml" />
-	<!-- <include filename="../../Corlib/corlib-asserts.xml" /> -->
-
-	<size-check>
-		<configuration name="blazor">
-			<profile name="wasm">
-				<assembly name="mscorlib" size="1197056" />
-				<assembly name="System" size="102912" />
-				<assembly name="System.Core" size="287744" />
-				<assembly name="System.Net.Http" size="10752" />
-				<assembly name="Microsoft.AspNetCore.Blazor" size="19968" />
-				<assembly name="Microsoft.AspNetCore.Components" size="30720" />
-				<assembly name="Microsoft.AspNetCore.Components.Browser" size="7680" />
-				<assembly name="Microsoft.Extensions.DependencyInjection.Abstractions" size="12800" />
-				<assembly name="Microsoft.Extensions.DependencyInjection" size="51712" />
-				<assembly name="Microsoft.JSInterop" size="29696" />
-				<assembly name="Mono.Security" size="8192" />
-				<assembly name="Mono.WebAssembly.Interop" size="5120" />
-			</profile>
-		</configuration>
-	</size-check>
 
 	<namespace name="System.Linq.Expressions" action="none" />
 
@@ -32,7 +12,7 @@
 	<namespace name="Microsoft.Extensions.DependencyInjection" action="none" />
 
 	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceProvider" action="none" />
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="none" />
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="none" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="fail" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="fail" />
 
 </linker-optimizer>
