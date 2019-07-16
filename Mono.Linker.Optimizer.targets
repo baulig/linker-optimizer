@@ -20,7 +20,8 @@
       Condition="'$(LinkerOptimizerEnabled)' != 'false'">
 
     <PropertyGroup>
-      <_LinkerOptimizerDependencyCache>$(BlazorIntermediateOutputPath)linker.optimizer.cache</_LinkerOptimizerDependencyCache>
+      <_LinkerOptimizerDependencyCache>$(BlazorIntermediateOutputPath)linker-optimizer.cache</_LinkerOptimizerDependencyCache>
+      <_LinkerOptimizerResponseFile>$(BlazorIntermediateOutputPath)linker-optimizer.response</_LinkerOptimizerResponseFile>
     </PropertyGroup>
   </Target>
 
@@ -28,7 +29,7 @@
       Name="_ComputeLinkerOptimizerDependencies"
       DependsOnTargets="_PrepareLinkerOptimizerConfiguration"
       Inputs="@(LinkerOptimizerXmlDescriptors)"
-      Outputs="$(_LinkerOptimizerDependencyCache)"
+      Outputs="$(_LinkerOptimizerDependencyCache);$(_LinkerOptimizerResponseFile)"
       Condition="'$(LinkerOptimizerEnabled)' != 'false'"
   >
 
@@ -45,8 +46,8 @@
       <_LinkerOptimizerOptions Condition="'$(LinkerOptimizerOptions)' != ''">--optimizer-options $(LinkerOptimizerOptions)</_LinkerOptimizerOptions>
       <_LinkerOptimizerReport Condition="'$(LinkerOptimizerReport)' != ''">--optimizer-report $(LinkerOptimizerReport)</_LinkerOptimizerReport>
       <_LinkerOptimizerExtraLinkerDesc>$(MSBuildThisFileDirectory)\Tests\Blazor\extra-linker-descriptor.xml</_LinkerOptimizerExtraLinkerDesc>
-      <_LinkerOptimizerCommandLine>$(_LinkerOptimizerArguments) @(_LinkerOptimizerXmlArguments, ' ') $(_LinkerOptimizerOptions) $(_LinkerOptimizerReport) $(LinkerOptimizerExtraArguments) $(LinkerOptimizerExtraLinkerArguments) </_LinkerOptimizerCommandLine>
-      <AdditionalMonoLinkerOptions>$(_LinkerOptimizerCommandLine) -x $(_LinkerOptimizerExtraLinkerDesc) $(AdditionalMonoLinkerOptions)</AdditionalMonoLinkerOptions>
+      <_LinkerOptimizerCommandLine>$(_LinkerOptimizerArguments) @(_LinkerOptimizerXmlArguments, ' ') $(_LinkerOptimizerOptions) $(_LinkerOptimizerReport) $(LinkerOptimizerExtraArguments) $(LinkerOptimizerExtraLinkerArguments) -x $(_LinkerOptimizerExtraLinkerDesc) </_LinkerOptimizerCommandLine>
+      <AdditionalMonoLinkerOptions>$(_LinkerOptimizerCommandLine) $(AdditionalMonoLinkerOptions)</AdditionalMonoLinkerOptions>
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
     </PropertyGroup>
 
@@ -60,7 +61,17 @@
       Overwrite="True"
       WriteOnlyWhenDifferent="True" />
 
+    <WriteLinesToFile
+      Lines="$(_LinkerOptimizerCommandLine)"
+      FIle="$(_LinkerOptimizerResponseFile)"
+      Overwrite="True"
+      WriteOnlyWhenDifferent="True" />
+
+    <Message Text="Generated response file: $(_LinkerOptimizerResponseFile)" />
+
     <ItemGroup>
+      <BlazorBuildLinkerExtraInputs Include="$(_LinkerOptimizerResponseFile)" />
+      <BlazorBuildLinkerExtraInputs Include="$(_LinkerOptimizerExtraLinkerDesc)" />
       <BlazorBuildLinkerExtraInputs Include="$(_LinkerOptimizerDependencyCache)" />
       <BlazorBuildLinkerExtraInputs Include="@(LinkerOptimizerXmlDescriptors)" />
     </ItemGroup>
