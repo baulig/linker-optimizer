@@ -7,18 +7,13 @@
 
 	<namespace name="System.Linq.Expressions" action="none" />
 
+	<namespace name="Microsoft.AspNetCore.Authorization" action="preserve" />
 	<namespace name="BlazingPizza.Client" action="preserve" />
 
 	<namespace name="Microsoft.Extensions.DependencyInjection" action="none" />
 
 	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceProvider" action="none" />
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="fail" />
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="fail" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="none" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="none" />
 
-	<features>
-		<feature name="sre" enabled="false" />
-		<feature name="remoting" enabled="false" />
-		<feature name="collator" enabled="false" />
-		<feature name="globalization" enabled="false" />
-	</features>
 </linker-optimizer>
