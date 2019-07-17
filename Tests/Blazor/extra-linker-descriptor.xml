@@ -1,25 +1,27 @@
 <linker>
 
   <assembly fullname="Mono.WebAssembly.Interop">
-    <type fullname="Mono.WebAssembly.Interop.MonoWebAssemblyJSRuntime" preserve="all" />
+    <type fullname="Mono.WebAssembly.Interop.MonoWebAssemblyJSRuntime" />
   </assembly>
 
-  <assembly fullname="Microsoft.AspNetCore.Blazor" preserve="all">
-    <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyComponentContext" preserve="all" />
-    <type fullname="Microsoft.AspNetCore.Components.Builder.ComponentsApplicationBuilderExtensions" preserve="all" />
-    <type fullname="Microsoft.AspNetCore.Blazor.Hosting.WebAssemblyHost" preserve="all" />
+  <assembly fullname="Microsoft.AspNetCore.Blazor" >
+    <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyComponentContext" />
+    <type fullname="Microsoft.AspNetCore.Components.Builder.ComponentsApplicationBuilderExtensions" />
+    <type fullname="Microsoft.AspNetCore.Blazor.Hosting.WebAssemblyHost" />
+    <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyUriHelper" />
+    <namespace fullname="Microsoft.AspNetCore.Blazor.Rendering" />
+    <namespace fullname="Microsoft.AspNetCore.Blazor.Http" />
   </assembly>
 
   <assembly fullname="EmptyBlazor" preserve="all" />
 
-  <assembly fullname="Microsoft.AspNetCore.Components.Browser" preserve="all">
-  </assembly>
+  <assembly fullname="Microsoft.AspNetCore.Components.Browser" preserve="all" />
 
   <assembly fullname="Microsoft.AspNetCore.Components">
-    <namespace fullname="Microsoft.AspNetCore.Components.Reflection" preserve="all" />
-    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutComponentBase" preserve="all" />
-    <type fullname="Microsoft.AspNetCore.Components.RouteAttribute" preserve="all" />
-    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutAttribute" preserve="all" />
+    <namespace fullname="Microsoft.AspNetCore.Components.Reflection" />
+    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutComponentBase" />
+    <type fullname="Microsoft.AspNetCore.Components.RouteAttribute" />
+    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutAttribute" />
     <namespace fullname="Microsoft.AspNetCore.Components.Routing" />
     <type fullname="Microsoft.AspNetCore.Components.UIMouseEventArgs" />
     <type fullname="Microsoft.AspNetCore.Components.PageDisplay" />
