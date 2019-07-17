@@ -57,17 +57,14 @@
       <_LinkerOptimizerArguments>--optimizer %(IntermediateAssembly.FullPath)</_LinkerOptimizerArguments>
       <_LinkerOptimizerOptions Condition="'$(LinkerOptimizerOptions)' != ''">--optimizer-options $(LinkerOptimizerOptions)</_LinkerOptimizerOptions>
       <_LinkerOptimizerReport Condition="'$(LinkerOptimizerReport)' != ''">--optimizer-report $(LinkerOptimizerReport)</_LinkerOptimizerReport>
-      <_LinkerOptimizerExtraLinkerDesc>$(MSBuildThisFileDirectory)\Tests\Blazor\extra-linker-descriptor.xml</_LinkerOptimizerExtraLinkerDesc>
 
       <_LinkerOptimizerCommandLine>$(_LinkerOptimizerArguments) @(_LinkerOptimizerXmlArguments, ' ') $(_LinkerOptimizerOptions) $(_LinkerOptimizerReport) $(LinkerOptimizerExtraArguments) @(_LinkerOptimizerAssemblyReferences, ' ')</_LinkerOptimizerCommandLine>
-      <_LinkerOptimizerFullCommandLine>$(_LinkerOptimizerCommandLine) -- -x $(_LinkerOptimizerExtraLinkerDesc) $(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ')</_LinkerOptimizerFullCommandLine>
+      <_LinkerOptimizerFullCommandLine>$(_LinkerOptimizerCommandLine) -- $(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ')</_LinkerOptimizerFullCommandLine>
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' == 'false'">
-      <_LinkerOptimizerExtraLinkerDesc>$(MSBuildThisFileDirectory)\Tests\Blazor\extra-linker-descriptor.xml</_LinkerOptimizerExtraLinkerDesc>
-
-      <_LinkerOptimizerFullCommandLine>-x $(_LinkerOptimizerExtraLinkerDesc) $(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ') @(_LinkerOptimizerAssemblyReferences, ' ')</_LinkerOptimizerFullCommandLine>
+      <_LinkerOptimizerFullCommandLine>$(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ') @(_LinkerOptimizerAssemblyReferences, ' ')</_LinkerOptimizerFullCommandLine>
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\illink.dll</MonoLinkerPath>
     </PropertyGroup>
 
@@ -91,7 +88,6 @@
 
     <ItemGroup>
       <BlazorBuildLinkerExtraInputs Include="$(_LinkerOptimizerResponseFile)" />
-      <BlazorBuildLinkerExtraInputs Include="$(_LinkerOptimizerExtraLinkerDesc)" />
       <BlazorBuildLinkerExtraInputs Include="$(_LinkerOptimizerDependencyCache)" />
       <BlazorBuildLinkerExtraInputs Include="@(LinkerOptimizerXmlDescriptors)" />
     </ItemGroup>

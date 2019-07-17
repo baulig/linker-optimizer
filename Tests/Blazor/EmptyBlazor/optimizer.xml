@@ -12,7 +12,7 @@
 	<namespace name="Microsoft.Extensions.DependencyInjection" action="none" />
 
 	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceProvider" action="none" />
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="fail" />
-	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="fail" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.ExpressionsServiceProviderEngine" action="warn" />
+	<type fullname="Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine" action="warn" />
 
 </linker-optimizer>
