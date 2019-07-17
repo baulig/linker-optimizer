@@ -1,23 +1,16 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' != 'false'">
+  <PropertyGroup>
     <LinkBlazorApplicationDependsOn>
       $(LinkBlazorApplicationDependsOn);
       _PrepareLinkerOptimizerConfiguration;
       _ComputeLinkerOptimizerDependencies;
     </LinkBlazorApplicationDependsOn>
-
-    <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' == 'false'">
-    <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\illink.dll</MonoLinkerPath>
   </PropertyGroup>
 
   <Target
       Name="_PrepareLinkerOptimizerConfiguration"
-      AfterTargets="_PrepareBlazorOutputConfiguration"
-      Condition="'$(LinkerOptimizerEnabled)' != 'false'">
+      AfterTargets="_PrepareBlazorOutputConfiguration">
 
     <PropertyGroup>
       <_LinkerOptimizerDependencyCache>$(BlazorIntermediateOutputPath)linker-optimizer.cache</_LinkerOptimizerDependencyCache>
@@ -34,24 +27,33 @@
               @(IntermediateAssembly);
               @(_BlazorDependencyInput);
               @(BlazorLinkerDescriptor)"
-      Outputs="$(_LinkerOptimizerDependencyCache);$(_LinkerOptimizerResponseFile)"
-      Condition="'$(LinkerOptimizerEnabled)' != 'false'">
+      Outputs="$(_LinkerOptimizerDependencyCache);$(_LinkerOptimizerResponseFile)">
 
-    <Message Text="Using Linker Optimizer XML: %(LinkerOptimizerXmlDescriptors.Identity)!" />
-    <Message Text="Using Linker Optimizer Arguments: $(LinkerOptimizerOptions)"  Condition="'$(LinkerOptimizerOptions)' != ''" />
-    <Message Text="Using Linker Optimizer Report: $(LinkerOptimizerReport)"  Condition="'$(LinkerOptimizerReport)' != ''" />
+    <Message Text="Linker Optimizer is disabled." Condition="'$(LinkerOptimizerEnabled)' == 'false'"/>
 
-    <ItemGroup>
+    <Message Text="Using Linker Optimizer XML: %(LinkerOptimizerXmlDescriptors.Identity)!" Condition="'$(LinkerOptimizerEnabled)' != 'false'"/>
+    <Message Text="Using Linker Optimizer Arguments: $(LinkerOptimizerOptions)"  Condition="'$(LinkerOptimizerOptions)' != '' and '$(LinkerOptimizerEnabled)' != 'false'" />
+    <Message Text="Using Linker Optimizer Report: $(LinkerOptimizerReport)"  Condition="'$(LinkerOptimizerReport)' != '' and '$(LinkerOptimizerEnabled)' != 'false'" />
+
+    <ItemGroup Condition="'$(LinkerOptimizerEnabled)' != 'false'">
       <_LinkerOptimizerXmlArguments Include="@(LinkerOptimizerXmlDescriptors->'--optimizer-xml &quot;%(FullPath)&quot;')" Condition="'@(LinkerOptimizerXmlDescriptors)' != ''" />
-      <_MonoBaseClassLibraryFolder Include="$(MonoBaseClassLibraryPath);$(MonoBaseClassLibraryFacadesPath)" />
       <_LinkerOptimizerAssemblyReferences Include="@(_BlazorDependencyInput->'--optimizer-ref &quot;%(Identity)&quot;')" />
       <_LinkerOptimizerAssemblyReferences Include="@(IntermediateAssembly->'--optimizer-ref &quot;%(FullPath)&quot;')" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(LinkerOptimizerEnabled)' == 'false'">
+      <_LinkerOptimizerAssemblyReferences Include="@(_BlazorDependencyInput->'-a &quot;%(Identity)&quot;')" />
+      <_LinkerOptimizerAssemblyReferences Include="@(IntermediateAssembly->'-a &quot;%(FullPath)&quot;')" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_MonoBaseClassLibraryFolder Include="$(MonoBaseClassLibraryPath);$(MonoBaseClassLibraryFacadesPath)" />
       <_BlazorFolderLookupPaths Include="@(_MonoBaseClassLibraryFolder->'-d &quot;%(Identity)&quot;')" />
       <_BlazorAssemblyDescriptorFiles
         Include="@(BlazorLinkerDescriptor->'-x &quot;%(FullPath)&quot;')" Condition="'@(BlazorLinkerDescriptor)' != ''" />
     </ItemGroup>
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' != 'false'">
       <_LinkerOptimizerArguments>--optimizer %(IntermediateAssembly.FullPath)</_LinkerOptimizerArguments>
       <_LinkerOptimizerOptions Condition="'$(LinkerOptimizerOptions)' != ''">--optimizer-options $(LinkerOptimizerOptions)</_LinkerOptimizerOptions>
       <_LinkerOptimizerReport Condition="'$(LinkerOptimizerReport)' != ''">--optimizer-report $(LinkerOptimizerReport)</_LinkerOptimizerReport>
@@ -60,6 +62,13 @@
       <_LinkerOptimizerCommandLine>$(_LinkerOptimizerArguments) @(_LinkerOptimizerXmlArguments, ' ') $(_LinkerOptimizerOptions) $(_LinkerOptimizerReport) $(LinkerOptimizerExtraArguments) @(_LinkerOptimizerAssemblyReferences, ' ')</_LinkerOptimizerCommandLine>
       <_LinkerOptimizerFullCommandLine>$(_LinkerOptimizerCommandLine) -- -x $(_LinkerOptimizerExtraLinkerDesc) $(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ')</_LinkerOptimizerFullCommandLine>
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' == 'false'">
+      <_LinkerOptimizerExtraLinkerDesc>$(MSBuildThisFileDirectory)\Tests\Blazor\extra-linker-descriptor.xml</_LinkerOptimizerExtraLinkerDesc>
+
+      <_LinkerOptimizerFullCommandLine>-x $(_LinkerOptimizerExtraLinkerDesc) $(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ') @(_LinkerOptimizerAssemblyReferences, ' ')</_LinkerOptimizerFullCommandLine>
+      <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\illink.dll</MonoLinkerPath>
     </PropertyGroup>
 
     <Hash ItemsToHash="@(LinkerOptimizerXmlDescriptors);$(_LinkerOptimizerFullCommandLine)">
@@ -91,7 +100,6 @@
 
   <Target
       Name="_LinkBlazorApplication"
-      Condition="'$(LinkerOptimizerEnabled)' != 'false'"
       DependsOnTargets="$(LinkBlazorApplicationDependsOn)"
       Inputs="$(BlazorBuildLinkerInputsCache);
               $(_LinkerOptimizerResponseFile);
