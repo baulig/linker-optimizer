@@ -15,7 +15,10 @@
 
   <assembly fullname="EmptyBlazor" preserve="all" />
 
-  <assembly fullname="Microsoft.AspNetCore.Components.Browser" preserve="all" />
+  <assembly fullname="Microsoft.AspNetCore.Components.Browser" >
+    <type fullname="Microsoft.AspNetCore.Components.Browser.RendererRegistryEventDispatcher" />
+    <type fullname="Microsoft.AspNetCore.Components.Browser.RendererRegistryEventDispatcher/BrowserEventDescriptor" />
+  </assembly>
 
   <assembly fullname="Microsoft.AspNetCore.Components">
     <namespace fullname="Microsoft.AspNetCore.Components.Reflection" />
