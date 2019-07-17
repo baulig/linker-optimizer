@@ -97,6 +97,8 @@ namespace Mono.Linker.Optimizer
 			}
 
 			linkContext.Pipeline.AddStepAfter (typeof (TypeMapStep), new InitializeOptimizerStep (context));
+			if (options.EnableBlazor)
+				linkContext.Pipeline.AddStepBefore(typeof(MarkStep), new BlazorPreserveStep(context));
 			linkContext.Pipeline.AddStepBefore (typeof (MarkStep), new PreprocessStep (context));
 			linkContext.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (context));
 			linkContext.Pipeline.AppendStep (new SizeReportStep (context));

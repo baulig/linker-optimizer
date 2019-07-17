@@ -8,7 +8,6 @@
     <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyComponentContext" />
     <type fullname="Microsoft.AspNetCore.Components.Builder.ComponentsApplicationBuilderExtensions" />
     <type fullname="Microsoft.AspNetCore.Blazor.Hosting.WebAssemblyHost" />
-    <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyUriHelper" />
     <namespace fullname="Microsoft.AspNetCore.Blazor.Rendering" />
     <namespace fullname="Microsoft.AspNetCore.Blazor.Http" />
   </assembly>

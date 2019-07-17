@@ -54,7 +54,7 @@
     </ItemGroup>
 
     <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' != 'false'">
-      <_LinkerOptimizerArguments>--optimizer %(IntermediateAssembly.FullPath)</_LinkerOptimizerArguments>
+      <_LinkerOptimizerArguments>--optimizer %(IntermediateAssembly.FullPath) --optimizer-options blazor</_LinkerOptimizerArguments>
       <_LinkerOptimizerOptions Condition="'$(LinkerOptimizerOptions)' != ''">--optimizer-options $(LinkerOptimizerOptions)</_LinkerOptimizerOptions>
       <_LinkerOptimizerReport Condition="'$(LinkerOptimizerReport)' != ''">--optimizer-report $(LinkerOptimizerReport)</_LinkerOptimizerReport>
 
