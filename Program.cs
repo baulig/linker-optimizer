@@ -60,16 +60,16 @@ namespace Mono.Linker.Optimizer
 			moduleEnabled &= !options.DisableModule;
 
 			if (mainModule != null) {
-				arguments.Insert(0, "-a");
-				arguments.Insert(1, mainModule);
+				// arguments.Insert(0, "-a");
+				// arguments.Insert(1, mainModule);
 			} else if (moduleEnabled) {
 				Console.Error.WriteLine ("Missing main module argument.");
 				return 1;
 			}
 
 			if (moduleEnabled) {
-				arguments.Insert (2, "--custom-step");
-				arguments.Insert (3, $"{typeof (InitializeStep).AssemblyQualifiedName}:LoadReferencesStep");
+				arguments.Add ("--custom-step");
+				arguments.Add ($"{typeof (InitializeStep).AssemblyQualifiedName}:ResolveFromAssemblyStep");
 
 				if (!options.IsFeatureEnabled (MonoLinkerFeature.ReflectionEmit)) {
 					arguments.Add ("--exclude-feature");
@@ -86,6 +86,10 @@ namespace Mono.Linker.Optimizer
 				if (!options.IsFeatureEnabled (MonoLinkerFeature.Globalization)) {
 					arguments.Add ("--exclude-feature");
 					arguments.Add ("globalization");
+				}
+				if (mainModule != null) {
+					arguments.Add ("-a");
+					arguments.Add (mainModule);
 				}
 			} else {
 				Console.Error.WriteLine ($"Optimizer is disabled.");

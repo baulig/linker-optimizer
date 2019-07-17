@@ -77,8 +77,14 @@ namespace Mono.Linker.Optimizer
 			Context.Logger.LogMessage (MessageImportance.Low, message);
 		}
 
+		static bool initialized;
+
 		public static void Initialize (LinkContext linkContext, string mainModule, OptimizerOptions options)
 		{
+			if (initialized)
+				return;
+			initialized = true;
+
 			var context = new OptimizerContext (linkContext, options, mainModule);
 
 			if (options.CheckSize)
@@ -90,8 +96,6 @@ namespace Mono.Linker.Optimizer
 					options.Preprocessor = OptimizerOptions.PreprocessorMode.Automatic;
 			}
 
-			linkContext.Pipeline.AddStepBefore (typeof (LoadReferencesStep), new ResolveAssembliesStep (context));
-
 			linkContext.Pipeline.AddStepAfter (typeof (TypeMapStep), new InitializeOptimizerStep (context));
 			linkContext.Pipeline.AddStepBefore (typeof (MarkStep), new PreprocessStep (context));
 			linkContext.Pipeline.ReplaceStep (typeof (MarkStep), new ConditionalMarkStep (context));
@@ -100,6 +104,8 @@ namespace Mono.Linker.Optimizer
 				linkContext.Pipeline.AppendStep (new CompareWithReportStep (context));
 			linkContext.Pipeline.AppendStep (new GenerateReportStep (context));
 			linkContext.Pipeline.AppendStep (new FinalCheckStep (context));
+
+			context.ResolveAssemblies ();
 		}
 
 		const string LinkerSupportType = "System.Runtime.CompilerServices.MonoLinkerSupport";
@@ -117,6 +123,14 @@ namespace Mono.Linker.Optimizer
 		Lazy<TypeDefinition> _platform_not_support_exception;
 		Lazy<MethodDefinition> _platform_not_supported_exception_ctor;
 		FieldInfo _tracer_stack_field;
+
+		void ResolveAssemblies ()
+		{
+			foreach (var reference in Options.AssemblyReferences) {
+				var assembly = Context.Resolve (reference);
+				LogMessage (MessageImportance.Normal, $"Resolved assembly reference: {reference} {assembly}");
+			}
+		}
 
 		void Initialize ()
 		{
