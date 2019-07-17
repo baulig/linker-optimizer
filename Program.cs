@@ -146,6 +146,10 @@ namespace Mono.Linker.Optimizer
 		{
 			while (arguments.Count > 0) {
 				var token = arguments[0];
+				if (token == "--") {
+					arguments.RemoveAt (0);
+					break;
+				}
 				if (!token.StartsWith ("--optimizer", StringComparison.Ordinal))
 					break;
 

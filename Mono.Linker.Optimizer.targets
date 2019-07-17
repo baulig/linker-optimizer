@@ -28,10 +28,14 @@
   <Target
       Name="_ComputeLinkerOptimizerDependencies"
       DependsOnTargets="_PrepareLinkerOptimizerConfiguration"
-      Inputs="@(LinkerOptimizerXmlDescriptors)"
+      Inputs="@(LinkerOptimizerXmlDescriptors);
+              $(BlazorBuildLinkerInputsCache);
+              @(BlazorBuildLinkerExtraInputs);
+              @(IntermediateAssembly);
+              @(_BlazorDependencyInput);
+              @(BlazorLinkerDescriptor)"
       Outputs="$(_LinkerOptimizerDependencyCache);$(_LinkerOptimizerResponseFile)"
-      Condition="'$(LinkerOptimizerEnabled)' != 'false'"
-  >
+      Condition="'$(LinkerOptimizerEnabled)' != 'false'">
 
     <Message Text="Using Linker Optimizer XML: %(LinkerOptimizerXmlDescriptors.Identity)!" />
     <Message Text="Using Linker Optimizer Arguments: $(LinkerOptimizerOptions)"  Condition="'$(LinkerOptimizerOptions)' != ''" />
@@ -39,6 +43,12 @@
 
     <ItemGroup>
       <_LinkerOptimizerXmlArguments Include="@(LinkerOptimizerXmlDescriptors->'--optimizer-xml &quot;%(FullPath)&quot;')" Condition="'@(LinkerOptimizerXmlDescriptors)' != ''" />
+      <_MonoBaseClassLibraryFolder Include="$(MonoBaseClassLibraryPath);$(MonoBaseClassLibraryFacadesPath)" />
+      <_LinkerOptimizerAssemblyReferences Include="@(_BlazorDependencyInput->'--optimizer-ref &quot;%(Identity)&quot;')" />
+      <_LinkerOptimizerAssemblyReferences Include="@(IntermediateAssembly->'--optimizer-ref &quot;%(FullPath)&quot;')" />
+      <_BlazorFolderLookupPaths Include="@(_MonoBaseClassLibraryFolder->'-d &quot;%(Identity)&quot;')" />
+      <_BlazorAssemblyDescriptorFiles
+        Include="@(BlazorLinkerDescriptor->'-x &quot;%(FullPath)&quot;')" Condition="'@(BlazorLinkerDescriptor)' != ''" />
     </ItemGroup>
 
     <PropertyGroup>
@@ -46,12 +56,13 @@
       <_LinkerOptimizerOptions Condition="'$(LinkerOptimizerOptions)' != ''">--optimizer-options $(LinkerOptimizerOptions)</_LinkerOptimizerOptions>
       <_LinkerOptimizerReport Condition="'$(LinkerOptimizerReport)' != ''">--optimizer-report $(LinkerOptimizerReport)</_LinkerOptimizerReport>
       <_LinkerOptimizerExtraLinkerDesc>$(MSBuildThisFileDirectory)\Tests\Blazor\extra-linker-descriptor.xml</_LinkerOptimizerExtraLinkerDesc>
-      <_LinkerOptimizerCommandLine>$(_LinkerOptimizerArguments) @(_LinkerOptimizerXmlArguments, ' ') $(_LinkerOptimizerOptions) $(_LinkerOptimizerReport) $(LinkerOptimizerExtraArguments) $(LinkerOptimizerExtraLinkerArguments) -x $(_LinkerOptimizerExtraLinkerDesc) </_LinkerOptimizerCommandLine>
-      <AdditionalMonoLinkerOptions>$(_LinkerOptimizerCommandLine) $(AdditionalMonoLinkerOptions)</AdditionalMonoLinkerOptions>
+
+      <_LinkerOptimizerCommandLine>$(_LinkerOptimizerArguments) @(_LinkerOptimizerXmlArguments, ' ') $(_LinkerOptimizerOptions) $(_LinkerOptimizerReport) $(LinkerOptimizerExtraArguments) @(_LinkerOptimizerAssemblyReferences, ' ')</_LinkerOptimizerCommandLine>
+      <_LinkerOptimizerFullCommandLine>$(_LinkerOptimizerCommandLine) -- -x $(_LinkerOptimizerExtraLinkerDesc) $(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ')</_LinkerOptimizerFullCommandLine>
       <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\Debug\netcoreapp2.0\Mono.Linker.Optimizer.dll</MonoLinkerPath>
     </PropertyGroup>
 
-    <Hash ItemsToHash="@(LinkerOptimizerXmlDescriptors);$(_LinkerOptimizerCommandLine)">
+    <Hash ItemsToHash="@(LinkerOptimizerXmlDescriptors);$(_LinkerOptimizerFullCommandLine)">
       <Output TaskParameter="HashResult" PropertyName="_LinkerOptimizerDependencyHash" />
     </Hash>
 
@@ -62,7 +73,7 @@
       WriteOnlyWhenDifferent="True" />
 
     <WriteLinesToFile
-      Lines="$(_LinkerOptimizerCommandLine)"
+      Lines="$(_LinkerOptimizerFullCommandLine)"
       FIle="$(_LinkerOptimizerResponseFile)"
       Overwrite="True"
       WriteOnlyWhenDifferent="True" />
@@ -80,9 +91,10 @@
 
   <Target
       Name="_LinkBlazorApplication"
-      Condition="$(_BlazorShouldLinkApplicationAssemblies) != ''"
+      Condition="'$(LinkerOptimizerEnabled)' != 'false'"
       DependsOnTargets="$(LinkBlazorApplicationDependsOn)"
       Inputs="$(BlazorBuildLinkerInputsCache);
+              $(_LinkerOptimizerResponseFile);
               @(BlazorBuildLinkerExtraInputs);
               @(IntermediateAssembly);
               @(_BlazorDependencyInput);
@@ -101,24 +113,12 @@
     has changed.
     4) Add the file we just created to the list of file writes, to support incremental builds.
     -->
-    <ItemGroup>
-      <_MonoBaseClassLibraryFolder Include="$(MonoBaseClassLibraryPath);$(MonoBaseClassLibraryFacadesPath)" />
-      <_BlazorAssembliesToLink Include="@(_BlazorDependencyInput->'--optimizer-ref &quot;%(Identity)&quot;')" />
-      <_BlazorAssembliesToLink Include="@(IntermediateAssembly->'--optimizer-ref &quot;%(FullPath)&quot;')" />
-      <_BlazorFolderLookupPaths Include="@(_MonoBaseClassLibraryFolder->'-d &quot;%(Identity)&quot;')" />
-      <_BlazorAssemblyDescriptorFiles
-        Include="@(BlazorLinkerDescriptor->'-x &quot;%(FullPath)&quot;')" Condition="'@(BlazorLinkerDescriptor)' != ''" />
-    </ItemGroup>
-
-    <PropertyGroup>
-      <_BlazorLinkerAdditionalOptions>$(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies)</_BlazorLinkerAdditionalOptions>
-    </PropertyGroup>
 
     <!-- Clear the contents of /obj/<<configuration>>/<<targetframework>>/blazor/blazor/linker -->
     <Delete Files="$(BlazorIntermediateLinkerOutputPath)*.dll" />
 
     <!-- Run the linker and put the results in /obj/<<configuration>>/<<targetframework>>/blazor/blazor/linker -->
-    <Exec Command="dotnet &quot;$(MonoLinkerPath)&quot; $(_BlazorLinkerAdditionalOptions) @(_BlazorAssembliesToLink, ' ') @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ')"  />
+    <Exec Command="dotnet &quot;$(MonoLinkerPath)&quot; \@$(_LinkerOptimizerResponseFile)" />
 
     <!-- Collect the contents of /obj/<<configuration>>/<<targetframework>>/blazor/blazor/linker/ -->
     <ItemGroup>
