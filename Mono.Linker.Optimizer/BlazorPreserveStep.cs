@@ -93,8 +93,27 @@ namespace Mono.Linker.Optimizer
 
 		void PreserveJSInvokable (MethodDefinition method)
 		{
-			Context.LogDebug ($"Preserving `[{js_invokable_attribute_type}]': `{method}'.");
+			Context.LogDebug ($"Preserving `[{js_invokable_attribute_type}]': `{method}' in `{method.DeclaringType.Module.FileName}'.");
+
+			PreserveType (method.DeclaringType);
 			Annotations.AddPreservedMethod (method.DeclaringType, method);
+
+			if (method.HasParameters) {
+				foreach (var pd in method.Parameters) {
+					var ptype = BasicBlocks.CecilHelper.Resolve (pd.ParameterType);
+					if (ptype != null) {
+						PreserveType (ptype);
+						Annotations.SetPreserve (ptype, TypePreserve.All);
+					}
+				}
+			}
+		}
+
+		void PreserveType (TypeDefinition type)
+		{
+			Annotations.Mark (type);
+			if (type.IsNested)
+				PreserveType (type.DeclaringType);
 		}
 	}
 }
