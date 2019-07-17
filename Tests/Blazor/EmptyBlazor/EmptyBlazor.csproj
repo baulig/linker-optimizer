@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <LinkerOptimizerXmlDescriptors Include="optimizer.xml" />
-    <LinkerOptimizerXmlDescriptors Include="$(MSBuildThisFileDirectory)\..\..\corlib-nunit.xml" />
     <BlazorLinkerDescriptor Include="$(MSBuildThisFileDirectory)\..\extra-linker-descriptor.xml" />
   </ItemGroup>
 

@@ -3,11 +3,7 @@
 
 	<options report-configuration="blazor" disable-all="true" report-mode="actions+size+detailed" check-size="false" size-check-tolerance="10%" />
 
-	<include filename="../../Corlib/corlib-api.xml" />
-
 	<namespace name="System.Linq.Expressions" action="none" />
-
-	<namespace name="EmptyBlazor" action="preserve" />
 
 	<namespace name="Microsoft.Extensions.DependencyInjection" action="none" />
 
