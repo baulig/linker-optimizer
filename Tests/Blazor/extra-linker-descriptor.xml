@@ -15,12 +15,14 @@
   <assembly fullname="Microsoft.AspNetCore.Components.Browser" preserve="all">
   </assembly>
 
-  <assembly fullname="Microsoft.AspNetCore.Components" preserve="all">
-  <!--
-    <namespace fullname="Microsoft.AspNetCore.Components.Reflection" preserve="all" /> -->
+  <assembly fullname="Microsoft.AspNetCore.Components">
+    <namespace fullname="Microsoft.AspNetCore.Components.Reflection" preserve="all" />
     <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutComponentBase" preserve="all" />
     <type fullname="Microsoft.AspNetCore.Components.RouteAttribute" preserve="all" />
     <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutAttribute" preserve="all" />
+    <namespace fullname="Microsoft.AspNetCore.Components.Routing" />
+    <type fullname="Microsoft.AspNetCore.Components.UIMouseEventArgs" />
+    <type fullname="Microsoft.AspNetCore.Components.PageDisplay" />
   </assembly>
 
 </linker>
