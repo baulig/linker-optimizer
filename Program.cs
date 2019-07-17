@@ -69,7 +69,7 @@ namespace Mono.Linker.Optimizer
 
 			if (moduleEnabled) {
 				arguments.Insert (2, "--custom-step");
-				arguments.Insert (3, $"TypeMapStep:{typeof (InitializeStep).AssemblyQualifiedName}");
+				arguments.Insert (3, $"{typeof (InitializeStep).AssemblyQualifiedName}:LoadReferencesStep");
 
 				if (!options.IsFeatureEnabled (MonoLinkerFeature.ReflectionEmit)) {
 					arguments.Add ("--exclude-feature");
@@ -176,6 +176,11 @@ namespace Mono.Linker.Optimizer
 					filename = arguments [0];
 					arguments.RemoveAt (0);
 					options.ReportFileName = filename;
+					break;
+				case "--optimizer-ref":
+					filename = arguments [0];
+					arguments.RemoveAt (0);
+					options.AssemblyReferences.Add (filename);
 					break;
 				}
 			}

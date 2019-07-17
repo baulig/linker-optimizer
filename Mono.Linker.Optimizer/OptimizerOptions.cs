@@ -107,12 +107,17 @@ namespace Mono.Linker.Optimizer
 			get;
 		}
 
+		public List<string> AssemblyReferences {
+			get;
+		}
+
 		readonly Dictionary<MonoLinkerFeature, bool> _enabled_features;
 
 		public OptimizerOptions ()
 		{
 			NoConditionalRedefinition = true;
 			DeadCodeElimination = true;
+			AssemblyReferences = new List<string> ();
 			_enabled_features = new Dictionary<MonoLinkerFeature, bool> {
 				[MonoLinkerFeature.Unknown] = false,
 				[MonoLinkerFeature.Martin] = false
