@@ -12,8 +12,6 @@
     <namespace fullname="Microsoft.AspNetCore.Blazor.Http" />
   </assembly>
 
-  <assembly fullname="EmptyBlazor" preserve="all" />
-
   <assembly fullname="Microsoft.AspNetCore.Components">
     <namespace fullname="Microsoft.AspNetCore.Components.Reflection" />
     <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutComponentBase" />

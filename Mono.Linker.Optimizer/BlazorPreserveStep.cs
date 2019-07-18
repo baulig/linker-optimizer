@@ -44,6 +44,8 @@ namespace Mono.Linker.Optimizer
 		{
 			Initialize ();
 
+			PreserveAssembly (Context.MainAssembly);
+
 			foreach (var assembly in GetAssemblies ()) {
 				foreach (var type in assembly.MainModule.Types) {
 					ProcessType (type);
@@ -62,6 +64,23 @@ namespace Mono.Linker.Optimizer
 			js_invokable_attribute_type = asm.MainModule.GetType (jsinvokable_name);
 			if (js_invokable_attribute_type == null)
 				Context.LogWarning ($"Cannot find `{jsinvokable_name}' in assembly `{asm}'.");
+		}
+
+		void PreserveAssembly (AssemblyDefinition assembly)
+		{
+			foreach (var type in assembly.MainModule.Types)
+				MarkAndPreserveAll (type);
+		}
+
+		void MarkAndPreserveAll (TypeDefinition type)
+		{
+			Annotations.MarkAndPush (type);
+			Annotations.SetPreserve (type, TypePreserve.All);
+
+			if (type.HasNestedTypes) {
+				foreach (var nested in type.NestedTypes)
+					MarkAndPreserveAll (nested);
+			}
 		}
 
 		void ProcessType (TypeDefinition type)
