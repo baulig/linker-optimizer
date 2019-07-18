@@ -15,6 +15,16 @@
     <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
     <ReferenceBlazorBuildLocally>true</ReferenceBlazorBuildLocally>
     <RazorLangVersion>3.0</RazorLangVersion>
+    <BlazorLinkOnBuild>true</BlazorLinkOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <BlazorLinkerDescriptor Include="$(MSBuildThisFileDirectory)\..\extra-linker-descriptor.xml" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <LinkerOptimizerExtraLinkerArguments>--verbose</LinkerOptimizerExtraLinkerArguments>
+    <LinkerOptimizerEnabled>true</LinkerOptimizerEnabled>
   </PropertyGroup>
 
   <ItemGroup>
