@@ -3,3 +3,5 @@
 bin/
 obj/
 martin-report.xml
+artifacts/
+.dotnet/

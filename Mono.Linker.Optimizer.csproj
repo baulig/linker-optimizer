@@ -32,7 +32,4 @@
     <Compile Include="Mono.Linker.Optimizer.Configuration\*.cs" />
     <Compile Include="System.Runtime.CompilerServices\*.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <None Remove="external\linker\external\cecil\symbols\pdb\obj\Mono.Cecil.Pdb.csproj.nuget.g.props" />
-  </ItemGroup>
 </Project>
