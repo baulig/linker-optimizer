@@ -4,8 +4,7 @@
     <VersionPrefix>1.0.0</VersionPrefix>
     <PreReleaseVersionLabel>prerelease</PreReleaseVersionLabel>
   </PropertyGroup>
-  <!--Package versions-->
   <PropertyGroup>
-    <ILLinkTasksPackageVersion>0.1.6-prerelease.19360.1</ILLinkTasksPackageVersion>
+    <MicrosoftNETCoreAppRuntimeVersion>3.0.0-preview6-27804-01</MicrosoftNETCoreAppRuntimeVersion>
   </PropertyGroup>
 </Project>
