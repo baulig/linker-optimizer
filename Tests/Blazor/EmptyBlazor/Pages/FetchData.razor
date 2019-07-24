@@ -35,12 +35,14 @@ else
 }
 
 @functions {
-    WeatherForecast[] forecasts;
+    WeatherForecast[] forecasts = null;
 
+#if MARTIN_FIXME
     protected override async Task OnInitAsync()
     {
         forecasts = await Http.GetJsonAsync<WeatherForecast[]>("sample-data/weather.json");
     }
+#endif
 
     class WeatherForecast
     {
