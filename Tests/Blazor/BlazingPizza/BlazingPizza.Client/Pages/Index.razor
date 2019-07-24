@@ -59,7 +59,7 @@
     List<PizzaSpecial> specials;
     Order Order => OrderState.Order;
 
-    protected async override Task OnInitAsync()
+    protected async override Task OnInitializedAsync()
     {
         specials = await HttpClient.GetJsonAsync<List<PizzaSpecial>>("specials");
     }
