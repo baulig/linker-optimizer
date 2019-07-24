@@ -17,10 +17,13 @@
     <namespace fullname="Microsoft.AspNetCore.Components.Reflection" />
     <namespace fullname="Microsoft.AspNetCore.Components.Routing" />
 
-    <type fullname="Microsoft.AspNetCore.Components.LayoutComponentBase" />
-    <type fullname="Microsoft.AspNetCore.Components.RouteAttribute" />
-    <type fullname="Microsoft.AspNetCore.Components.LayoutAttribute" />
-    <type fullname="Microsoft.AspNetCore.Components.PageDisplay" />
+    <namespace fullname="Microsoft.AspNetCore.Components">
+      <type fullname="LayoutAttribute" />
+      <type fullname="LayoutComponentBase" />
+      <type fullname="PageDisplay" />
+      <type fullname="RouteAttribute" />
+      <type fullname="UI*EventArgs" />
+    </namespace>
 
     <namespace fullname="Microsoft.AspNetCore.Components.Rendering">
       <type fullname="EventFieldInfo" />
@@ -28,7 +31,6 @@
   </assembly>
 
   <assembly fullname="Microsoft.AspNetCore.Components.Web">
-
     <namespace fullname="Microsoft.AspNetCore.Components">
       <type fullname="UI*EventArgs" />
     </namespace>
