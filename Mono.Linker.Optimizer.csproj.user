@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
     <StartAction>Project</StartAction>
-    <StartArguments>@EmptyBlazor/obj/Debug/netstandard2.0/blazor/linker-optimizer.response</StartArguments>
+    <StartArguments>@../../artifacts/obj/EmptyBlazor/Debug/netstandard2.0/blazor/linker-optimizer.response</StartArguments>
     <StartWorkingDirectory>Tests\Blazor</StartWorkingDirectory>
     <ExternalConsole>false</ExternalConsole>
     <ConsolePause>true</ConsolePause>
