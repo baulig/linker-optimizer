@@ -1,26 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
-  <PropertyGroup>
-    <LocalBuildRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..', '..'))</LocalBuildRoot>
-  </PropertyGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>7.3</LangVersion>
     <RazorLangVersion>3.0</RazorLangVersion>
-  </PropertyGroup>
-
-  <PropertyGroup>
-      <RestoreSources>
-      $(LocalBuildRoot)/Blazor/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/Extensions/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/Extensions/artifacts/packages/Debug/NonShipping/;
-      $(LocalBuildRoot)/AspNetCore/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/AspNetCore/artifacts/packages/Debug/NonShipping/;
-      $(LocalBuildRoot)/AspNetCore-Tooling/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/AspNetCore-Tooling/artifacts/packages/Debug/NonShipping/;
-      $(LocalBuildRoot)/EntityFrameworkCore/artifacts/packages/Debug/Shipping/;
-    </RestoreSources>
   </PropertyGroup>
 
 </Project>

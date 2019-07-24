@@ -6,9 +6,6 @@
     <VersionPrefix>1.0.0</VersionPrefix>
     <PreReleaseVersionLabel>prerelease</PreReleaseVersionLabel>
   </PropertyGroup>
-  <PropertyGroup>
-    <LocalBuildRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))</LocalBuildRoot>
-  </PropertyGroup>
   <!--
 
     These versions should ONLY be updated by automation.
@@ -46,14 +43,6 @@
   <PropertyGroup Label="Restore feeds">
     <RestoreSources>
       $(RestoreSources);
-      $(LocalBuildRoot)/Blazor/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/Extensions/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/Extensions/artifacts/packages/Debug/NonShipping/;
-      $(LocalBuildRoot)/AspNetCore/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/AspNetCore/artifacts/packages/Debug/NonShipping/;
-      $(LocalBuildRoot)/AspNetCore-Tooling/artifacts/packages/Debug/Shipping/;
-      $(LocalBuildRoot)/AspNetCore-Tooling/artifacts/packages/Debug/NonShipping/;
-      $(LocalBuildRoot)/EntityFrameworkCore/artifacts/packages/Debug/Shipping/;
       https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json;
       https://dotnet.myget.org/F/aspnetcore-dev/api/v3/index.json;
     </RestoreSources>

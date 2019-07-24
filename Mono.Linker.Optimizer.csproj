@@ -4,7 +4,7 @@
     <AssemblyName>Mono.Linker.Optimizer</AssemblyName>
     <AssemblyTitle>Mono Linker Optimizer</AssemblyTitle>
     <Description>Mono Linker Optimizer</Description>
-    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
