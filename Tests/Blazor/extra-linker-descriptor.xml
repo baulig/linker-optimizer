@@ -40,4 +40,16 @@
     </namespace>
   </assembly>
 
+  <assembly fullname="Microsoft.AspNetCore.Authorization" preserve="all">
+    <namespace fullname="Microsoft.AspNetCore.Authorization">
+      <type fullname="DefaultAuthorizationHandlerProvider" />
+      <type fullname="DefaultAuthorizationPolicyProvider" />
+      <type fullname="DefaultAuthorizationService" />
+    </namespace>
+  </assembly>
+
+  <assembly fullname="Microsoft.Extensions.Options" preserve="all">
+    <type fullname="Microsoft.Extensions.Options.OptionsManager`1" />
+  </assembly>
+
 </linker>

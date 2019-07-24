@@ -2,13 +2,14 @@
 
   <ItemGroup>
     <LinkerOptimizerXmlDescriptors Include="optimizer.xml" />
+    <BlazorLinkerDescriptor Include="linker-descriptor.xml" />
   </ItemGroup>
 
   <PropertyGroup>
     <LinkerOptimizerOptions>report-profile=wasm,report-mode=actions+size+detailed</LinkerOptimizerOptions>
     <LinkerOptimizerReport>martin-report.xml</LinkerOptimizerReport>
     <LinkerOptimizerExtraLinkerArguments>--verbose --dump-dependencies</LinkerOptimizerExtraLinkerArguments>
-    <LinkerOptimizerEnabled>false</LinkerOptimizerEnabled>
+    <LinkerOptimizerEnabled>true</LinkerOptimizerEnabled>
   </PropertyGroup>
 
   <ItemGroup>
