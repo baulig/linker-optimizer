@@ -8,6 +8,7 @@
     <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyComponentContext" />
     <type fullname="Microsoft.AspNetCore.Components.Builder.ComponentsApplicationBuilderExtensions" />
     <type fullname="Microsoft.AspNetCore.Blazor.Hosting.WebAssemblyHost" />
+    <type fullname="Microsoft.AspNetCore.Blazor.Services.WebAssemblyLoggerFactory" />
     <namespace fullname="Microsoft.AspNetCore.Blazor.Rendering" />
     <namespace fullname="Microsoft.AspNetCore.Blazor.Http" />
   </assembly>
@@ -16,16 +17,24 @@
     <namespace fullname="Microsoft.AspNetCore.Components.Reflection" />
     <namespace fullname="Microsoft.AspNetCore.Components.Routing" />
 
-    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutComponentBase" />
+    <type fullname="Microsoft.AspNetCore.Components.LayoutComponentBase" />
     <type fullname="Microsoft.AspNetCore.Components.RouteAttribute" />
-    <type fullname="Microsoft.AspNetCore.Components.Layouts.LayoutAttribute" />
-
-    <type fullname="Microsoft.AspNetCore.Components.UIMouseEventArgs" />
-    <type fullname="Microsoft.AspNetCore.Components.UI*EventArgs" />
+    <type fullname="Microsoft.AspNetCore.Components.LayoutAttribute" />
     <type fullname="Microsoft.AspNetCore.Components.PageDisplay" />
 
     <namespace fullname="Microsoft.AspNetCore.Components.Rendering">
       <type fullname="EventFieldInfo" />
+    </namespace>
+  </assembly>
+
+  <assembly fullname="Microsoft.AspNetCore.Components.Web">
+
+    <namespace fullname="Microsoft.AspNetCore.Components">
+      <type fullname="UI*EventArgs" />
+    </namespace>
+
+    <namespace fullname="Microsoft.AspNetCore.Components.Routing">
+      <type fullname="NavLink" />
     </namespace>
   </assembly>
 
