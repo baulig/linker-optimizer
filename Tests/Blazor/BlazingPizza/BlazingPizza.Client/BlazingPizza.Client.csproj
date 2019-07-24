@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <LinkerOptimizerXmlDescriptors Include="optimizer.xml" />
-    <LinkerOptimizerXmlDescriptors Include="$(MSBuildThisFileDirectory)\..\..\..\corlib-nunit.xml" />
   </ItemGroup>
 
   <PropertyGroup>

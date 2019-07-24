@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <LinkerOptimizerXmlDescriptors Include="optimizer.xml" />
-    <BlazorLinkerDescriptor Include="$(MSBuildThisFileDirectory)\..\extra-linker-descriptor.xml" />
   </ItemGroup>
 
   <PropertyGroup>

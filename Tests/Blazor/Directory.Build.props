@@ -9,4 +9,8 @@
     <RazorLangVersion>3.0</RazorLangVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <BlazorLinkerDescriptor Include="$(MSBuildThisFileDirectory)\extra-linker-descriptor.xml" />
+  </ItemGroup>
+
 </Project>
