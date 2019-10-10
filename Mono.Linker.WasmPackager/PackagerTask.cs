@@ -412,6 +412,7 @@ namespace Mono.Linker.WasmPackager
 				wasm_core_support_library = $"--js-library {BINDINGS_MODULE_SUPPORT}";
 			}
 
+#if REMOVED
 			var runtime_js = Path.Combine (emit_ninja ? BuildDir : out_prefix, "runtime.js");
 			if (emit_ninja) {
 				File.Delete (runtime_js);
@@ -429,6 +430,7 @@ namespace Mono.Linker.WasmPackager
 					}
 				}
 			}
+#endif
 
 			AssemblyData dedup_asm = null;
 
