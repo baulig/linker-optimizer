@@ -1,0 +1,31 @@
+<Project DefaultTargets="Build">
+  <UsingTask TaskName="Mono.Linker.WasmPackager.MartinTest" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
+  <UsingTask TaskName="Mono.Linker.WasmPackager.PackagerTask" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
+
+  <Target Name="MartinTest">
+    <MartinTest />
+  </Target>
+
+  <Target Name="RunWasmPackager">
+    <ItemGroup>
+        <_RootAssemblies Include="$(TargetPath)" />
+    </ItemGroup>
+    <PackagerTask
+      MonoWasmRoot="$(MonoWasmRoot)"
+      EmscriptenSdkDir="$(MonoWasmRoot)/sdks/builds/toolchains/emsdk"
+      RootAssemblies="@(_RootAssemblies)"
+      EnableAot="true"
+      BuildDir="obj/aot"
+      RuntimeTemplate="runtime-tests.js"
+    />
+  </Target>
+
+  <PropertyGroup Condition="'$(UseWasmPackager)' == 'true'">
+    <LinkBlazorApplicationDependsOn>
+      $(LinkBlazorApplicationDependsOn);
+      RunWasmPackager;
+      MartinTest;
+    </LinkBlazorApplicationDependsOn>
+  </PropertyGroup>
+
+</Project>

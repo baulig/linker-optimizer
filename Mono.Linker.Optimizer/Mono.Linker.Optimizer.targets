@@ -8,6 +8,8 @@
     </LinkBlazorApplicationDependsOn>
   </PropertyGroup>
 
+  <Import Project="$(MSBuildThisFileDirectory)\..\Mono.Linker.WasmPackager\Mono.Linker.WasmPackager.targets" />
+
   <Target
       Name="_PrepareLinkerOptimizerConfiguration"
       AfterTargets="_PrepareBlazorOutputConfiguration">
@@ -71,7 +73,7 @@
 
     <PropertyGroup Condition="'$(LinkerOptimizerEnabled)' == 'false'">
       <_LinkerOptimizerFullCommandLine>$(LinkerOptimizerExtraLinkerArguments) $(AdditionalMonoLinkerOptions) -l $(MonoLinkerI18NAssemblies) @(_BlazorFolderLookupPaths, ' ') -o &quot;$(BlazorIntermediateLinkerOutputPath)&quot; @(_BlazorAssemblyDescriptorFiles, ' ') @(_LinkerOptimizerAssemblyReferences, ' ')</_LinkerOptimizerFullCommandLine>
-      <MonoLinkerPath>$(MSBuildThisFileDirectory)\artifacts\bin\Mono.Linker\Debug\netcoreapp3.0\illink.dll</MonoLinkerPath>
+      <MonoLinkerPath>$(MSBuildThisFileDirectory)\bin\optimizer\netcoreapp2.0\linker.dll</MonoLinkerPath>
     </PropertyGroup>
 
     <Hash ItemsToHash="@(LinkerOptimizerXmlDescriptors);$(_LinkerOptimizerFullCommandLine)">
