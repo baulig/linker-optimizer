@@ -95,7 +95,7 @@ namespace Mono.Linker.WasmPackager
 
 			public TaskItem CreateTaskItem ()
 			{
-				return new TaskItem (name, new Dictionary<string,string> () {
+				return new TaskItem (name, new Dictionary<string, string> () {
 					{ "SrcPath", src_path },
 					{ "AOT", aot ? "true" : "false" }
 				});
@@ -229,8 +229,6 @@ namespace Mono.Linker.WasmPackager
 
 		public override bool Execute ()
 		{
-			Log.LogMessage (MessageImportance.High, $"WASM RESOLVER: {MonoWasmRoot}");
-
 			out_prefix = Environment.CurrentDirectory;
 			app_prefix = Environment.CurrentDirectory;
 
@@ -276,10 +274,31 @@ namespace Mono.Linker.WasmPackager
 				}
 			}
 
+			RemoveDuplicates (ref file_list, "file", f => f);
+			RemoveDuplicates (ref assemblies, "assembly", a => a.name);
+
 			FileList = file_list.Select (f => new TaskItem (f)).ToArray ();
 			Assemblies = assemblies.Select (a => a.CreateTaskItem ()).ToArray ();
 
 			return true;
+		}
+
+		void RemoveDuplicates<T> (ref List<T> list, string name, Func<T,string> getKey)
+		{
+			var dupsFound = false;
+			var dict = new Dictionary<string, T> ();
+			foreach (var item in list) {
+				var key = getKey(item);
+				if (dict.ContainsKey (key)) {
+					Log.LogError ($"Duplicate {name}: '{key}'.");
+					dupsFound = true;
+				} else {
+					dict.Add (key, item);
+				}
+			}
+
+			if (dupsFound)
+				list = dict.Values.ToList ();
 		}
 	}
 }
