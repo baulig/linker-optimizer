@@ -35,22 +35,6 @@ namespace Mono.Linker.WasmPackager
 			get; set;
 		}
 
-		public bool EnableLinker {
-			get; set;
-		}
-
-		public string AotInputDir {
-			get; set;
-		}
-
-		public string LinkerInputDir {
-			get; set;
-		}
-
-		public string LinkerOutputDir {
-			get; set;
-		}
-
 		public string[] AotAssemblies {
 			get; set;
 		}
@@ -87,36 +71,15 @@ namespace Mono.Linker.WasmPackager
 			// Assembly name
 			public string name;
 			// Base filename
-			public string filename;
-			// Path outside build tree
 			public string src_path;
-			// Path of .bc file
-			public string bc_path;
-			// Path of the wasm object file
-			public string o_path;
-			// Path in appdir
-			public string app_path;
-			// Path of the AOT depfile
-			public string aot_depfile_path;
-			// Linker input path
-			public string linkin_path;
-			// Linker output path
-			public string linkout_path;
-			// AOT input path
-			public string aotin_path;
-			// Final output path after IL strip
-			public string final_path;
 			// Whenever to AOT this assembly
 			public bool aot;
 
 			public TaskItem CreateTaskItem ()
 			{
-				return new TaskItem (name, new Dictionary<string, string> () {
-					{ "SrcPath", src_path },
-					{ "AOT", aot ? "true" : "false" },
-					{ "LinkerInput", linkin_path },
-					{ "LinkerOutput", linkout_path },
-					{ "AotInput", aotin_path }
+				return new TaskItem (src_path, new Dictionary<string, string> () {
+					{ "Name", name },
+					{ "AOT", aot ? "true" : "false" }
 				});
 			}
 		}
@@ -251,21 +214,6 @@ namespace Mono.Linker.WasmPackager
 			out_prefix = Environment.CurrentDirectory;
 			app_prefix = Environment.CurrentDirectory;
 
-			if (EnableLinker) {
-				if (string.IsNullOrEmpty (LinkerInputDir)) {
-					Log.LogError ($"When using the linker, the `LinkerInputDir` parameter must be set.");
-					return false;
-				}
-				if (string.IsNullOrEmpty (LinkerOutputDir)) {
-					Log.LogError ($"When using the linker, the `LinkerOutputDir` parameter must be set.");
-					return false;
-				}
-				if (string.IsNullOrEmpty (AotInputDir)) {
-					Log.LogError ($"When using the linker, the `AotInputDir` parameter must be set.");
-					return false;
-				}
-			}
-
 			var mono_sdk_root = Path.Combine (MonoWasmRoot, "sdks", "out");
 
 			var tool_prefix = Path.Combine (MonoWasmRoot, "sdk", "wasm");
@@ -310,18 +258,6 @@ namespace Mono.Linker.WasmPackager
 
 			RemoveDuplicates (ref file_list, "file", f => f);
 			RemoveDuplicates (ref assemblies, "assembly", a => a.name);
-
-			foreach (var a in assemblies) {
-				var assembly = a.src_path;
-				if (assembly == null)
-					continue;
-				string filename = Path.GetFileName (assembly);
-				if (EnableLinker) {
-					a.linkin_path = Path.Combine (LinkerInputDir, filename);
-					a.linkout_path = Path.Combine (LinkerOutputDir, filename);
-					a.aotin_path = Path.Combine (AotInputDir, filename);
-				}
-			}
 
 			FileList = file_list.Select (f => new TaskItem (f)).ToArray ();
 			Assemblies = assemblies.Select (a => a.CreateTaskItem ()).ToArray ();

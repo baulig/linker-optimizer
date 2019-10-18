@@ -145,7 +145,7 @@
       Overwrite="True"
       WriteOnlyWhenDifferent="True" />
 
-    <Message Importance="High" Text="Wasm packager - got config hash $(__WasmPackager_ConfigHash)" />
+    <Message Importance="High" Text="Wasm packager - got config hash $(_WasmPackager_ConfigHash)" />
   </Target>
 
   <!-- 
@@ -179,19 +179,10 @@
         MonoWasmRoot="$(MonoWasmRoot)"
         RootAssemblies="@(WasmPackager_RootAssemblies)"
         EnableAot="$(WasmPackager_EnableAot)"
-        EnableLinker="$(WasmPackager_EnableLinker)"
-        EnableDebug="$(WasmEnableDebug)"
-        LinkerInputDir="$(_WasmPackager_LinkerInput_Dir)"
-        LinkerOutputDir="$(_WasmPackager_LinkerOutput_Dir)"
-        AotInputDir="$(_WasmPackager_LinkerOutput_Dir)">
-      <Output TaskParameter="Assemblies" ItemName="_WasmPackager_Assemblies" />
-      <Output TaskParameter="FileList" ItemName="__WasmPackager_FileList" />
+        EnableDebug="$(WasmEnableDebug)">
+        <Output TaskParameter="Assemblies" ItemName="__WasmPackager_Assemblies" />
+      <Output TaskParameter="FileList" ItemName="_WasmPackager_FileList" />
     </WasmResolverTask>
-
-    <ItemGroup>
-      <_WasmPackager_AotAssemblies Include="@(_WasmPackager_Assemblies)" Condition="'%(AOT)' == 'true'" />
-      <_WasmPackager_PInvokeAssemblies Include="%(_WasmPackager_Assemblies.LinkerInput)" Condition="'%(LinkerInput)' != ''" />
-    </ItemGroup>
 
     <ItemGroup Condition="'$(WasmPackager_EnableLinker)' == 'true'">
       <_WasmPackager_Assemblies Include="@(__WasmPackager_Assemblies)">
@@ -205,6 +196,11 @@
       <_WasmPackager_Assemblies Include="@(__WasmPackager_Assemblies)" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_WasmPackager_AotAssemblies Include="@(_WasmPackager_Assemblies)" Condition="'%(_WasmPackager_Assemblies.AOT)' == 'true'" />
+      <_WasmPackager_PInvokeAssemblies Include="@(_WasmPackager_Assemblies)" Condition="'%(_WasmPackager_Assemblies.LinkerInput)' != ''" />
+    </ItemGroup>
+
     <!-- Make sure to always modify these in pairs -->
     <ItemGroup>
       <_WasmPackager_Copy_Inputs Include="%(_WasmPackager_SdkSources.Source)" />
@@ -212,7 +208,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_WasmPackager_Copy_Inputs Include="%(_WasmPackager_Assemblies.SrcPath)" Condition="'%(_WasmPackager_Assemblies.LinkerInput)' != ''" />
+      <_WasmPackager_Copy_Inputs Include="%(_WasmPackager_Assemblies.Identity)" Condition="'%(_WasmPackager_Assemblies.LinkerInput)' != ''" />
       <_WasmPackager_Copy_Outputs Include="%(_WasmPackager_Assemblies.LinkerInput)"/>
     </ItemGroup>
 
@@ -220,14 +216,14 @@
       <_WasmPackager_Emcc_Sources Include="@(_WasmPackager_SdkSources)" Condition="'%(_WasmPackager_SdkSources.Emcc_Output)' != ''" />
     </ItemGroup>
 
-    <Message Importance="Normal" Text="  Assemblies: %(_WasmPackager_Assemblies.Identity) - %(_WasmPackager_Assemblies.SrcPath)" />
+    <Message Importance="Normal" Text="  Assemblies: %(_WasmPackager_Assemblies.Name) - %(_WasmPackager_Assemblies.Identity)" />
     <Message Importance="Normal" Text="  FileList: %(_WasmPackager_FileList.Identity)" />
-    <Message Importance="Normal" Text="  AOT Assemblies: %(_WasmPackager_AotAssemblies.Identity) - %(_WasmPackager_AotAssemblies.SrcPath)" />
-    <Message Importance="Normal" Text="  PInvoke Assemblies: %(_WasmPackager_PInvokeAssemblies.Identity) - %(_WasmPackager_PInvokeAssemblies.SrcPath)" />
+    <Message Importance="Normal" Text="  AOT Assemblies: %(_WasmPackager_AotAssemblies.Name) - %(_WasmPackager_AotAssemblies.Identity)" />
+    <Message Importance="Normal" Text="  PInvoke Assemblies: %(_WasmPackager_PInvokeAssemblies.Name) - %(_WasmPackager_PInvokeAssemblies.Identity) - %(_WasmPackager_PInvokeAssemblies.LinkerInput)" />
     <Message Importance="Normal" Text="  SDK Sources: %(_WasmPackager_SdkSources.Identity) - %(_WasmPackager_SdkSources.Source) - %(_WasmPackager_SdkSources.Intermediate)" />
     <Message Importance="Normal" Text="  Emcc Sources: %(_WasmPackager_Emcc_Sources.Identity) - %(_WasmPackager_Emcc_Sources.Emcc_Output) - %(_WasmPackager_Emcc_Sources.Emcc_Flags)" />
-    <Message Importance="Normal" Text="  Linker Inputs: %(_WasmPackager_Assemblies.Identity) - %(_WasmPackager_Assemblies.LinkerInput)" />
-    <Message Importance="Normal" Text="  Linker Outputs: %(_WasmPackager_Assemblies.Identity) - %(_WasmPackager_Assemblies.LinkerOutput)" />
+    <Message Importance="Normal" Text="  Linker Inputs: %(_WasmPackager_Assemblies.Name) - %(_WasmPackager_Assemblies.LinkerInput)" />
+    <Message Importance="Normal" Text="  Linker Outputs: %(_WasmPackager_Assemblies.Name) - %(_WasmPackager_Assemblies.LinkerOutput)" />
 
     <!-- Include all the results here and separate item lists. -->
     <ItemGroup>
@@ -235,8 +231,6 @@
       <__WasmPackager_AllResolveResults Include="A;@(_WasmPackager_Assemblies->'%(Identity):%(SrcPath):%(AOT):%(LinkerInput)')" />
       <__WasmPackager_AllResolveResults Include="S;@(_WasmPackager_SdkSources->'%(Identity):%(Emcc_Output):%(Emcc_Flags):%(Emcc_Deps)') " />
     </ItemGroup>
-
-    <Message Importance="High" Text="ALL RESOLVE RESULTS: %(__WasmPackager_AllResolveResults.Identity)" />
 
     <Hash ItemsToHash="@(__WasmPackager_AllResolveResults)">
       <Output TaskParameter="HashResult" PropertyName="_WasmPackager_ResolveHash" />
@@ -249,7 +243,7 @@
       WriteOnlyWhenDifferent="True" />
 
 
-    <Message Importance="High" Text="WasmPackager - done resolving assemblies, resolve hash is $(__WasmPackager_ResolveHash)" />
+    <Message Importance="High" Text="WasmPackager - done resolving assemblies, resolve hash is $(_WasmPackager_ResolveHash)" />
   </Target>
 
   <!-- 
@@ -278,8 +272,6 @@ config = {
       </__WasmPackager_MonoConfig_Contents>
     </PropertyGroup>
 
-    <Message Importance="High" Text="MONO CONFIG: $(__WasmPackager_MonoConfig_Contents)" />
-
     <!--
       Don't set WriteOnlyWhenDifferent="true" here as this will confuse automated dependency tracking and
       this entire target will already be skipped on unchanged inputs via the $(_WasmPackager_ResolveCache).
@@ -302,7 +294,7 @@ config = {
       Outputs="$(_WasmPackager_DriverGen)">
 
     <ItemGroup>
-      <__WasmPackager_AotAssemblies_SymbolList Include="@(_WasmPackager_AotAssemblies->Replace ('.', '_')->Replace ('-', '_'))" />
+      <__WasmPackager_AotAssemblies_SymbolList Include="@(_WasmPackager_AotAssemblies->'%(Name)'->Replace ('.', '_')->Replace ('-', '_'))" />
       <__WasmPackager_AotAssemblies_Symbols Include="$([System.String]::Format('mono_aot_module_{0}_info', %(__WasmPackager_AotAssemblies_SymbolList.Identity)))" />
 
       <__WasmPackager_DriverGen_Lines Include="@(__WasmPackager_AotAssemblies_Symbols->'extern void %2A%(Identity);')" />
@@ -318,7 +310,7 @@ config = {
       <__WasmPackager_DriverGen_Lines Include="#define LINK_ICALLS 1" Condition="'$(WasmPackager_LinkIcalls)' == 'true'" />
     </ItemGroup>
 
-    <Message Importance="Normal" Text="WasmPackager - AotAssemblies: %(_WasmPackager_AotAssemblies.Identity) - %(_WasmPackager_AotAssemblies.SrcPath)" />
+    <Message Importance="Normal" Text="WasmPackager - AotAssemblies: %(_WasmPackager_AotAssemblies.Name) - %(_WasmPackager_AotAssemblies.Identity)" />
 
     <!--
       Don't set WriteOnlyWhenDifferent="true" here as this will confuse automated dependency tracking and
@@ -336,7 +328,7 @@ config = {
   <Target
       Name="_WasmPackager_GeneratePInvokeTable"
       DependsOnTargets="$(_WasmPackagerGeneratorDependsUpon)"
-      Inputs="@(_WasmPackager_PInvokeAssemblies)"
+      Inputs="@(_WasmPackager_PInvokeAssemblies->'%(LinkerInput)')"
       Outputs="$(_WasmPackager_PInvokeTable)"
       Condition="'$(_WasmPackager_PInvokeTable)' != ''">
       <Message Importance="High" Text="WasmPackager - generating P/Invoke table: $(_WasmPackager_PInvokeTable)" />
