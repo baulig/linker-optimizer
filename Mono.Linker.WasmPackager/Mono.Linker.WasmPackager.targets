@@ -53,7 +53,6 @@
 
     <_WasmPackager_MonoConfig>$(WasmPackager_BuildDir)/mono-config.js</_WasmPackager_MonoConfig>
     <_WasmPackager_DriverGen>$(WasmPackager_BuildDir)/driver-gen.c</_WasmPackager_DriverGen>
-    <_WasmPackager_Driver_Output>$(WasmPackager_BuildDir)/driver.o</_WasmPackager_Driver_Output>
     <_WasmPackager_PInvokeTablesDefault>$(WasmPackager_BuildDir)/pinvoke-tables-default.h</_WasmPackager_PInvokeTablesDefault>
     <_WasmPackager_EmsdkEnv>$(WasmPackager_BuildDir)/emsdk_env.sh</_WasmPackager_EmsdkEnv>
     <_WasmPackager_MonoIncludeDir>$(MonoWasmRoot)/sdks/out/wasm-runtime-release/include/mono-2.0</_WasmPackager_MonoIncludeDir>
@@ -335,21 +334,6 @@ config = {
           OutputFile="$(_WasmPackager_PInvokeTable)" />
   </Target>
 
-    <!-- 
-    Generates the pinvoke-table.h
-  -->
-  <Target
-      Name="_WasmPackager_GeneratePInvokeTable"
-      DependsOnTargets="$(_WasmPackagerGeneratorDependsUpon)"
-      Inputs="@(_WasmPackager_PInvokeAssemblies)"
-      Outputs="$(_WasmPackager_PInvokeTable)"
-      Condition="'$(_WasmPackager_PInvokeTable)' != ''">
-      <GeneratePInvokeTable
-          NativeLibraries="System.Native;@(WasmPackager_PInvokeLibraries)"
-          Assemblies="@(_WasmPackager_PInvokeAssemblies)"
-          OutputFile="$(_WasmPackager_PInvokeTable)" />
-  </Target>
-
   <Target
       Name="_WasmPackager_ConstructEnv"
       DependsOnTargets="_WasmPackager_Resolve"
@@ -394,19 +378,10 @@ config = {
 
   </Target>
 
-  <Target
-      Name="_WasmPackager_Emcc_Driver"
-      DependsOnTargets="$(_WasmPackagerGeneratorDependsUpon)"
-      Inputs="@(_WasmPackager_Driver_Deps);$(_WasmPackager_Driver);$(_WasmPackager_EmsdkEnv)"
-      Outputs="$(_WasmPackager_Driver_Output)">
+  <Target Name="RunWasmPackager" DependsOnTargets="$(WasmPackagerDependsUpon)">
+    <Message Importance="High" Text="WasmPackager: $(WasmPackager_BuildDir)" />
 
     <Error Text="ABORT HERE" />
-
-    <!-- 
-      ninja.WriteLine ("build $emsdk_env: create-emsdk-env");
-      ninja.WriteLine ($"build $builddir/driver.o: emcc $builddir/driver.c | $emsdk_env $builddir/driver-gen.c {driver_deps}");
-      ninja.WriteLine ($"  flags = {driver_cflags} -DDRIVER_GEN=1 -I$mono_sdkdir/wasm-runtime-release/include/mono-2.0");
-    -->
 
     <PackagerTask
       MonoWasmRoot="$(MonoWasmRoot)"
