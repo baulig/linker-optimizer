@@ -185,12 +185,24 @@
         LinkerOutputDir="$(_WasmPackager_LinkerOutput_Dir)"
         AotInputDir="$(_WasmPackager_LinkerOutput_Dir)">
       <Output TaskParameter="Assemblies" ItemName="_WasmPackager_Assemblies" />
-      <Output TaskParameter="FileList" ItemName="_WasmPackager_FileList" />
+      <Output TaskParameter="FileList" ItemName="__WasmPackager_FileList" />
     </WasmResolverTask>
 
     <ItemGroup>
       <_WasmPackager_AotAssemblies Include="@(_WasmPackager_Assemblies)" Condition="'%(AOT)' == 'true'" />
       <_WasmPackager_PInvokeAssemblies Include="%(_WasmPackager_Assemblies.LinkerInput)" Condition="'%(LinkerInput)' != ''" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(WasmPackager_EnableLinker)' == 'true'">
+      <_WasmPackager_Assemblies Include="@(__WasmPackager_Assemblies)">
+        <LinkerInput>$(_WasmPackager_LinkerInput_Dir)/%(Filename)%(Extension)</LinkerInput>
+        <LinkerOutput>$(_WasmPackager_LinkerOutput_Dir)/%(Filename)%(Extension)</LinkerOutput>
+        <AotInput>$(_WasmPackager_LinkerOutput_Dir)/%(Filename)%(Extension)</AotInput>
+      </_WasmPackager_Assemblies>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(WasmPackager_EnableLinker)' != 'true'">
+      <_WasmPackager_Assemblies Include="@(__WasmPackager_Assemblies)" />
     </ItemGroup>
 
     <!-- Make sure to always modify these in pairs -->
