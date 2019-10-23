@@ -23,6 +23,14 @@ namespace Mono.Linker.WasmPackager
 			get; set;
 		}
 
+		public string Framework {
+			get; set;
+		}
+
+		public string NetCoreAppDir {
+			get; set;
+		}
+
 		public bool AddBinding {
 			get; set;
 		}
@@ -52,10 +60,12 @@ namespace Mono.Linker.WasmPackager
 		#endregion
 
 		string app_prefix, framework_prefix, bcl_prefix, bcl_tools_prefix, bcl_facades_prefix, out_prefix;
+		static List<string> bcl_prefixes;
 		HashSet<string> asm_map = new HashSet<string> ();
 		List<string> file_list = new List<string> ();
 		HashSet<string> assemblies_with_dbg_info = new HashSet<string> ();
 		List<string> root_search_paths = new List<string> ();
+		bool is_netcore;
 
 		List<AssemblyData> assemblies = new List<AssemblyData> ();
 
@@ -134,7 +144,12 @@ namespace Mono.Linker.WasmPackager
 
 		string ResolveBcl (string asm_name)
 		{
-			return ResolveWithExtension (bcl_prefix, asm_name);
+			foreach (var prefix in bcl_prefixes) {
+				string res = ResolveWithExtension (prefix, asm_name);
+				if (res != null)
+					return res;
+			}
+			return null;
 		}
 
 		string ResolveBclFacade (string asm_name)
@@ -214,6 +229,19 @@ namespace Mono.Linker.WasmPackager
 			out_prefix = Environment.CurrentDirectory;
 			app_prefix = Environment.CurrentDirectory;
 
+			if (!string.IsNullOrEmpty (Framework)) {
+				if (Framework.StartsWith ("netcoreapp")) {
+					is_netcore = true;
+					if (string.IsNullOrEmpty (NetCoreAppDir)) {
+						Log.LogError ("The 'NetCoreAppDir' argument is required.");
+						return false;
+					}
+				} else {
+					Log.LogError ("The only valid value for 'Framework' is 'netcoreapp...'");
+					return false;
+				}
+			}
+
 			var mono_sdk_root = Path.Combine (MonoWasmRoot, "sdks", "out");
 
 			var tool_prefix = Path.Combine (MonoWasmRoot, "sdk", "wasm");
@@ -221,6 +249,15 @@ namespace Mono.Linker.WasmPackager
 			bcl_prefix = Path.Combine (mono_sdk_root, "wasm-bcl/wasm");
 			bcl_tools_prefix = Path.Combine (mono_sdk_root, "wasm-bcl/wasm_tools");
 			bcl_facades_prefix = Path.Combine (bcl_prefix, "Facades");
+			bcl_prefixes = new List<string> ();
+			if (is_netcore) {
+				/* corelib */
+				bcl_prefixes.Add (Path.Combine (mono_sdk_root, "netcore"));
+				/* .net runtime */
+				bcl_prefixes.Add (NetCoreAppDir);
+			} else {
+				bcl_prefixes.Add (bcl_prefix);
+			}
 
 			foreach (var ra in RootAssemblies) {
 				AssemblyKind kind;

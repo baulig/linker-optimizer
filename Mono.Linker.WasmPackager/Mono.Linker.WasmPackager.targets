@@ -3,6 +3,7 @@
   <UsingTask TaskName="Mono.Linker.WasmPackager.PackagerTask" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
   <UsingTask TaskName="Mono.Linker.WasmPackager.GenerateICallTable" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
   <UsingTask TaskName="Mono.Linker.WasmPackager.GeneratePInvokeTable" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
+  <UsingTask TaskName="Mono.Linker.WasmPackager.GetFirstItem" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
   <UsingTask TaskName="Mono.Linker.WasmPackager.SourceEnvironment" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
   <UsingTask TaskName="Mono.Linker.WasmPackager.WasmResolverTask" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
   <UsingTask TaskName="Mono.Linker.WasmPackager.Emcc" AssemblyFile=".\bin\Debug\netstandard2.0\WasmPackager.dll" />
@@ -20,7 +21,7 @@
 
   <!-- FIXME -->
   <ItemGroup>
-    <WasmPackager_RootAssemblies Include="$(TargetPath)" />
+    <WasmPackager_RootAssemblies Include="@(IntermediateAssembly)" />
     <!-- <WasmPackager_Profilers Include="TestProfiler" /> -->
     <WasmPackager_PInvokeLibraries Include="libfoo" />
   </ItemGroup>
@@ -38,6 +39,7 @@
 
   <!-- Derived and private settings -->
   <PropertyGroup>
+    <_WasmPackager_NetCoreAppDir>$(MonoWasmRoot)/netcore/shared/Microsoft.NETCore.App/3.0</_WasmPackager_NetCoreAppDir>
     <_WasmPackager_RuntimeJsIntermediate>$(WasmPackager_BuildDir)/runtime.js</_WasmPackager_RuntimeJsIntermediate>
     <_WasmPackager_ExecMode>AotInterp</_WasmPackager_ExecMode>
 
@@ -55,7 +57,9 @@
     <_WasmPackager_DriverGen>$(WasmPackager_BuildDir)/driver-gen.c</_WasmPackager_DriverGen>
     <_WasmPackager_PInvokeTablesDefault>$(WasmPackager_BuildDir)/pinvoke-tables-default.h</_WasmPackager_PInvokeTablesDefault>
     <_WasmPackager_EmsdkEnv>$(WasmPackager_BuildDir)/emsdk_env.sh</_WasmPackager_EmsdkEnv>
-    <_WasmPackager_MonoIncludeDir>$(MonoWasmRoot)/sdks/out/wasm-runtime-release/include/mono-2.0</_WasmPackager_MonoIncludeDir>
+    <_WasmPackager_MonoSdkRoot>$(MonoWasmRoot)/sdks/out</_WasmPackager_MonoSdkRoot>
+    <_WasmPackager_MonoBclPath>$(_WasmPackager_MonoSdkRoot)/wasm-bcl/wasm</_WasmPackager_MonoBclPath>
+    <_WasmPackager_MonoIncludeDir>$(_WasmPackager_MonoSdkRoot)/wasm-runtime-release/include/mono-2.0</_WasmPackager_MonoIncludeDir>
 
     <_WasmPackager_EnableZLib Condition="('$(WasmPackager_EnableAot)' == 'true') OR ('$(WasmPackager_LinkIcalls)' == 'true')">true</_WasmPackager_EnableZLib>
 
@@ -382,27 +386,69 @@ config = {
 
   </Target>
 
-  <Target Name="RunWasmPackager" DependsOnTargets="$(WasmPackagerDependsUpon)">
+  <Target Name="_WasmPackager_PrepareOptimizerConfiguration" DependsOnTargets="$(WasmPackagerDependsUpon)">
     <Message Importance="High" Text="WasmPackager: $(WasmPackager_BuildDir)" />
 
-    <Error Text="ABORT HERE" />
+    <PropertyGroup>
+      <LinkerOptimizerInputPath>$(_WasmPackager_LinkerInput_Dir)</LinkerOptimizerInputPath>
+      <LinkerOptimizerOutputPath>$(_WasmPackager_LinkerOutput_Dir)</LinkerOptimizerOutputPath>
+      <LinkerOptimizerEnabled>true</LinkerOptimizerEnabled>
+      <LinkerOptimizerExtraLinkerArguments>-l none --deterministic --disable-opt unreachablebodies --exclude-feature com --exclude-feature remoting --exclude-feature etw</LinkerOptimizerExtraLinkerArguments>
+    </PropertyGroup>
 
-    <PackagerTask
-      MonoWasmRoot="$(MonoWasmRoot)"
-      EmscriptenSdkDir="$(MonoWasmRoot)/sdks/builds/toolchains/emsdk"
-      RootAssemblies="@(_RootAssemblies)"
-      EnableAot="true"
-      BuildDir="$(_WasmPackagerBuildDir)"
-      RuntimeTemplate="runtime-tests.js">
-    </PackagerTask>
+    <GetFirstItem Input="@(_WasmPackager_Assemblies)">
+      <Output TaskParameter="Output" ItemName="__WasmPackager_FirstInput" />
+    </GetFirstItem>
+
+    <ItemGroup>
+      <LinkerOptimizerInputAssembly Include="%(__WasmPackager_FirstInput.LinkerInput)" />
+      <LinkerOptimizerDependencyInput Include="%(_WasmPackager_Assemblies.LinkerInput)" />
+      <LinkerOptimizerDependencyInput Remove="%(__WasmPackager_FirstInput.LinkerInput)" />
+      <LinkerOptimizerBaseClassLibraryPath Include="$(_WasmPackager_MonoBclPath);$(_WasmPackager_MonoBclPath)/Facades" />
+    </ItemGroup>
+
+    <Message Importance="High" Text="WasmPackager - prepare optimizer config" />
+    <Message Text="  input assembly: %(LinkerOptimizerInputAssembly.Identity)" />
+    <Message Text="  dependency:     %(LinkerOptimizerDependencyInput.Identity)" />
+
   </Target>
+
+  <Target Name="_WasmPackager_NetFramework"
+    DependsOnTargets="$(_WasmPackager_NetFramework_DependsOn)">
+    <Message Importance="High" Text="WasmPackager: $(WasmPackager_BuildDir)" />
+
+    <ItemGroup>
+      <!-- Disable _CopyAppConfigFile and friends -->
+      <AppConfigWithTargetPath Remove="@(AppConfigWithTargetPath)" />
+    </ItemGroup>
+
+  </Target>
+
+  <Import Project="$(MSBuildThisFileDirectory)\..\Mono.Linker.Optimizer\Mono.Linker.Optimizer.targets" />
 
   <PropertyGroup Condition="'$(UseWasmPackager)' == 'true'">
     <LinkBlazorApplicationDependsOn>
       $(LinkBlazorApplicationDependsOn);
-      RunWasmPackager;
+      WasmPackager;
       MartinTest;
     </LinkBlazorApplicationDependsOn>
+    <LinkerOptimizerConfigurationDependsOn>
+      $(LinkerOptimizerConfigurationDependsOn);
+      _WasmPackager_PrepareOptimizerConfiguration;
+    </LinkerOptimizerConfigurationDependsOn>
+    <LinkerOptimizerDependsOn>
+      $(LinkerOptimizerDependsOn);
+    </LinkerOptimizerDependsOn>
+    <_WasmPackager_NetFramework_DependsOn>
+      $(_WasmPackager_NetFramework_DependsOn);
+      $(LinkerOptimizerDependsOn);
+      _LinkerOptimizer_LinkApplication;
+    </_WasmPackager_NetFramework_DependsOn>
+
+    <TargetsTriggeredByCompilation>_WasmPackager_NetFramework;</TargetsTriggeredByCompilation>
+    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    <SkipCopyBuildProduct>true</SkipCopyBuildProduct>
+    <SkipCopyingSymbolsToOutputDirectory>true</SkipCopyingSymbolsToOutputDirectory>
   </PropertyGroup>
 
 </Project>
