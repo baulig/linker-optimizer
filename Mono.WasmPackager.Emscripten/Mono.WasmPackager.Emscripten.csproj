@@ -2,19 +2,9 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <NuspecFile>Mono.WasmPackager.Emscripten.nuspec</NuspecFile>
-    <WasmPackager_Emscripten_Version>1.39.5</WasmPackager_Emscripten_Version>
+    <WasmPackager_Emscripten_Version>1.39.7</WasmPackager_Emscripten_Version>
     <NoWarn>NU5128</NoWarn>
   </PropertyGroup>
-
-  <Target Name="CopyPackage" AfterTargets="Pack">
-    <PropertyGroup>
-      <PackageFileName>$(PackageId).$(PackageVersion).nupkg</PackageFileName>
-    </PropertyGroup>
-    <Copy
-      SourceFiles="$(OutputPath)\$(PackageFileName)"
-      DestinationFolder="$(MSBuildThisFileDirectory)..\artifacts\" />
-    <Message Importance="High" Text="Copied $(PackageFileName) to artifacts directoy." />
-  </Target>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Build.Framework" Version="$(MSBuildFrameworkVersion)" />

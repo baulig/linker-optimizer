@@ -1,5 +1,6 @@
 optimizer-report.xml
 .packages/
+.test-packages/
 aot/
 app/
 .emscripten-cache*

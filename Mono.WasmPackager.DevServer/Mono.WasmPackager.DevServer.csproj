@@ -6,19 +6,8 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <OutputType>exe</OutputType>
     <IsPackable>true</IsPackable>
-    <NoWarn>NU5128</NoWarn>
-    <UseDebugProxyPackage>true</UseDebugProxyPackage>
+    <UseDebugProxyPackage>false</UseDebugProxyPackage>
   </PropertyGroup>
-
-  <Target Name="CopyPackage" AfterTargets="Pack">
-    <PropertyGroup>
-      <PackageFileName>$(PackageId).$(PackageVersion).nupkg</PackageFileName>
-    </PropertyGroup>
-    <Copy
-      SourceFiles="$(OutputPath)\$(PackageFileName)"
-      DestinationFolder="$(MSBuildThisFileDirectory)..\artifacts\" />
-    <Message Importance="High" Text="Copied $(PackageFileName) to artifacts directoy." />
-  </Target>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

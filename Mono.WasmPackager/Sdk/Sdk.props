@@ -81,6 +81,8 @@
 
   <Import Sdk="Mono.Linker.Optimizer" Version="1.0.0" Project="Sdk.props" Condition="'$(WasmPackager_EnableLinker)' == 'true'" />
 
+  <Import Sdk="Mono.Linker.CilStrip" Version="1.0.0" Project="Sdk.props" Condition="'$(WasmPackager_EnablePackager)' == 'true'" />
+
   <PropertyGroup Condition="'$(_WasmPackager_SkipSdkImport)' != 'true'">
     <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
     <SkipCopyBuildProduct>true</SkipCopyBuildProduct>
